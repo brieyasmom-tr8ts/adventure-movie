@@ -3,185 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Adventure Movie Maker</title>
+<title>Choose Your Adventure</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e8e8e8; }
-  .screen { display: none; position: fixed; inset: 0; }
-  .screen.active { display: flex; flex-direction: column; }
-  #home-screen { background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1628 100%); align-items: center; justify-content: center; padding: 24px; }
-  .home-content { max-width: 520px; width: 100%; text-align: center; }
-  .home-logo { font-size: 48px; margin-bottom: 8px; background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-  .home-tagline { color: #888; font-size: 16px; margin-bottom: 40px; }
-  .prompt-section { margin-bottom: 24px; text-align: left; }
-  .prompt-label { font-size: 14px; color: #aaa; margin-bottom: 8px; display: block; }
-  .prompt-textarea { width: 100%; min-height: 120px; padding: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: #fff; font-size: 16px; resize: vertical; font-family: inherit; line-height: 1.5; transition: border-color 0.2s; }
-  .prompt-textarea:focus { outline: none; border-color: #4d96ff; }
-  .prompt-textarea::placeholder { color: #555; }
-  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
-  .example-chip { padding: 8px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #aaa; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-  .example-chip:hover { background: rgba(77,150,255,0.15); border-color: #4d96ff; color: #fff; }
-  .generate-btn { width: 100%; padding: 16px 32px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #4d96ff, #7b68ee); color: #fff; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
-  .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(77,150,255,0.35); }
-  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .settings-toggle { margin-top: 16px; color: #666; font-size: 13px; cursor: pointer; text-decoration: underline; background: none; border: none; }
-  .settings-panel { margin-top: 12px; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: left; display: none; }
-  .settings-panel.open { display: block; }
-  .settings-panel label { font-size: 13px; color: #888; display: block; margin-bottom: 6px; }
-  .settings-panel input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px; font-family: monospace; }
-  .settings-panel .hint { font-size: 11px; color: #555; margin-top: 4px; }
-  #loading-screen { background: #0a0a0f; align-items: center; justify-content: center; }
-  .loading-content { text-align: center; }
-  .loading-spinner { width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #4d96ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 24px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: #888; font-size: 16px; }
-  .loading-status { color: #555; font-size: 13px; margin-top: 8px; }
-  #player-screen { background: #000; }
-  .letterbox-top, .letterbox-bottom { height: 12vh; background: #000; flex-shrink: 0; transition: height 0.6s ease; }
-  .scene-area { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-  .scene-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 1.2s ease; }
-  .scene-bg.fade-out { opacity: 0; }
-  .scene-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 100%); }
-  .scene-content { position: relative; z-index: 2; width: 100%; max-width: 700px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 100%; }
-  .scene-chapter { font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: #4d96ff; margin-bottom: 12px; align-self: flex-start; opacity: 0; animation: fadeUp 0.6s 0.3s forwards; }
-  .scene-text { font-size: 20px; line-height: 1.6; color: #e8e8e8; text-shadow: 0 2px 20px rgba(0,0,0,0.8); margin-bottom: 32px; max-width: 600px; opacity: 0; animation: fadeUp 0.8s 0.5s forwards; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  .choices-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; opacity: 0; animation: fadeUp 0.6s 1s forwards; }
-  .choice-btn { width: 100%; padding: 16px 20px; text-align: left; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 16px; cursor: pointer; transition: all 0.25s; }
-  .choice-btn:hover { background: rgba(77,150,255,0.2); border-color: #4d96ff; transform: translateX(8px); }
-  .choice-btn .choice-key { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; font-weight: 700; margin-right: 12px; }
-  .timer-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, #ff6b6b, #ffd93d); transition: width 0.1s linear; }
-  #ending-screen { background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%); align-items: center; justify-content: center; padding: 24px; }
-  .ending-content { max-width: 500px; text-align: center; }
-  .ending-badge { font-size: 64px; margin-bottom: 16px; }
-  .ending-title { font-size: 32px; font-weight: 800; margin-bottom: 12px; background: linear-gradient(135deg, #ffd93d, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .ending-text { font-size: 18px; line-height: 1.6; color: #aaa; margin-bottom: 32px; }
-  .ending-stats { display: flex; gap: 24px; justify-content: center; margin-bottom: 32px; }
-  .stat-num { font-size: 28px; font-weight: 800; color: #4d96ff; }
-  .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
-  .ending-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .ending-btn { padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; }
-  .ending-btn.primary { background: #4d96ff; color: #fff; }
-  .ending-btn.secondary { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.1); }
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 24px; background: #ff4444; color: #fff; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  @media (max-width: 480px) { .home-logo { font-size: 36px; } .scene-text { font-size: 17px; } .choice-btn { font-size: 15px; padding: 14px 16px; } .letterbox-top, .letterbox-bottom { height: 6vh; } }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222}
+.screen{display:none;position:fixed;inset:0;flex-direction:column}
+.screen.active{display:flex}
+#home-screen{background:linear-gradient(160deg,#1a1a2e,#16213e,#0f3460);align-items:center;justify-content:center;padding:24px}
+.home-wrap{max-width:480px;width:100%;text-align:center}
+.home-title{font-size:40px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.1}
+.home-title span{background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-sub{color:#aac;font-size:16px;margin-bottom:32px}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.story-card{background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 12px;cursor:pointer;transition:all 0.2s;text-align:center}
+.story-card:hover{background:rgba(255,255,255,0.16);border-color:#ffd200;transform:translateY(-3px)}
+.story-card .card-emoji{font-size:36px;margin-bottom:8px}
+.story-card .card-title{color:#fff;font-size:14px;font-weight:700;margin-bottom:4px}
+.story-card .card-theme{color:#ffd200;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+#player-screen{background:#000}
+.scene-image{width:100%;height:40vh;object-fit:cover;flex-shrink:0;position:relative}
+.scene-image img{width:100%;height:100%;object-fit:cover}
+.scene-image-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,#111 100%)}
+.scene-body{flex:1;overflow-y:auto;background:#111;padding:20px 20px 100px;display:flex;flex-direction:column}
+.scene-chapter{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:10px}
+.scene-text{font-size:19px;line-height:1.7;color:#eee;margin-bottom:24px;flex:1}
+.choices-wrap{display:flex;flex-direction:column;gap:10px}
+.choice-btn{padding:16px 18px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;text-align:left;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:12px}
+.choice-btn:hover,.choice-btn:active{background:rgba(255,210,0,0.15);border-color:#ffd200}
+.choice-key{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;color:#ffd200}
+.timer-track{height:5px;background:rgba(255,255,255,0.1);width:100%}
+.timer-fill{height:100%;background:linear-gradient(90deg,#f7971e,#ffd200);transition:width 0.5s linear}
+#ending-screen{background:linear-gradient(160deg,#0f3460,#16213e,#1a1a2e);align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.ending-wrap{max-width:480px;width:100%;text-align:center;padding:20px 0}
+.ending-emoji{font-size:72px;margin-bottom:12px}
+.ending-type{font-size:12px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:8px}
+.ending-title{font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
+.ending-text{font-size:17px;line-height:1.6;color:#bbb;margin-bottom:20px}
+.ending-lesson{background:rgba(255,210,0,0.1);border:2px solid #ffd200;border-radius:14px;padding:16px;margin-bottom:24px}
+.ending-lesson-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#ffd200;margin-bottom:6px}
+.ending-lesson-text{font-size:16px;color:#fff;line-height:1.5}
+.reflect-title{font-size:14px;text-transform:uppercase;letter-spacing:2px;color:#ffd200;margin-bottom:12px}
+.reflect-list{list-style:none;margin-bottom:28px;text-align:left}
+.reflect-list li{color:#ccc;font-size:15px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);padding-left:20px;position:relative}
+.reflect-list li::before{content:'?';position:absolute;left:0;color:#ffd200;font-weight:700}
+.ending-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.end-btn{padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer}
+.end-btn.primary{background:#ffd200;color:#111}
+.end-btn.secondary{background:rgba(255,255,255,0.08);color:#ccc;border:2px solid rgba(255,255,255,0.15)}
+@media(max-width:400px){.story-grid{grid-template-columns:1fr}.home-title{font-size:32px}.scene-text{font-size:17px}}
 </style>
 </head>
 <body>
 <div id="home-screen" class="screen active">
-  <div class="home-content">
-    <div class="home-logo">Adventure Movie</div>
-    <p class="home-tagline">Type a prompt. Get an interactive movie. Choose your path.</p>
-    <div class="prompt-section">
-      <label class="prompt-label">What's your movie about?</label>
-      <textarea class="prompt-textarea" id="movie-prompt" placeholder="Example: A detective in 1940s Chicago investigates a series of impossible murders at a jazz club..."></textarea>
-    </div>
-    <div class="examples">
-      <span class="example-chip" data-prompt="A space crew discovers an alien signal coming from inside their own ship">Sci-Fi Thriller</span>
-      <span class="example-chip" data-prompt="You wake up in a medieval kingdom with no memory, but everyone seems to know you as the lost heir">Fantasy Quest</span>
-      <span class="example-chip" data-prompt="A heist crew has 60 minutes to rob the most secure vault in the world, but there's a traitor among them">Heist Drama</span>
-      <span class="example-chip" data-prompt="You're a teenager who discovers your small town is actually a simulation, and the adults are hiding something terrifying">Horror Mystery</span>
-      <span class="example-chip" data-prompt="Two strangers keep running into each other during a chaotic day in Tokyo, and each meeting changes their lives">Romance</span>
-    </div>
-    <button class="generate-btn" id="generate-btn" onclick="generateMovie()">Generate My Movie</button>
-    <button class="settings-toggle" onclick="toggleSettings()">API Settings</button>
-    <div class="settings-panel" id="settings-panel">
-      <label for="api-key">Claude API Key</label>
-      <input type="password" id="api-key" placeholder="sk-ant-..." value="">
-      <p class="hint">Get yours at console.anthropic.com. Key is stored locally only.</p>
-    </div>
-  </div>
-</div>
-<div id="loading-screen" class="screen">
-  <div class="loading-content">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Creating your adventure...</div>
-    <div class="loading-status" id="loading-status">Crafting the story...</div>
+  <div class="home-wrap">
+    <div class="home-title">Choose Your<br><span>Adventure</span></div>
+    <p class="home-sub">Step into the story. Every choice matters.</p>
+    <div class="story-grid" id="story-grid"></div>
   </div>
 </div>
 <div id="player-screen" class="screen">
-  <div class="letterbox-top"></div>
-  <div class="scene-area">
-    <div class="scene-bg" id="scene-bg"></div>
-    <div class="scene-overlay"></div>
-    <div class="scene-content" id="scene-content">
-      <div class="scene-chapter" id="scene-chapter"></div>
-      <div class="scene-text" id="scene-text"></div>
-      <div class="choices-container" id="choices-container"></div>
-    </div>
+  <div class="scene-image" id="scene-image-wrap">
+    <img id="scene-img" src="" alt="">
+    <div class="scene-image-overlay"></div>
   </div>
-  <div class="letterbox-bottom"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+  <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+  <div class="scene-body">
+    <div class="scene-chapter" id="scene-chapter"></div>
+    <div class="scene-text" id="scene-text"></div>
+    <div class="choices-wrap" id="choices-wrap"></div>
+  </div>
 </div>
 <div id="ending-screen" class="screen">
-  <div class="ending-content">
-    <div class="ending-badge" id="ending-badge">&#127916;</div>
-    <h1 class="ending-title" id="ending-title">The End</h1>
-    <p class="ending-text" id="ending-text"></p>
-    <div class="ending-stats">
-      <div class="stat-item"><div class="stat-num" id="stat-scenes">0</div><div class="stat-label">Scenes</div></div>
-      <div class="stat-item"><div class="stat-num" id="stat-choices">0</div><div class="stat-label">Choices Made</div></div>
-      <div class="stat-item"><div class="stat-num" id="stat-ending">1/3</div><div class="stat-label">Ending</div></div>
+  <div class="ending-wrap">
+    <div class="ending-emoji" id="ending-emoji"></div>
+    <div class="ending-type" id="ending-type"></div>
+    <div class="ending-title" id="ending-title"></div>
+    <div class="ending-text" id="ending-text"></div>
+    <div class="ending-lesson">
+      <div class="ending-lesson-label">Life Lesson</div>
+      <div class="ending-lesson-text" id="ending-lesson"></div>
     </div>
+    <div class="reflect-title">Think About It</div>
+    <ul class="reflect-list" id="reflect-list"></ul>
     <div class="ending-actions">
-      <button class="ending-btn primary" onclick="restartMovie()">Play Again (Different Choices)</button>
-      <button class="ending-btn secondary" onclick="goHome()">New Movie</button>
+      <button class="end-btn primary" onclick="restartStory()">Play Again</button>
+      <button class="end-btn secondary" onclick="goHome()">All Stories</button>
     </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
 <script>
-let currentStory=null,currentSceneId=null,choicesMade=0,scenesVisited=0,timerInterval=null;
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000)}
-function toggleSettings(){document.getElementById('settings-panel').classList.toggle('open')}
-(function(){try{const s=localStorage.getItem('adventure-api-key');if(s)document.getElementById('api-key').value=s}catch(e){}})();
-document.getElementById('api-key').addEventListener('change',function(){try{localStorage.setItem('adventure-api-key',this.value)}catch(e){}});
-document.querySelectorAll('.example-chip').forEach(c=>{c.addEventListener('click',()=>{document.getElementById('movie-prompt').value=c.dataset.prompt})});
-const STORY_SYSTEM_PROMPT="You are an interactive movie writer. Given a movie premise, generate a branching interactive story in JSON format.\n\nThe story must have:\n- 8-15 scenes total\n- Each scene has: id, chapter label, narrative text (2-4 vivid sentences, present tense, second person), a mood (one of: tense, calm, dark, bright, action, mysterious, romantic, eerie), and 2-3 choices\n- Each choice has: text (short action) and nextScene (id of next scene)\n- At least 3 different endings (scenes with no choices, marked with ending: true, endingTitle, endingEmoji)\n- Choices should lead to meaningfully different paths\n- Make it cinematic\n\nReturn ONLY valid JSON:\n{\"title\":\"Movie Title\",\"startScene\":\"scene_1\",\"totalEndings\":3,\"scenes\":{\"scene_1\":{\"id\":\"scene_1\",\"chapter\":\"Chapter 1\",\"text\":\"...\",\"mood\":\"mysterious\",\"choices\":[{\"text\":\"Open the door\",\"nextScene\":\"scene_2\"},{\"text\":\"Run away\",\"nextScene\":\"scene_3\"}]},\"scene_end_1\":{\"id\":\"scene_end_1\",\"chapter\":\"Finale\",\"text\":\"...\",\"mood\":\"bright\",\"ending\":true,\"endingTitle\":\"The Hero's Victory\",\"endingEmoji\":\"&#127775;\"}}}";
-async function generateMovie(){
-  const prompt=document.getElementById('movie-prompt').value.trim();
-  if(!prompt){toast('Enter a movie idea first!');return}
-  const apiKey=document.getElementById('api-key').value.trim();
-  if(!apiKey){toast('Add your Claude API key in settings below');document.getElementById('settings-panel').classList.add('open');return}
-  document.getElementById('generate-btn').disabled=true;
-  showScreen('loading-screen');
-  const statuses=['Crafting the story world...','Writing branching plotlines...','Creating dramatic choices...','Designing multiple endings...','Polishing the script...'];
-  let si=0;const statusEl=document.getElementById('loading-status');
-  const st=setInterval(()=>{si=(si+1)%statuses.length;statusEl.textContent=statuses[si]},2500);
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,system:STORY_SYSTEM_PROMPT,messages:[{role:'user',content:'Create an interactive movie about: '+prompt}]})});
-    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+r.status)}
-    const data=await r.json();let text=data.content[0].text;
-    const m=text.match(/```(?:json)?\s*([\s\S]*?)```/);if(m)text=m[1];
-    currentStory=JSON.parse(text.trim());choicesMade=0;scenesVisited=0;clearInterval(st);startMovie();
-  }catch(err){clearInterval(st);showScreen('home-screen');toast('Error: '+err.message);document.getElementById('generate-btn').disabled=false}
-}
-const MG={tense:'linear-gradient(135deg,#1a0000,#330000,#1a0a00)',calm:'linear-gradient(135deg,#0a1628,#1a2a4a,#0a2818)',dark:'linear-gradient(135deg,#0a0a0a,#1a1a2e,#0a0a1a)',bright:'linear-gradient(135deg,#1a2a0a,#2a3a1a,#1a2a2a)',action:'linear-gradient(135deg,#2a0a00,#3a1a00,#2a1a0a)',mysterious:'linear-gradient(135deg,#1a0a2e,#0a1a2e,#2e0a2e)',romantic:'linear-gradient(135deg,#2e0a1a,#3a1a2a,#2e1a2a)',eerie:'linear-gradient(135deg,#0a1a0a,#1a2a1a,#0a0a1a)'};
-function startMovie(){showScreen('player-screen');playScene(currentStory.startScene)}
+const STORIES=[{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{s1:{chapter:"Bible Story · 1 Samuel 17",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},s2a:{chapter:"The Volunteer",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},s2b:{chapter:"Staying Back",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage. A soldier next to you says the king has promised great rewards to whoever defeats Goliath.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},s2c:{chapter:"The Plan",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},s3:{chapter:"The Valley",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — look back at the soldiers watching you",next:"end_neutral"}]},end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's. That day, one brave shepherd boy changed everything.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. You take it off, confused about what to do next. Another soldier eventually fights Goliath — and loses. The battle is lost that day. You head home thinking about what might have been different if you had trusted your own gifts and God's help.",lesson:"God gives each of us unique gifts. Trying to be someone else instead of trusting who God made you to be can hold you back.",reflect:["David's gift was his sling and his faith — not a soldier's armor. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away and go back home. The standoff with Goliath continues for forty more days. No one is brave enough to step forward. Later, you hear that a boy — just like you — from another village finally stood up and defeated the giant. You wonder: what would have happened if you had been brave enough to try?",lesson:"Doing nothing is still a choice. When we let fear stop us from acting, we miss the chance to do great things — and others miss out too.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if David had tried and failed?","What is one small brave thing you could do TODAY?"]}}}];
+let currentStory=null,timerInterval=null;
+const TIMER_SECONDS=40;
+function buildHome(){document.getElementById('story-grid').innerHTML=STORIES.map(s=>'<div class="story-card" onclick="startStory(\''+s.id+'\')"><div class="card-emoji">'+s.emoji+'</div><div class="card-title">'+s.title+'</div><div class="card-theme">'+s.theme+'</div></div>').join('')}
+function goHome(){if(timerInterval)clearInterval(timerInterval);showScreen('home-screen')}
+function startStory(id){currentStory=STORIES.find(s=>s.id===id);if(!currentStory)return;showScreen('player-screen');playScene('s1')}
+function restartStory(){if(!currentStory)return;showScreen('player-screen');playScene('s1')}
 function playScene(id){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null}
-  const s=currentStory.scenes[id];if(!s){toast('Scene not found');return}
-  currentSceneId=id;scenesVisited++;
-  const bg=document.getElementById('scene-bg');bg.classList.add('fade-out');
-  setTimeout(()=>{bg.style.background=MG[s.mood]||MG.mysterious;bg.classList.remove('fade-out')},600);
-  const ch=document.getElementById('scene-chapter'),tx=document.getElementById('scene-text'),co=document.getElementById('choices-container');
-  ch.style.animation='none';tx.style.animation='none';co.style.animation='none';void ch.offsetHeight;
-  ch.textContent=s.chapter||'';ch.style.animation='fadeUp 0.6s 0.3s forwards';ch.style.opacity='0';
-  tx.textContent=s.text||'';tx.style.animation='fadeUp 0.8s 0.5s forwards';tx.style.opacity='0';
-  if(s.ending){co.innerHTML='';setTimeout(()=>showEnding(s),3000);return}
-  const keys=['A','B','C','D'];
-  co.innerHTML=s.choices.map((c,i)=>'<button class="choice-btn" onclick="makeChoice(\''+c.nextScene+'\')"><span class="choice-key">'+keys[i]+'</span>'+c.text+'</button>').join('');
-  co.style.animation='fadeUp 0.6s 1.2s forwards';co.style.opacity='0';
-  startTimer(15,s.choices[0].nextScene);
+  const s=currentStory.scenes[id];if(!s)return;
+  if(s.ending){showEnding(s);return}
+  document.getElementById('scene-chapter').textContent=s.chapter||'';
+  document.getElementById('scene-text').textContent=s.text;
+  document.getElementById('scene-img').src=s.image||currentStory.image;
+  const keys=['A','B','C'];
+  document.getElementById('choices-wrap').innerHTML=s.choices.map((c,i)=>'<button class="choice-btn" onclick="choose(\''+c.next+'\')"><span class="choice-key">'+keys[i]+'</span>'+c.text+'</button>').join('');
+  document.querySelector('.scene-body').scrollTop=0;
+  let rem=TIMER_SECONDS;
+  const fill=document.getElementById('timer-fill');
+  fill.style.width='100%';
+  timerInterval=setInterval(()=>{rem--;fill.style.width=(rem/TIMER_SECONDS*100)+'%';if(rem<=0){clearInterval(timerInterval);timerInterval=null;choose(s.choices[0].next)}},1000)
 }
-function makeChoice(n){choicesMade++;if(timerInterval){clearInterval(timerInterval);timerInterval=null}document.getElementById('choices-container').style.opacity='0';setTimeout(()=>playScene(n),400)}
-function startTimer(sec,def){const bar=document.getElementById('timer-bar');let rem=sec*10;const tot=rem;bar.style.width='100%';timerInterval=setInterval(()=>{rem--;bar.style.width=(rem/tot*100)+'%';if(rem<=0){clearInterval(timerInterval);timerInterval=null;makeChoice(def)}},100)}
-function showEnding(s){document.getElementById('ending-badge').innerHTML=s.endingEmoji||'&#127916;';document.getElementById('ending-title').textContent=s.endingTitle||'The End';document.getElementById('ending-text').textContent=s.text||'';document.getElementById('stat-scenes').textContent=scenesVisited;document.getElementById('stat-choices').textContent=choicesMade;document.getElementById('stat-ending').textContent='1/'+(currentStory.totalEndings||'?');showScreen('ending-screen')}
-function restartMovie(){choicesMade=0;scenesVisited=0;startMovie()}
-function goHome(){currentStory=null;document.getElementById('generate-btn').disabled=false;showScreen('home-screen')}
-document.addEventListener('keydown',e=>{if(document.querySelector('#player-screen.active')){const c=document.querySelectorAll('.choice-btn');const m={a:0,b:1,c:2,d:3,'1':0,'2':1,'3':2,'4':3};const i=m[e.key.toLowerCase()];if(i!==undefined&&c[i])c[i].click()}});
+function choose(next){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null}
+  const w=document.getElementById('choices-wrap');w.style.opacity='0.3';
+  setTimeout(()=>{w.style.opacity='1';playScene(next)},300)
+}
+function showEnding(s){
+  document.getElementById('ending-emoji').textContent=s.emoji;
+  document.getElementById('ending-type').textContent=s.type;
+  document.getElementById('ending-title').textContent=s.title;
+  document.getElementById('ending-text').textContent=s.text;
+  document.getElementById('ending-lesson').textContent=s.lesson;
+  document.getElementById('reflect-list').innerHTML=(s.reflect||[]).map(q=>'<li>'+q+'</li>').join('');
+  showScreen('ending-screen')
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+document.addEventListener('keydown',e=>{
+  if(!document.querySelector('#player-screen.active'))return;
+  const btns=document.querySelectorAll('.choice-btn');
+  const map={a:0,b:1,c:2,'1':0,'2':1,'3':2};
+  const i=map[e.key.toLowerCase()];
+  if(i!==undefined&&btns[i])btns[i].click()
+});
+buildHome();
 </script>
 </body>
 </html>
