@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Adventure Movie Maker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e8e8e8; }
+  .screen { display: none; position: fixed; inset: 0; }
+  .screen.active { display: flex; flex-direction: column; }
+  #home-screen { background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1628 100%); align-items: center; justify-content: center; padding: 24px; }
+  .home-content { max-width: 520px; width: 100%; text-align: center; }
+  .home-logo { font-size: 48px; margin-bottom: 8px; background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+  .home-tagline { color: #888; font-size: 16px; margin-bottom: 40px; }
+  .prompt-section { margin-bottom: 24px; text-align: left; }
+  .prompt-label { font-size: 14px; color: #aaa; margin-bottom: 8px; display: block; }
+  .prompt-textarea { width: 100%; min-height: 120px; padding: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: #fff; font-size: 16px; resize: vertical; font-family: inherit; line-height: 1.5; transition: border-color 0.2s; }
+  .prompt-textarea:focus { outline: none; border-color: #4d96ff; }
+  .prompt-textarea::placeholder { color: #555; }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .example-chip { padding: 8px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #aaa; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .example-chip:hover { background: rgba(77,150,255,0.15); border-color: #4d96ff; color: #fff; }
+  .generate-btn { width: 100%; padding: 16px 32px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #4d96ff, #7b68ee); color: #fff; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+  .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(77,150,255,0.35); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .settings-toggle { margin-top: 16px; color: #666; font-size: 13px; cursor: pointer; text-decoration: underline; background: none; border: none; }
+  .settings-panel { margin-top: 12px; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: left; display: none; }
+  .settings-panel.open { display: block; }
+  .settings-panel label { font-size: 13px; color: #888; display: block; margin-bottom: 6px; }
+  .settings-panel input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px; font-family: monospace; }
+  .settings-panel .hint { font-size: 11px; color: #555; margin-top: 4px; }
+  #loading-screen { background: #0a0a0f; align-items: center; justify-content: center; }
+  .loading-content { text-align: center; }
+  .loading-spinner { width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #4d96ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 24px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: #888; font-size: 16px; }
+  .loading-status { color: #555; font-size: 13px; margin-top: 8px; }
+  #player-screen { background: #000; }
+  .letterbox-top, .letterbox-bottom { height: 12vh; background: #000; flex-shrink: 0; transition: height 0.6s ease; }
+  .scene-area { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .scene-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 1.2s ease; }
+  .scene-bg.fade-out { opacity: 0; }
+  .scene-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 100%); }
+  .scene-content { position: relative; z-index: 2; width: 100%; max-width: 700px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 100%; }
+  .scene-chapter { font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: #4d96ff; margin-bottom: 12px; align-self: flex-start; opacity: 0; animation: fadeUp 0.6s 0.3s forwards; }
+  .scene-text { font-size: 20px; line-height: 1.6; color: #e8e8e8; text-shadow: 0 2px 20px rgba(0,0,0,0.8); margin-bottom: 32px; max-width: 600px; opacity: 0; animation: fadeUp 0.8s 0.5s forwards; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .choices-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; opacity: 0; animation: fadeUp 0.6s 1s forwards; }
+  .choice-btn { width: 100%; padding: 16px 20px; text-align: left; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 16px; cursor: pointer; transition: all 0.25s; }
+  .choice-btn:hover { background: rgba(77,150,255,0.2); border-color: #4d96ff; transform: translateX(8px); }
+  .choice-btn .choice-key { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; font-weight: 700; margin-right: 12px; }
+  .timer-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, #ff6b6b, #ffd93d); transition: width 0.1s linear; }
+  #ending-screen { background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%); align-items: center; justify-content: center; padding: 24px; }
+  .ending-content { max-width: 500px; text-align: center; }
+  .ending-badge { font-size: 64px; margin-bottom: 16px; }
+  .ending-title { font-size: 32px; font-weight: 800; margin-bottom: 12px; background: linear-gradient(135deg, #ffd93d, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .ending-text { font-size: 18px; line-height: 1.6; color: #aaa; margin-bottom: 32px; }
+  .ending-stats { display: flex; gap: 24px; justify-content: center; margin-bottom: 32px; }
+  .stat-num { font-size: 28px; font-weight: 800; color: #4d96ff; }
+  .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+  .ending-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .ending-btn { padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; }
+  .ending-btn.primary { background: #4d96ff; color: #fff; }
+  .ending-btn.secondary { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.1); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 24px; background: #ff4444; color: #fff; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  @media (max-width: 480px) { .home-logo { font-size: 36px; } .scene-text { font-size: 17px; } .choice-btn { font-size: 15px; padding: 14px 16px; } .letterbox-top, .letterbox-bottom { height: 6vh; } }
+</style>
+</head>
+<body>
+<div id="home-screen" class="screen active">
+  <div class="home-content">
+    <div class="home-logo">Adventure Movie</div>
+    <p class="home-tagline">Type a prompt. Get an interactive movie. Choose your path.</p>
+    <div class="prompt-section">
+      <label class="prompt-label">What's your movie about?</label>
+      <textarea class="prompt-textarea" id="movie-prompt" placeholder="Example: A detective in 1940s Chicago investigates a series of impossible murders at a jazz club..."></textarea>
+    </div>
+    <div class="examples">
+      <span class="example-chip" data-prompt="A space crew discovers an alien signal coming from inside their own ship">Sci-Fi Thriller</span>
+      <span class="example-chip" data-prompt="You wake up in a medieval kingdom with no memory, but everyone seems to know you as the lost heir">Fantasy Quest</span>
+      <span class="example-chip" data-prompt="A heist crew has 60 minutes to rob the most secure vault in the world, but there's a traitor among them">Heist Drama</span>
+      <span class="example-chip" data-prompt="You're a teenager who discovers your small town is actually a simulation, and the adults are hiding something terrifying">Horror Mystery</span>
+      <span class="example-chip" data-prompt="Two strangers keep running into each other during a chaotic day in Tokyo, and each meeting changes their lives">Romance</span>
+    </div>
+    <button class="generate-btn" id="generate-btn" onclick="generateMovie()">Generate My Movie</button>
+    <button class="settings-toggle" onclick="toggleSettings()">API Settings</button>
+    <div class="settings-panel" id="settings-panel">
+      <label for="api-key">Claude API Key</label>
+      <input type="password" id="api-key" placeholder="sk-ant-..." value="">
+      <p class="hint">Get yours at console.anthropic.com. Key is stored locally only.</p>
+    </div>
+  </div>
+</div>
+<div id="loading-screen" class="screen">
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Creating your adventure...</div>
+    <div class="loading-status" id="loading-status">Crafting the story...</div>
+  </div>
+</div>
+<div id="player-screen" class="screen">
+  <div class="letterbox-top"></div>
+  <div class="scene-area">
+    <div class="scene-bg" id="scene-bg"></div>
+    <div class="scene-overlay"></div>
+    <div class="scene-content" id="scene-content">
+      <div class="scene-chapter" id="scene-chapter"></div>
+      <div class="scene-text" id="scene-text"></div>
+      <div class="choices-container" id="choices-container"></div>
+    </div>
+  </div>
+  <div class="letterbox-bottom"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+</div>
+<div id="ending-screen" class="screen">
+  <div class="ending-content">
+    <div class="ending-badge" id="ending-badge">&#127916;</div>
+    <h1 class="ending-title" id="ending-title">The End</h1>
+    <p class="ending-text" id="ending-text"></p>
+    <div class="ending-stats">
+      <div class="stat-item"><div class="stat-num" id="stat-scenes">0</div><div class="stat-label">Scenes</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-choices">0</div><div class="stat-label">Choices Made</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-ending">1/3</div><div class="stat-label">Ending</div></div>
+    </div>
+    <div class="ending-actions">
+      <button class="ending-btn primary" onclick="restartMovie()">Play Again (Different Choices)</button>
+      <button class="ending-btn secondary" onclick="goHome()">New Movie</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let currentStory=null,currentSceneId=null,choicesMade=0,scenesVisited=0,timerInterval=null;
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000)}
+function toggleSettings(){document.getElementById('settings-panel').classList.toggle('open')}
+(function(){try{const s=localStorage.getItem('adventure-api-key');if(s)document.getElementById('api-key').value=s}catch(e){}})();
+document.getElementById('api-key').addEventListener('change',function(){try{localStorage.setItem('adventure-api-key',this.value)}catch(e){}});
+document.querySelectorAll('.example-chip').forEach(c=>{c.addEventListener('click',()=>{document.getElementById('movie-prompt').value=c.dataset.prompt})});
+const STORY_SYSTEM_PROMPT="You are an interactive movie writer. Given a movie premise, generate a branching interactive story in JSON format.\n\nThe story must have:\n- 8-15 scenes total\n- Each scene has: id, chapter label, narrative text (2-4 vivid sentences, present tense, second person), a mood (one of: tense, calm, dark, bright, action, mysterious, romantic, eerie), and 2-3 choices\n- Each choice has: text (short action) and nextScene (id of next scene)\n- At least 3 different endings (scenes with no choices, marked with ending: true, endingTitle, endingEmoji)\n- Choices should lead to meaningfully different paths\n- Make it cinematic\n\nReturn ONLY valid JSON:\n{\"title\":\"Movie Title\",\"startScene\":\"scene_1\",\"totalEndings\":3,\"scenes\":{\"scene_1\":{\"id\":\"scene_1\",\"chapter\":\"Chapter 1\",\"text\":\"...\",\"mood\":\"mysterious\",\"choices\":[{\"text\":\"Open the door\",\"nextScene\":\"scene_2\"},{\"text\":\"Run away\",\"nextScene\":\"scene_3\"}]},\"scene_end_1\":{\"id\":\"scene_end_1\",\"chapter\":\"Finale\",\"text\":\"...\",\"mood\":\"bright\",\"ending\":true,\"endingTitle\":\"The Hero's Victory\",\"endingEmoji\":\"&#127775;\"}}}";
+async function generateMovie(){
+  const prompt=document.getElementById('movie-prompt').value.trim();
+  if(!prompt){toast('Enter a movie idea first!');return}
+  const apiKey=document.getElementById('api-key').value.trim();
+  if(!apiKey){toast('Add your Claude API key in settings below');document.getElementById('settings-panel').classList.add('open');return}
+  document.getElementById('generate-btn').disabled=true;
+  showScreen('loading-screen');
+  const statuses=['Crafting the story world...','Writing branching plotlines...','Creating dramatic choices...','Designing multiple endings...','Polishing the script...'];
+  let si=0;const statusEl=document.getElementById('loading-status');
+  const st=setInterval(()=>{si=(si+1)%statuses.length;statusEl.textContent=statuses[si]},2500);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,system:STORY_SYSTEM_PROMPT,messages:[{role:'user',content:'Create an interactive movie about: '+prompt}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+r.status)}
+    const data=await r.json();let text=data.content[0].text;
+    const m=text.match(/```(?:json)?\s*([\s\S]*?)```/);if(m)text=m[1];
+    currentStory=JSON.parse(text.trim());choicesMade=0;scenesVisited=0;clearInterval(st);startMovie();
+  }catch(err){clearInterval(st);showScreen('home-screen');toast('Error: '+err.message);document.getElementById('generate-btn').disabled=false}
+}
+const MG={tense:'linear-gradient(135deg,#1a0000,#330000,#1a0a00)',calm:'linear-gradient(135deg,#0a1628,#1a2a4a,#0a2818)',dark:'linear-gradient(135deg,#0a0a0a,#1a1a2e,#0a0a1a)',bright:'linear-gradient(135deg,#1a2a0a,#2a3a1a,#1a2a2a)',action:'linear-gradient(135deg,#2a0a00,#3a1a00,#2a1a0a)',mysterious:'linear-gradient(135deg,#1a0a2e,#0a1a2e,#2e0a2e)',romantic:'linear-gradient(135deg,#2e0a1a,#3a1a2a,#2e1a2a)',eerie:'linear-gradient(135deg,#0a1a0a,#1a2a1a,#0a0a1a)'};
+function startMovie(){showScreen('player-screen');playScene(currentStory.startScene)}
+function playScene(id){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null}
+  const s=currentStory.scenes[id];if(!s){toast('Scene not found');return}
+  currentSceneId=id;scenesVisited++;
+  const bg=document.getElementById('scene-bg');bg.classList.add('fade-out');
+  setTimeout(()=>{bg.style.background=MG[s.mood]||MG.mysterious;bg.classList.remove('fade-out')},600);
+  const ch=document.getElementById('scene-chapter'),tx=document.getElementById('scene-text'),co=document.getElementById('choices-container');
+  ch.style.animation='none';tx.style.animation='none';co.style.animation='none';void ch.offsetHeight;
+  ch.textContent=s.chapter||'';ch.style.animation='fadeUp 0.6s 0.3s forwards';ch.style.opacity='0';
+  tx.textContent=s.text||'';tx.style.animation='fadeUp 0.8s 0.5s forwards';tx.style.opacity='0';
+  if(s.ending){co.innerHTML='';setTimeout(()=>showEnding(s),3000);return}
+  const keys=['A','B','C','D'];
+  co.innerHTML=s.choices.map((c,i)=>'<button class="choice-btn" onclick="makeChoice(\''+c.nextScene+'\')"><span class="choice-key">'+keys[i]+'</span>'+c.text+'</button>').join('');
+  co.style.animation='fadeUp 0.6s 1.2s forwards';co.style.opacity='0';
+  startTimer(15,s.choices[0].nextScene);
+}
+function makeChoice(n){choicesMade++;if(timerInterval){clearInterval(timerInterval);timerInterval=null}document.getElementById('choices-container').style.opacity='0';setTimeout(()=>playScene(n),400)}
+function startTimer(sec,def){const bar=document.getElementById('timer-bar');let rem=sec*10;const tot=rem;bar.style.width='100%';timerInterval=setInterval(()=>{rem--;bar.style.width=(rem/tot*100)+'%';if(rem<=0){clearInterval(timerInterval);timerInterval=null;makeChoice(def)}},100)}
+function showEnding(s){document.getElementById('ending-badge').innerHTML=s.endingEmoji||'&#127916;';document.getElementById('ending-title').textContent=s.endingTitle||'The End';document.getElementById('ending-text').textContent=s.text||'';document.getElementById('stat-scenes').textContent=scenesVisited;document.getElementById('stat-choices').textContent=choicesMade;document.getElementById('stat-ending').textContent='1/'+(currentStory.totalEndings||'?');showScreen('ending-screen')}
+function restartMovie(){choicesMade=0;scenesVisited=0;startMovie()}
+function goHome(){currentStory=null;document.getElementById('generate-btn').disabled=false;showScreen('home-screen')}
+document.addEventListener('keydown',e=>{if(document.querySelector('#player-screen.active')){const c=document.querySelectorAll('.choice-btn');const m={a:0,b:1,c:2,d:3,'1':0,'2':1,'3':2,'4':3};const i=m[e.key.toLowerCase()];if(i!==undefined&&c[i])c[i].click()}});
+</script>
+</body>
+</html>
