@@ -141,6 +141,10 @@ function buildSystemPrompt(seed) {
     ];
   }
 
+  const playerLine = seed.playerName
+    ? `- The protagonist is named "${seed.playerName}". Address them by name in the narration where natural (not in every sentence — sprinkle it in). Choices should still be written from their first-person perspective ("Climb the tree", not "${seed.playerName} climbs the tree").`
+    : "";
+
   return [
     `You are the live story engine for an interactive choose-your-own-adventure app.`,
     "You generate ONE scene at a time, based on the player's full journey so far.",
@@ -151,6 +155,7 @@ function buildSystemPrompt(seed) {
     `- Category: ${seed.category || "General"}`,
     `- Tone: ${seed.tone || "cinematic, present-tense, emotionally honest"}`,
     `- Lesson the story moves toward: ${seed.lesson || "let the player discover meaning through their choices"}`,
+    playerLine,
     "",
     ...writingRules,
     "",

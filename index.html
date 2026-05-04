@@ -239,6 +239,120 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .end-btn.secondary{background:rgba(255,255,255,0.06);color:var(--text-2);border:1px solid var(--border-2);backdrop-filter:blur(6px)}
 .end-btn.secondary:hover{background:rgba(255,255,255,0.12);color:#fff;border-color:var(--gold)}
 
+/* ---------- Profile pill (top-left, current kid) ---------- */
+.profile-pill{
+  position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:230;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--border-2);color:#fff;
+  height:42px;padding:0 14px;border-radius:21px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;font-family:inherit;
+  transition:transform 0.15s,background 0.2s,border-color 0.2s;
+  max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.profile-pill:hover{background:rgba(255,210,0,0.18);border-color:var(--gold)}
+.profile-pill:active{transform:scale(0.96)}
+body[data-screen="player-screen"] .profile-pill,body[data-screen="ending-screen"] .profile-pill{display:none}
+body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area-inset-top))}
+
+/* ---------- Welcome row + streak ---------- */
+.home-welcome{padding:0 24px;margin:-4px 0 18px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-size:15px;color:var(--text-2);font-weight:600}
+.streak-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(247,151,30,0.15);border:1px solid rgba(247,151,30,0.4);color:#ffb84d;font-size:12px;font-weight:800;letter-spacing:0.3px}
+.streak-chip:empty{display:none}
+
+/* ---------- Daily story hero card ---------- */
+.daily-card{
+  margin:0 24px 20px;padding:20px 22px;border-radius:18px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(255,210,0,0.18),rgba(247,151,30,0.08)),
+    radial-gradient(ellipse at top right,rgba(255,210,0,0.12),transparent 60%),var(--bg-2);
+  border:1.5px solid rgba(255,210,0,0.4);
+  box-shadow:0 12px 36px rgba(255,210,0,0.18);
+  position:relative;overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.3s;
+}
+.daily-card:hover{transform:translateY(-3px);box-shadow:0 18px 48px rgba(255,210,0,0.3)}
+.daily-card:active{transform:scale(0.98)}
+.daily-tag{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:var(--gold);font-weight:800;margin-bottom:8px}
+.daily-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:-0.3px}
+.daily-text{font-size:13px;color:var(--text-2);line-height:1.4}
+.daily-card .arrow{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:24px;opacity:0.7}
+
+/* ---------- Custom story button ---------- */
+.custom-button{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:calc(100% - 48px);margin:0 24px 26px;padding:16px;
+  background:linear-gradient(135deg,rgba(127,200,255,0.14),rgba(180,127,255,0.06));
+  border:1.5px solid rgba(180,127,255,0.4);border-radius:14px;
+  color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
+  transition:transform 0.15s,background 0.25s,border-color 0.25s,box-shadow 0.25s;
+}
+.custom-button:hover{background:linear-gradient(135deg,rgba(180,127,255,0.25),rgba(127,200,255,0.12));border-color:#b47fff;box-shadow:0 8px 28px rgba(180,127,255,0.25)}
+.custom-button:active{transform:scale(0.98)}
+.custom-icon{font-size:20px}
+
+/* ---------- Speech toggle (player screen) ---------- */
+.speech-btn{
+  position:absolute;top:30px;right:18px;z-index:15;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--border-2);color:#fff;
+  width:38px;height:38px;border-radius:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  transition:transform 0.15s,background 0.2s;
+}
+.speech-btn:hover{background:rgba(255,210,0,0.2);border-color:var(--gold)}
+.speech-btn.on{background:rgba(255,210,0,0.22);border-color:var(--gold)}
+
+/* ---------- Modal (name prompt + switcher + custom creator) ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px}
+.modal.active{display:flex;animation:modalFade 0.25s ease}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+.modal-card{
+  background:linear-gradient(180deg,var(--bg-3),var(--bg-2));
+  border:1px solid var(--border-2);border-radius:20px;
+  padding:28px 22px 22px;max-width:420px;width:100%;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6);
+  animation:modalSlide 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalSlide{from{transform:translateY(20px) scale(0.96);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.modal-card h2{color:#fff;font-size:22px;font-weight:900;margin-bottom:6px;letter-spacing:-0.3px}
+.modal-card p{color:var(--text-3);font-size:14px;margin-bottom:18px;line-height:1.4}
+.modal-card .interactive-input{margin-bottom:12px}
+.modal-secondary{
+  width:100%;padding:12px;margin-top:8px;background:rgba(255,255,255,0.06);
+  color:var(--text-2);border:1px solid var(--border-2);border-radius:12px;
+  font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s
+}
+.modal-secondary:hover{background:rgba(255,255,255,0.12);color:#fff}
+.modal-close{
+  width:100%;padding:10px;margin-top:6px;background:transparent;
+  color:var(--text-3);border:none;font-family:inherit;font-size:13px;cursor:pointer;
+}
+.modal-close:hover{color:#fff}
+
+/* Switcher list */
+.switcher-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.switcher-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:14px 16px;background:rgba(255,255,255,0.04);
+  border:1.5px solid var(--border);border-radius:12px;cursor:pointer;
+  transition:background 0.2s,border-color 0.2s;
+}
+.switcher-item:hover{background:rgba(255,210,0,0.08);border-color:var(--gold-soft)}
+.switcher-item.active{background:linear-gradient(135deg,rgba(255,210,0,0.15),rgba(247,151,30,0.05));border-color:var(--gold)}
+.switcher-name{color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px}
+.switcher-active-tag{font-size:9px;color:var(--gold);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+.switcher-remove{background:transparent;border:none;color:#888;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background 0.2s,color 0.2s}
+.switcher-remove:hover{background:rgba(255,80,80,0.2);color:#ff7878}
+
+/* Chips for custom story */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{
+  padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid var(--border-2);
+  border-radius:999px;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;transition:background 0.2s,border-color 0.2s,color 0.2s;
+}
+.chip:hover{background:rgba(180,127,255,0.18);border-color:#b47fff;color:#fff}
+.chip:active{transform:scale(0.95)}
+
 /* Mobile */
 @media(max-width:400px){
   .home-title{font-size:38px}
@@ -247,6 +361,8 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   .ending-emoji{font-size:80px}
   .story-card{flex-basis:148px;height:212px}
   .home-hero{padding:52px 20px 12px}
+  .daily-title{font-size:20px}
+  .modal-card h2{font-size:20px}
 }
 </style>
 </head>
@@ -255,6 +371,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 <div class="vignette"></div>
 
 <button class="top-btn top-back" onclick="goHome()" title="Back to stories" aria-label="Back to stories">←</button>
+<button class="profile-pill" id="profile-pill" onclick="openSwitcher()" title="Switch reader">👤 Add name</button>
 <div class="top-bar">
   <button class="top-btn on" id="sound-toggle" onclick="toggleSound()" title="Sound on/off">🔊</button>
 </div>
@@ -264,6 +381,17 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
     <div class="home-title">Choose Your<br><span>Adventure</span></div>
     <p class="home-sub">Step into the story. Every choice matters.</p>
   </div>
+  <div class="home-welcome" id="home-welcome"></div>
+  <div class="daily-card" id="daily-card" onclick="startDailyStory()">
+    <div class="daily-tag">⏰ Today's Adventure</div>
+    <div class="daily-title" id="daily-title">A new story every day</div>
+    <div class="daily-text">Tap to dive into today's tale, generated just for you.</div>
+    <div class="arrow">›</div>
+  </div>
+  <button class="custom-button" onclick="openCustomCreator()">
+    <span class="custom-icon">✨</span>
+    <span>Make My Own Story</span>
+  </button>
   <div id="categories-wrap"></div>
 </div>
 
@@ -276,6 +404,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   </div>
   <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
   <div class="scene-body scene-fade" id="scene-body">
+    <button class="speech-btn" id="speech-toggle" onclick="toggleSpeech()" title="Read aloud">🔈</button>
     <div class="scene-chapter" id="scene-chapter"></div>
     <div class="scene-text" id="scene-text" onclick="skipTypewriter()"></div>
     <div class="choices-wrap" id="choices-wrap"></div>
@@ -308,6 +437,45 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   <div class="ai-loading-label">The story unfolds</div>
   <div class="ai-loading-bar"></div>
   <div class="ai-loading-hint">Claude is writing your next scene…</div>
+</div>
+
+<div class="modal" id="name-modal">
+  <div class="modal-card">
+    <h2>What's your name?</h2>
+    <p>So we can use it inside your stories.</p>
+    <input class="interactive-input" id="name-input" placeholder="Type your name" maxlength="20" autocomplete="off">
+    <button class="interactive-submit" onclick="submitFirstName()">Let's go!</button>
+  </div>
+</div>
+
+<div class="modal" id="switcher-modal">
+  <div class="modal-card">
+    <h2>Who's reading?</h2>
+    <p>Pick yourself, or add a brother/sister.</p>
+    <div class="switcher-list" id="switcher-list"></div>
+    <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
+    <button class="modal-close" onclick="closeSwitcher()">Done</button>
+  </div>
+</div>
+
+<div class="modal" id="custom-modal">
+  <div class="modal-card">
+    <h2>✨ Make Your Own Story</h2>
+    <p>What should it be about?</p>
+    <input class="interactive-input" id="custom-input" placeholder="A story about..." maxlength="80" autocomplete="off">
+    <div class="chip-row">
+      <button class="chip" onclick="pickCustomChip('a brave dragon adventure')">🐉 Dragons</button>
+      <button class="chip" onclick="pickCustomChip('exploring outer space')">🚀 Space</button>
+      <button class="chip" onclick="pickCustomChip('an adventure with my pet')">🐶 My Pet</button>
+      <button class="chip" onclick="pickCustomChip('a sneaky ninja mission')">🥷 Ninjas</button>
+      <button class="chip" onclick="pickCustomChip('solving a tricky mystery')">🔍 Mystery</button>
+      <button class="chip" onclick="pickCustomChip('a journey to the dinosaur world')">🦕 Dinos</button>
+      <button class="chip" onclick="pickCustomChip('an underwater treasure hunt')">🐠 Ocean</button>
+      <button class="chip" onclick="pickCustomChip('a magical forest journey')">🌲 Magic</button>
+    </div>
+    <button class="interactive-submit" onclick="startCustomStory()">Start adventure ✨</button>
+    <button class="modal-close" onclick="closeCustomCreator()">Cancel</button>
+  </div>
 </div>
 
 <script>
@@ -551,6 +719,7 @@ let typewriterTimeout=null;
 let typewriterDone=true;
 let typewriterFull="";
 let soundOn=localStorage.getItem('am_sound')!=='off';
+let speechOn=localStorage.getItem('am_speech')==='on';
 let progress=loadProgress();
 
 /* =========================================================
@@ -715,8 +884,10 @@ function tryDifferentPath(){
 function goHome(){
   if(timerInterval)clearInterval(timerInterval);
   stopMusic();currentMood=null;
+  stopSpeech();
   hideAILoading();
   buildHome();
+  refreshWelcome();
   showScreen('home-screen');
 }
 
@@ -828,8 +999,8 @@ async function generateAIResponse(input,context){
 }
 
 function buildSeed(story){
-  const rl=story.category==='New Readers'?'new-readers':story.category==='1st & 2nd Grade'?'early-elementary':'default';
-  return {
+  const rl=(story.seed&&story.seed.readingLevel)||(story.category==='New Readers'?'new-readers':story.category==='1st & 2nd Grade'?'early-elementary':'default');
+  const seed={
     title:story.title,
     theme:story.theme,
     category:story.category,
@@ -837,6 +1008,275 @@ function buildSeed(story){
     tone:(story.seed&&story.seed.tone)||'cinematic, present-tense, ages 10+',
     lesson:(story.seed&&story.seed.lesson)||''
   };
+  const player=getActivePlayer();
+  if(player) seed.playerName=player;
+  return seed;
+}
+
+/* =========================================================
+   PROFILES — multi-kid name switcher (no auth, all local)
+   ========================================================= */
+function getPlayers(){
+  try{return JSON.parse(localStorage.getItem('am_players')||'[]');}catch(e){return [];}
+}
+function setPlayers(arr){localStorage.setItem('am_players',JSON.stringify(arr));}
+function getActivePlayer(){
+  const list=getPlayers();
+  const a=localStorage.getItem('am_active');
+  if(a&&list.includes(a))return a;
+  return list[0]||'';
+}
+function setActivePlayer(name){
+  localStorage.setItem('am_active',name||'');
+  refreshProfileUI();
+  refreshWelcome();
+}
+function addPlayer(name){
+  name=(name||'').trim().slice(0,20);
+  if(!name)return false;
+  const list=getPlayers();
+  if(!list.includes(name))list.push(name);
+  setPlayers(list);
+  setActivePlayer(name);
+  return true;
+}
+function removePlayer(name){
+  const list=getPlayers().filter(n=>n!==name);
+  setPlayers(list);
+  if(getActivePlayer()===name)setActivePlayer(list[0]||'');
+  renderSwitcherList();
+  refreshWelcome();
+}
+function refreshProfileUI(){
+  const p=getActivePlayer();
+  const pill=document.getElementById('profile-pill');
+  if(pill)pill.textContent=p?'👤 '+p:'👤 Add name';
+}
+function refreshWelcome(){
+  const p=getActivePlayer();
+  const el=document.getElementById('home-welcome');
+  if(!el)return;
+  if(!p){el.innerHTML='';return;}
+  const streak=getStreakDisplay();
+  el.innerHTML=`<span>Hi <strong style="color:#fff">${escapeHtml(p)}</strong>!</span>${streak?`<span class="streak-chip">${streak}</span>`:''}`;
+}
+function showFirstNamePrompt(){
+  document.getElementById('name-modal').classList.add('active');
+  setTimeout(()=>{const i=document.getElementById('name-input');i&&i.focus();},150);
+}
+function submitFirstName(){
+  const inp=document.getElementById('name-input');
+  if(!inp)return;
+  if(addPlayer(inp.value)){
+    document.getElementById('name-modal').classList.remove('active');
+    inp.value='';
+  }else{
+    inp.focus();
+  }
+}
+function openSwitcher(){
+  renderSwitcherList();
+  document.getElementById('switcher-modal').classList.add('active');
+}
+function closeSwitcher(){document.getElementById('switcher-modal').classList.remove('active');}
+function renderSwitcherList(){
+  const list=getPlayers();
+  const active=getActivePlayer();
+  const wrap=document.getElementById('switcher-list');
+  if(!wrap)return;
+  if(list.length===0){wrap.innerHTML='<p style="color:#888;text-align:center;padding:12px">No readers yet. Add one below.</p>';return;}
+  wrap.innerHTML=list.map(name=>`
+    <div class="switcher-item${name===active?' active':''}" onclick="pickPlayer('${name.replace(/'/g,"\\'")}')">
+      <div class="switcher-name">👤 ${escapeHtml(name)}${name===active?' <span class="switcher-active-tag">Active</span>':''}</div>
+      <button class="switcher-remove" onclick="event.stopPropagation();confirmRemovePlayer('${name.replace(/'/g,"\\'")}')" title="Remove">×</button>
+    </div>
+  `).join('');
+}
+function pickPlayer(name){
+  setActivePlayer(name);
+  renderSwitcherList();
+  buildHome(); // refresh streak/welcome
+}
+function confirmRemovePlayer(name){
+  if(confirm(`Remove ${name} from this device?\nTheir streak will be lost.`))removePlayer(name);
+}
+function addPlayerPrompt(){
+  const name=prompt("Reader's name?");
+  if(name)addPlayer(name);
+  renderSwitcherList();
+}
+
+/* =========================================================
+   STREAK — per-profile, tracks consecutive days played
+   ========================================================= */
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function streakKey(){return 'am_streak:'+(getActivePlayer()||'__guest__');}
+function bumpStreak(){
+  const today=todayStr();
+  let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){d={};}
+  if(d.lastDate===today)return d.count||0;
+  if(d.lastDate&&daysBetween(d.lastDate,today)===1){d.count=(d.count||0)+1;}
+  else{d.count=1;}
+  d.lastDate=today;
+  localStorage.setItem(streakKey(),JSON.stringify(d));
+  return d.count;
+}
+function getStreakDisplay(){
+  let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){return '';}
+  if(!d.lastDate)return '';
+  if(daysBetween(d.lastDate,todayStr())>1)return '';
+  return `🔥 Day ${d.count||1}`;
+}
+
+/* =========================================================
+   DAILY STORY — one fresh AI story per device per day
+   ========================================================= */
+function getDailySeed(){
+  const days=[
+    {theme:'rest and discovery',tone:'calm and adventurous'},
+    {theme:'courage and bravery',tone:'exciting and uplifting'},
+    {theme:'animals and nature',tone:'wonder and warmth'},
+    {theme:'mystery and curiosity',tone:'fun and slightly mysterious'},
+    {theme:'friendship and kindness',tone:'heartwarming'},
+    {theme:'adventure and exploration',tone:'epic but age-appropriate'},
+    {theme:'imagination and magic',tone:'whimsical, fun'}
+  ];
+  return days[new Date().getDay()];
+}
+async function getOrCreateDailyStory(){
+  const today=todayStr();
+  let cached;try{cached=JSON.parse(localStorage.getItem('am_daily_story')||'{}');}catch(e){cached={};}
+  if(cached.date===today&&cached.scene)return cached;
+  const t=getDailySeed();
+  const seed={
+    title:"Today's Adventure",
+    theme:t.theme,
+    category:'Daily',
+    tone:t.tone,
+    lesson:'every day brings something to discover',
+    readingLevel:'default'
+  };
+  const player=getActivePlayer();
+  if(player)seed.playerName=player;
+  const resp=await fetch('/api/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({seed,history:[]})});
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok||!data.scene)throw new Error(data.error||'Generation failed');
+  const result={date:today,scene:data.scene,seed};
+  localStorage.setItem('am_daily_story',JSON.stringify(result));
+  return result;
+}
+async function startDailyStory(){
+  showAILoading();
+  try{
+    const daily=await getOrCreateDailyStory();
+    hideAILoading();
+    currentStory={
+      id:'daily_'+daily.date,
+      title:"Today's Adventure",
+      theme:daily.seed.theme,
+      category:'Daily',
+      aiStory:true,
+      image:'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
+      seed:daily.seed,
+      scenes:{}
+    };
+    visitedScenes=[];journey=[];currentAIScene=null;
+    showScreen('player-screen');
+    renderAIScene(daily.scene);
+  }catch(e){
+    hideAILoading();
+    showAIError(e.message||'Could not load today\'s story');
+    showScreen('player-screen');
+  }
+}
+
+/* =========================================================
+   CUSTOM STORY — kid types a topic, AI runs with it
+   ========================================================= */
+function openCustomCreator(){
+  document.getElementById('custom-modal').classList.add('active');
+  setTimeout(()=>{const i=document.getElementById('custom-input');i&&i.focus();},150);
+}
+function closeCustomCreator(){
+  document.getElementById('custom-modal').classList.remove('active');
+}
+function pickCustomChip(t){
+  const i=document.getElementById('custom-input');
+  if(i){i.value=t;i.focus();}
+}
+function startCustomStory(){
+  const inp=document.getElementById('custom-input');
+  const theme=(inp&&inp.value||'').trim();
+  if(!theme){if(inp)inp.focus();return;}
+  closeCustomCreator();
+  const seed={
+    title:theme.slice(0,40),
+    theme:theme,
+    category:'Custom',
+    tone:'fun, exciting, age-appropriate, present-tense',
+    lesson:'every choice shapes the story',
+    readingLevel:'default'
+  };
+  const player=getActivePlayer();
+  if(player)seed.playerName=player;
+  currentStory={
+    id:'custom_'+Date.now(),
+    title:seed.title,
+    theme:seed.theme,
+    category:'Custom',
+    aiStory:true,
+    image:'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
+    seed,
+    scenes:{}
+  };
+  visitedScenes=[];journey=[];currentAIScene=null;
+  showScreen('player-screen');
+  generateAIScene();
+}
+
+/* =========================================================
+   SPEECH — browser speechSynthesis (free, no API)
+   ========================================================= */
+let speechVoice=null;
+function pickVoice(){
+  if(!('speechSynthesis' in window))return;
+  const voices=speechSynthesis.getVoices();
+  if(!voices||!voices.length)return;
+  speechVoice=voices.find(v=>/samantha|karen|google.*us.*english.*female|tessa|moira/i.test(v.name))
+    ||voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en')&&/female/i.test(v.name))
+    ||voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en'));
+}
+function toggleSpeech(){
+  speechOn=!speechOn;
+  localStorage.setItem('am_speech',speechOn?'on':'off');
+  refreshSpeechBtn();
+  if(!speechOn){stopSpeech();}
+  else{
+    // Speak whatever is currently on-screen
+    const t=typewriterFull||document.getElementById('scene-text').textContent;
+    if(t)speakText(t);
+  }
+}
+function refreshSpeechBtn(){
+  const btn=document.getElementById('speech-toggle');
+  if(!btn)return;
+  btn.textContent=speechOn?'🔊':'🔈';
+  btn.classList.toggle('on',speechOn);
+}
+function speakText(text){
+  if(!speechOn)return;
+  if(!('speechSynthesis' in window))return;
+  try{speechSynthesis.cancel();}catch(e){}
+  if(!text)return;
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=0.95;u.pitch=1.05;
+  if(!speechVoice)pickVoice();
+  if(speechVoice)u.voice=speechVoice;
+  speechSynthesis.speak(u);
+}
+function stopSpeech(){
+  try{speechSynthesis.cancel();}catch(e){}
 }
 
 async function generateAIScene(){
@@ -992,6 +1432,8 @@ function startTypewriter(fullText,onDone){
   if(typewriterTimeout){clearTimeout(typewriterTimeout);typewriterTimeout=null;}
   typewriterDone=false;
   el.innerHTML='<span class="caret"></span>';
+  // Speak the scene aloud (in parallel with typing) if audio narration is on
+  if(speechOn&&typewriterFull)speakText(typewriterFull);
   let i=0;
   const speed=getTypeSpeed();
   const step=()=>{
@@ -1080,6 +1522,8 @@ function chooseAI(idx){
 function showEnding(s,endingId){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   recordEnding(currentStory.id,endingId);
+  bumpStreak();
+  stopSpeech();
   stopMusic();currentMood=null;
   playMusic(s.type&&s.type.toLowerCase().includes('best')?'victory':'calm');
   playSfx('reveal');
@@ -1127,7 +1571,21 @@ document.addEventListener('keydown',e=>{
    ========================================================= */
 document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇';
 document.getElementById('sound-toggle').classList.toggle('on',soundOn);
+refreshProfileUI();
+refreshWelcome();
+refreshSpeechBtn();
 buildHome();
+
+// First-time visitor → prompt for name
+if(getPlayers().length===0){
+  setTimeout(showFirstNamePrompt,400);
+}
+
+// Speech voices load async on some browsers
+if('speechSynthesis' in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged=pickVoice;
+}
 
 // Resume audio context on first user gesture (browser autoplay policy)
 ['click','touchstart','keydown'].forEach(ev=>{
@@ -1136,6 +1594,14 @@ buildHome();
     if(ctx&&ctx.state==='suspended')ctx.resume();
     document.removeEventListener(ev,once);
   });
+});
+
+// Submit name modal on Enter
+document.getElementById('name-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')submitFirstName();
+});
+document.getElementById('custom-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')startCustomStory();
 });
 </script>
 </body>
