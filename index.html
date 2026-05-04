@@ -54,9 +54,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .home-title span{background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .home-sub{color:var(--text-3);font-size:15px;margin-bottom:24px;letter-spacing:0.3px}
 
-.mode-pill{display:inline-flex;background:rgba(255,255,255,0.04);border:1px solid var(--border-2);border-radius:999px;padding:3px;margin:0 auto;gap:2px}
-.mode-pill button{background:transparent;border:none;color:var(--text-3);padding:7px 16px;font-size:11px;font-weight:800;border-radius:999px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1.3px;transition:background 0.2s,color 0.2s}
-.mode-pill button.active{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111}
+.mode-pill{display:none}
 
 #categories-wrap{padding:20px 0 80px}
 .category-section{margin-bottom:28px}
@@ -168,13 +166,6 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .interactive-hint{color:var(--text-3);font-size:12px;margin-top:8px;text-align:center}
 .ai-response{margin-top:16px;padding:14px;background:rgba(255,210,0,0.08);border-left:3px solid var(--gold);border-radius:8px;color:var(--text-1);font-size:15px;line-height:1.5;font-style:italic}
 
-/* WWYD overlay */
-.wwyd-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.4s}
-.wwyd-overlay.active{opacity:1;pointer-events:auto}
-.wwyd-text{font-size:36px;font-weight:900;color:#fff;text-align:center;padding:0 24px;letter-spacing:-0.5px;transform:scale(0.9);transition:transform 0.4s}
-.wwyd-overlay.active .wwyd-text{transform:scale(1)}
-.wwyd-text span{background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-
 /* Scene fade */
 .scene-fade{transition:opacity 0.4s ease}
 .scene-fade.fading{opacity:0}
@@ -252,7 +243,6 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 @media(max-width:400px){
   .home-title{font-size:38px}
   .scene-text{font-size:17px}
-  .wwyd-text{font-size:28px}
   .ending-title{font-size:30px}
   .ending-emoji{font-size:80px}
   .story-card{flex-basis:148px;height:212px}
@@ -273,10 +263,6 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   <div class="home-hero">
     <div class="home-title">Choose Your<br><span>Adventure</span></div>
     <p class="home-sub">Step into the story. Every choice matters.</p>
-    <div class="mode-pill" role="group" aria-label="Mode">
-      <button id="mode-story" class="active" onclick="setMode('story')">Story Mode</button>
-      <button id="mode-reflect" onclick="setMode('reflect')">Reflection Mode</button>
-    </div>
   </div>
   <div id="categories-wrap"></div>
 </div>
@@ -316,10 +302,6 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
       <button class="end-btn secondary" onclick="goHome()">All Stories</button>
     </div>
   </div>
-</div>
-
-<div class="wwyd-overlay" id="wwyd-overlay">
-  <div class="wwyd-text">What would <span>YOU</span> do?</div>
 </div>
 
 <div class="ai-loading" id="ai-loading">
@@ -568,7 +550,6 @@ let timerWarned=false;
 let typewriterTimeout=null;
 let typewriterDone=true;
 let typewriterFull="";
-let mode=localStorage.getItem('am_mode')||'story';
 let soundOn=localStorage.getItem('am_sound')!=='off';
 let progress=loadProgress();
 
@@ -647,12 +628,6 @@ function toggleSound(){
     const s=currentStory.scenes[currentSceneId];
     if(s)playMusic(s.mood||'calm');
   }
-}
-function setMode(m){
-  mode=m;
-  localStorage.setItem('am_mode',m);
-  document.getElementById('mode-story').classList.toggle('active',m==='story');
-  document.getElementById('mode-reflect').classList.toggle('active',m==='reflect');
 }
 
 /* =========================================================
@@ -1078,18 +1053,10 @@ function choose(next){
   }
   const choicesWrap=document.getElementById('choices-wrap');
   choicesWrap.classList.add('hidden');
-  const proceed=()=>{
-    if(next==='ai'||next==='AI'){
-      generateAIScene();
-    }else{
-      playScene(next);
-    }
-  };
-  if(mode==='reflect'){
-    showWWYD(proceed);
-  }else{
-    setTimeout(proceed,350);
-  }
+  setTimeout(()=>{
+    if(next==='ai'||next==='AI')generateAIScene();
+    else playScene(next);
+  },350);
 }
 
 /* Choice handler for AI-generated scenes (looked up by index) */
@@ -1104,20 +1071,7 @@ function chooseAI(idx){
   }
   const choicesWrap=document.getElementById('choices-wrap');
   choicesWrap.classList.add('hidden');
-  const proceed=()=>generateAIScene();
-  if(mode==='reflect'){
-    showWWYD(proceed);
-  }else{
-    setTimeout(proceed,350);
-  }
-}
-function showWWYD(done){
-  const ov=document.getElementById('wwyd-overlay');
-  ov.classList.add('active');
-  setTimeout(()=>{
-    ov.classList.remove('active');
-    setTimeout(done,300);
-  },1500);
+  setTimeout(generateAIScene,350);
 }
 
 /* =========================================================
@@ -1143,9 +1097,6 @@ function showEnding(s,endingId){
     progEl.textContent=`★ You've discovered ${found} of ${total} endings`;
   }
   const reflect=(s.reflect||[]).slice();
-  if(mode==='reflect'){
-    reflect.unshift("Pause for 30 seconds. Sit with the choice you just made.");
-  }
   document.getElementById('reflect-list').innerHTML=reflect.map(q=>`<li>${q}</li>`).join('');
   showScreen('ending-screen');
 }
@@ -1174,7 +1125,6 @@ document.addEventListener('keydown',e=>{
 /* =========================================================
    INIT
    ========================================================= */
-setMode(mode);
 document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇';
 document.getElementById('sound-toggle').classList.toggle('on',soundOn);
 buildHome();
