@@ -105,6 +105,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222;-
 .mode-pill button{background:transparent;border:none;color:#aac;padding:6px 14px;font-size:12px;font-weight:700;border-radius:999px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1px;transition:background 0.2s,color 0.2s}
 .mode-pill button.active{background:#ffd200;color:#111}
 
+/* AI badge on cards */
+.card-ai-tag{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#f7971e,#ffd200);color:#111;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:800;letter-spacing:0.5px}
+
+/* AI loading overlay (cinematic "the story unfolds…") */
+.ai-loading{position:fixed;inset:0;background:rgba(0,0,0,0.86);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;opacity:0;pointer-events:none;transition:opacity 0.35s}
+.ai-loading.active{opacity:1;pointer-events:auto}
+.ai-loading-label{color:#ffd200;font-size:12px;text-transform:uppercase;letter-spacing:5px;margin-bottom:24px;font-weight:800}
+.ai-loading-bar{width:240px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;position:relative}
+.ai-loading-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffd200,transparent);background-size:50% 100%;background-repeat:no-repeat;animation:shimmer 1.4s infinite linear}
+@keyframes shimmer{from{background-position:-50% 0}to{background-position:150% 0}}
+.ai-loading-hint{color:#888;font-size:12px;margin-top:18px;letter-spacing:1px}
+
+/* AI error surface */
+.ai-error{padding:18px;background:rgba(255,80,80,0.08);border:2px solid rgba(255,120,120,0.4);border-radius:14px;color:#fff;margin-bottom:10px}
+.ai-error strong{display:block;color:#ff8e8e;margin-bottom:6px;font-size:15px}
+.ai-error-msg{color:#ddd;font-size:13px;line-height:1.5;margin-bottom:12px;word-break:break-word}
+
 @media(max-width:400px){.story-grid{grid-template-columns:1fr}.home-title{font-size:32px}.scene-text{font-size:17px}.wwyd-text{font-size:24px}}
 </style>
 </head>
@@ -165,15 +182,27 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222;-
   <div class="wwyd-text">What would <span>YOU</span> do?</div>
 </div>
 
+<div class="ai-loading" id="ai-loading">
+  <div class="ai-loading-label">The story unfolds</div>
+  <div class="ai-loading-bar"></div>
+  <div class="ai-loading-hint">Claude is writing your next scene…</div>
+</div>
+
 <script>
 /* =========================================================
    STORIES — grouped by category
    Scene types:
-   - Branching: { chapter, text, image|video, mood, choices:[{text,next}] }
-   - Ending:    { ending:true, type, emoji, title, text, lesson, reflect[] }
-   - Interactive (AI-ready): { interactive:true, chapter, text, image, prompt, next }
+   - Branching:        { chapter, text, image|video, mood, choices:[{text,next}] }
+   - Ending:           { ending:true, type, emoji, title, text, lesson, reflect[] }
+   - Interactive:      { interactive:true, chapter, text, image, prompt, next }
+   - AI handoff:       any choice with next:"ai" hands the next scene to Claude.
+                       Story-level seed:{tone,lesson} steers the AI.
    ========================================================= */
 const STORIES=[
+{id:"crossroads",title:"The Crossroads",theme:"Choose Your Path",emoji:"✨",category:"AI Adventures",aiStory:true,image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",seed:{tone:"cinematic, sensory, present-tense, ages 10+, emotionally honest",lesson:"the meaning of the journey emerges from the choices the player actually makes"},scenes:{
+  s1:{chapter:"AI Adventure · A Path Begins",mood:"calm",text:"You arrive at a crossroads at golden hour. Three paths fan out from a weathered stone marker. A traveler with kind eyes nods to you and says, 'Each one leads somewhere true. Choose by what's calling you — not what's safe.' Wind moves through the grass. Somewhere far off, a bell rings once. You feel your pulse in your fingertips. The story is about to be yours.",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",choices:[{text:"Take the forest path — follow the wild call of curiosity",next:"ai"},{text:"Take the mountain path — climb toward what scares you",next:"ai"},{text:"Take the town path — walk toward people who need you",next:"ai"}]}
+}},
+
 {id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{
   s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},
   s2a:{chapter:"The Volunteer",mood:"tension",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},
@@ -225,6 +254,9 @@ const TIMER_SECONDS=40;
 let currentStory=null;
 let currentSceneId=null;
 let visitedScenes=[];
+let journey=[];           // [{chapter,text,choice}] — full path passed to the AI
+let currentAIScene=null;  // last scene Claude returned
+let aiBusy=false;
 let timerInterval=null;
 let timerWarned=false;
 let typewriterTimeout=null;
@@ -345,7 +377,7 @@ function buildHome(){
   const wrap=document.getElementById('categories-wrap');
   const cats={};
   STORIES.forEach(s=>{(cats[s.category]=cats[s.category]||[]).push(s);});
-  const order=['Bible','Leadership','Life Decisions','Teen / Social'];
+  const order=['AI Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
@@ -354,10 +386,17 @@ function buildHome(){
     const cards=cats[cat].map(s=>{
       const total=endingCount(s);
       const found=discoveredCount(s.id);
-      const complete=found>=total&&total>0;
+      const isAI=!!s.aiStory;
+      const complete=!isAI&&found>=total&&total>0;
       const badge=complete?'<div class="card-badge">✓ COMPLETE</div>':'';
-      const prog=total>0?`<div class="card-progress${complete?' complete':''}">${found}/${total} endings</div>`:'';
-      return `<div class="story-card" onclick="startStory('${s.id}')">${badge}<div class="card-emoji">${s.emoji}</div><div class="card-title">${s.title}</div><div class="card-theme">${s.theme}</div>${prog}</div>`;
+      const aiTag=isAI?'<div class="card-ai-tag">✨ AI</div>':'';
+      let prog='';
+      if(isAI){
+        prog=`<div class="card-progress">${found} ${found===1?'path':'paths'} explored</div>`;
+      }else if(total>0){
+        prog=`<div class="card-progress${complete?' complete':''}">${found}/${total} endings</div>`;
+      }
+      return `<div class="story-card" onclick="startStory('${s.id}')">${badge}${aiTag}<div class="card-emoji">${s.emoji}</div><div class="card-title">${s.title}</div><div class="card-theme">${s.theme}</div>${prog}</div>`;
     }).join('');
     return `<div class="category-section"><div class="category-title">${cat}</div><div class="story-grid">${cards}</div></div>`;
   }).join('');
@@ -374,25 +413,26 @@ function showScreen(id){
 function startStory(id){
   currentStory=STORIES.find(s=>s.id===id);
   if(!currentStory)return;
-  visitedScenes=[];
+  visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
   playScene('s1');
 }
 function restartStory(){
   if(!currentStory)return;
-  visitedScenes=[];
+  visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
   playScene('s1');
 }
 function tryDifferentPath(){
   if(!currentStory)return;
-  visitedScenes=[];
+  visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
   playScene('s1');
 }
 function goHome(){
   if(timerInterval)clearInterval(timerInterval);
   stopMusic();currentMood=null;
+  hideAILoading();
   buildHome();
   showScreen('home-screen');
 }
@@ -481,12 +521,16 @@ async function submitInteractive(nextId){
 }
 
 /* =========================================================
-   AI LAYER — placeholder, ready to wire to a real API later
+   AI LAYER
+   - generateAIResponse(input, ctx): used by interactive scenes
+     for a one-line acknowledgement (mock; could call /api/generate later).
+   - generateAIScene():               full live scene generation,
+     posts the story seed + journey to the Pages Function /api/generate.
    ========================================================= */
 async function generateAIResponse(input,context){
-  // TODO: replace this body with a fetch() to your API endpoint.
-  // Keep the signature stable so callers don't change.
-  await new Promise(r=>setTimeout(r,700));
+  // Lightweight mock for interactive ack — keeps interactive scenes feeling alive
+  // without burning a full AI call.
+  await new Promise(r=>setTimeout(r,600));
   const mocks=[
     "Interesting choice. That says a lot about how you handle pressure.",
     "Most people don't think to do that. The story remembers.",
@@ -494,6 +538,148 @@ async function generateAIResponse(input,context){
     "A bold answer. The next scene will weigh it."
   ];
   return mocks[Math.floor(Math.random()*mocks.length)];
+}
+
+function buildSeed(story){
+  return {
+    title:story.title,
+    theme:story.theme,
+    category:story.category,
+    tone:(story.seed&&story.seed.tone)||'cinematic, present-tense, ages 10+',
+    lesson:(story.seed&&story.seed.lesson)||''
+  };
+}
+
+async function generateAIScene(){
+  if(aiBusy)return;
+  aiBusy=true;
+  showAILoading();
+  const seed=buildSeed(currentStory);
+  const cacheKey='aiscene:'+currentStory.id+':'+simpleHash(JSON.stringify(journey));
+  let scene=aiCacheGet(cacheKey);
+  if(!scene){
+    try{
+      const resp=await fetch('/api/generate',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({seed,history:journey})
+      });
+      const data=await resp.json().catch(()=>({error:'Invalid JSON from server'}));
+      if(!resp.ok){
+        aiBusy=false;
+        showAIError(data.error||('HTTP '+resp.status),data.detail);
+        return;
+      }
+      scene=data.scene;
+      if(!scene){
+        aiBusy=false;
+        showAIError('Empty scene returned',JSON.stringify(data));
+        return;
+      }
+      aiCacheSet(cacheKey,scene);
+    }catch(e){
+      aiBusy=false;
+      showAIError('Network error',String(e));
+      return;
+    }
+  }
+  aiBusy=false;
+  hideAILoading();
+  renderAIScene(scene);
+}
+
+function renderAIScene(scene){
+  currentAIScene=scene;
+  currentSceneId='ai_'+(journey.length);
+
+  if(scene.ending){
+    showEnding(scene,currentSceneId);
+    return;
+  }
+
+  playMusic(scene.mood||'calm');
+
+  const body=document.getElementById('scene-body');
+  body.classList.add('fading');
+
+  setTimeout(()=>{
+    // AI scenes reuse the story's hero image (no AI image generation here).
+    const imgEl=document.getElementById('scene-img');
+    const videoEl=document.getElementById('scene-video');
+    imgEl.src=currentStory.image;
+    imgEl.style.display='block';
+    videoEl.style.display='none';
+    try{videoEl.pause();}catch(e){}
+    imgEl.style.animation='none';void imgEl.offsetWidth;imgEl.style.animation='';
+
+    document.getElementById('scene-chapter').textContent=scene.chapter||'';
+    document.querySelector('.scene-body').scrollTop=0;
+
+    const choicesWrap=document.getElementById('choices-wrap');
+    choicesWrap.classList.remove('hidden');
+    const keys=['A','B','C','D'];
+    const choices=(scene.choices||[]).slice(0,4);
+    choicesWrap.innerHTML=choices.map((c,i)=>
+      `<button class="choice-btn" onclick="chooseAI(${i})"><span class="choice-key">${keys[i]}</span>${escapeHtml(c.text)}</button>`
+    ).join('');
+
+    startTypewriter(scene.text||'');
+    // Timer auto-picks first AI choice on timeout.
+    aiAutoTimer();
+
+    body.classList.remove('fading');
+  },300);
+}
+
+function aiAutoTimer(){
+  let rem=TIMER_SECONDS;
+  timerWarned=false;
+  const fill=document.getElementById('timer-fill');
+  fill.classList.remove('warn');
+  fill.style.width='100%';
+  timerInterval=setInterval(()=>{
+    rem--;
+    fill.style.width=(rem/TIMER_SECONDS*100)+'%';
+    if(rem<=5&&!timerWarned){timerWarned=true;fill.classList.add('warn');playSfx('warn');}
+    if(rem<=0){
+      clearInterval(timerInterval);timerInterval=null;
+      chooseAI(0);
+    }
+  },1000);
+}
+
+function showAILoading(){document.getElementById('ai-loading').classList.add('active');}
+function hideAILoading(){document.getElementById('ai-loading').classList.remove('active');}
+
+function showAIError(msg,detail){
+  hideAILoading();
+  const choicesWrap=document.getElementById('choices-wrap');
+  choicesWrap.classList.remove('hidden');
+  const detailHtml=detail?`<div class="ai-error-msg">${escapeHtml(String(detail).slice(0,300))}</div>`:'';
+  choicesWrap.innerHTML=`
+    <div class="ai-error">
+      <strong>The storyteller is unavailable.</strong>
+      <div class="ai-error-msg">${escapeHtml(msg||'Unknown error')}</div>
+      ${detailHtml}
+    </div>
+    <button class="choice-btn" onclick="generateAIScene()"><span class="choice-key">↻</span>Try again</button>
+    <button class="choice-btn" onclick="goHome()"><span class="choice-key">←</span>Back to stories</button>
+  `;
+}
+
+/* =========================================================
+   AI CACHE — sessionStorage keyed by story id + journey hash
+   ========================================================= */
+function simpleHash(s){
+  let h=0;
+  for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
+  return h.toString(36);
+}
+function aiCacheGet(key){
+  try{const v=sessionStorage.getItem(key);return v?JSON.parse(v):null;}catch(e){return null;}
+}
+function aiCacheSet(key,val){
+  try{sessionStorage.setItem(key,JSON.stringify(val));}catch(e){}
 }
 
 /* =========================================================
@@ -551,12 +737,48 @@ function startTimer(defaultNext){
 function choose(next){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   playSfx('click');
+  // Record journey step (only for branching scenes that have a choices array
+  // matching this `next`; interactive scenes push their own step)
+  const s=currentStory&&currentStory.scenes[currentSceneId];
+  if(s&&Array.isArray(s.choices)){
+    const c=s.choices.find(x=>x.next===next);
+    if(c){
+      journey.push({chapter:s.chapter||'',text:s.text||'',choice:c.text});
+    }
+  }
   const choicesWrap=document.getElementById('choices-wrap');
   choicesWrap.classList.add('hidden');
+  const proceed=()=>{
+    if(next==='ai'||next==='AI'){
+      generateAIScene();
+    }else{
+      playScene(next);
+    }
+  };
   if(mode==='reflect'){
-    showWWYD(()=>playScene(next));
+    showWWYD(proceed);
   }else{
-    setTimeout(()=>playScene(next),350);
+    setTimeout(proceed,350);
+  }
+}
+
+/* Choice handler for AI-generated scenes (looked up by index) */
+function chooseAI(idx){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  playSfx('click');
+  if(currentAIScene&&Array.isArray(currentAIScene.choices)){
+    const c=currentAIScene.choices[idx];
+    if(c){
+      journey.push({chapter:currentAIScene.chapter||'',text:currentAIScene.text||'',choice:c.text});
+    }
+  }
+  const choicesWrap=document.getElementById('choices-wrap');
+  choicesWrap.classList.add('hidden');
+  const proceed=()=>generateAIScene();
+  if(mode==='reflect'){
+    showWWYD(proceed);
+  }else{
+    setTimeout(proceed,350);
   }
 }
 function showWWYD(done){
@@ -584,7 +806,12 @@ function showEnding(s,endingId){
   document.getElementById('ending-lesson').textContent=s.lesson||'';
   const total=endingCount(currentStory);
   const found=discoveredCount(currentStory.id);
-  document.getElementById('ending-progress').textContent=`★ You've discovered ${found} of ${total} endings`;
+  const progEl=document.getElementById('ending-progress');
+  if(currentStory.aiStory||total===0){
+    progEl.textContent=`★ ${found} ${found===1?'path':'paths'} explored`;
+  }else{
+    progEl.textContent=`★ You've discovered ${found} of ${total} endings`;
+  }
   const reflect=(s.reflect||[]).slice();
   if(mode==='reflect'){
     reflect.unshift("Pause for 30 seconds. Sit with the choice you just made.");
