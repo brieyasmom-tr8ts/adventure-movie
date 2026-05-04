@@ -5,145 +5,284 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Choose Your Adventure</title>
 <style>
+/* ---------- Design tokens ---------- */
+:root{
+  --bg-1:#08080f;--bg-2:#12121e;--bg-3:#1a1a2c;
+  --gold:#ffd200;--gold-2:#f7971e;--gold-soft:rgba(255,210,0,0.18);
+  --text-1:#fff;--text-2:#cdd1e0;--text-3:#7a7f90;
+  --border:rgba(255,255,255,0.08);--border-2:rgba(255,255,255,0.16);
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:#000;color:var(--text-2);
+  -webkit-tap-highlight-color:transparent;
+  text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;
+}
 .screen{display:none;position:fixed;inset:0;flex-direction:column}
 .screen.active{display:flex}
 
-/* Home */
-#home-screen{background:linear-gradient(160deg,#1a1a2e,#16213e,#0f3460);padding:24px;overflow-y:auto;align-items:center}
-.home-wrap{max-width:560px;width:100%;text-align:center;padding-bottom:40px}
-.home-title{font-size:40px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.1;margin-top:24px}
-.home-title span{background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.home-sub{color:#aac;font-size:16px;margin-bottom:28px}
-.category-section{margin-bottom:28px;text-align:left}
-.category-title{color:#ffd200;font-size:13px;text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;padding-left:4px;font-weight:700}
-.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.story-card{position:relative;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 12px;cursor:pointer;transition:transform 0.15s,background 0.2s,border-color 0.2s;text-align:center;overflow:hidden}
-.story-card:hover{background:rgba(255,255,255,0.16);border-color:#ffd200;transform:translateY(-3px)}
-.story-card:active{transform:translateY(0) scale(0.97)}
-.story-card .card-emoji{font-size:36px;margin-bottom:8px}
-.story-card .card-title{color:#fff;font-size:14px;font-weight:700;margin-bottom:4px}
-.story-card .card-theme{color:#ffd200;font-size:12px;text-transform:uppercase;letter-spacing:1px}
-.card-progress{margin-top:8px;font-size:11px;color:#aac;letter-spacing:0.5px}
-.card-progress.complete{color:#7fffa1}
-.card-badge{position:absolute;top:8px;right:8px;background:rgba(127,255,161,0.15);border:1px solid #7fffa1;color:#7fffa1;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700}
+/* ---------- Always-on layers ---------- */
+.vignette{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,0.55) 100%);pointer-events:none;z-index:200}
 
-/* Top bar */
-.top-bar{position:fixed;top:10px;right:10px;z-index:30;display:flex;gap:8px}
-.top-btn{background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);color:#fff;width:40px;height:40px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform 0.15s,background 0.2s}
-.top-btn:hover{background:rgba(255,210,0,0.2)}
+/* ---------- Top bar ---------- */
+.top-bar{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;z-index:230;display:flex;gap:8px}
+.top-btn{
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--border-2);color:#fff;
+  width:42px;height:42px;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  transition:transform 0.15s,background 0.2s,border-color 0.2s;
+}
+.top-btn:hover{background:rgba(255,210,0,0.2);border-color:var(--gold)}
 .top-btn:active{transform:scale(0.92)}
-.top-btn.on{background:rgba(255,210,0,0.25);border-color:#ffd200}
+.top-btn.on{background:rgba(255,210,0,0.18);border-color:var(--gold)}
+.top-back{display:none;position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:230}
+body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .top-back{display:flex}
 
-/* Player */
+/* ---------- Home screen ---------- */
+#home-screen{
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 0%,rgba(247,151,30,0.12),transparent 60%),
+    linear-gradient(180deg,var(--bg-3) 0%,var(--bg-1) 60%);
+  padding:0;overflow-y:auto;align-items:stretch;
+}
+.home-hero{padding:64px 24px 16px;text-align:center}
+.home-title{font-size:46px;font-weight:900;color:#fff;line-height:1.05;letter-spacing:-1px;margin-bottom:8px;margin-top:8px}
+.home-title span{background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-sub{color:var(--text-3);font-size:15px;margin-bottom:24px;letter-spacing:0.3px}
+
+.mode-pill{display:inline-flex;background:rgba(255,255,255,0.04);border:1px solid var(--border-2);border-radius:999px;padding:3px;margin:0 auto;gap:2px}
+.mode-pill button{background:transparent;border:none;color:var(--text-3);padding:7px 16px;font-size:11px;font-weight:800;border-radius:999px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1.3px;transition:background 0.2s,color 0.2s}
+.mode-pill button.active{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111}
+
+#categories-wrap{padding:20px 0 80px}
+.category-section{margin-bottom:28px}
+.category-title{color:#fff;font-size:18px;font-weight:800;margin-bottom:12px;padding:0 24px;letter-spacing:-0.2px}
+.category-title::after{content:'';display:inline-block;width:24px;height:1px;background:var(--gold);margin-left:10px;vertical-align:middle;opacity:0.5}
+
+/* Netflix-style horizontal poster row */
+.story-grid{
+  display:flex;gap:14px;
+  overflow-x:auto;overflow-y:visible;
+  padding:6px 24px 16px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.story-grid::-webkit-scrollbar{display:none}
+
+.story-card{
+  position:relative;flex:0 0 168px;height:236px;
+  border-radius:16px;overflow:hidden;
+  background-size:cover;background-position:center;background-color:var(--bg-2);
+  cursor:pointer;border:1px solid var(--border);
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  transition:transform 0.25s cubic-bezier(0.2,0.9,0.3,1.2),box-shadow 0.3s,border-color 0.3s;
+  scroll-snap-align:start;
+}
+.story-card:hover{transform:translateY(-6px) scale(1.04);box-shadow:0 16px 44px rgba(0,0,0,0.6),0 0 0 1px var(--gold-soft);border-color:var(--gold)}
+.story-card:active{transform:scale(0.97)}
+
+.card-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.45) 0%,transparent 35%,rgba(0,0,0,0.95) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+.card-emoji{position:absolute;top:14px;right:12px;font-size:22px;opacity:0.92;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));z-index:2}
+.card-theme{font-size:9.5px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:800;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,0.5)}
+.card-title{color:#fff;font-size:15px;font-weight:800;line-height:1.2;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,0.7)}
+.card-progress{font-size:10.5px;color:var(--text-2);letter-spacing:0.3px;opacity:0.95;text-shadow:0 1px 4px rgba(0,0,0,0.7)}
+.card-progress.complete{color:#7fffa1}
+.card-badge{position:absolute;top:10px;left:10px;background:rgba(127,255,161,0.22);border:1px solid #7fffa1;color:#7fffa1;font-size:9px;padding:3px 7px;border-radius:6px;font-weight:800;backdrop-filter:blur(8px);z-index:2;letter-spacing:0.5px}
+.card-ai-tag{position:absolute;top:10px;left:10px;background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#111;font-size:10px;padding:3px 7px;border-radius:6px;font-weight:800;z-index:2;box-shadow:0 4px 14px rgba(255,210,0,0.35);letter-spacing:0.3px}
+
+/* ---------- Player screen ---------- */
 #player-screen{background:#000}
-.scene-image{width:100%;height:40vh;flex-shrink:0;position:relative;overflow:hidden;background:#000}
-.scene-image img,.scene-image video{width:100%;height:100%;object-fit:cover;animation:zoomIn 12s ease-out forwards}
-@keyframes zoomIn{from{transform:scale(1)}to{transform:scale(1.08)}}
-.scene-image-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,#111 100%);pointer-events:none}
-.scene-body{flex:1;overflow-y:auto;background:#111;padding:20px 20px 100px;display:flex;flex-direction:column}
-.scene-chapter{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:10px}
-.scene-text{font-size:19px;line-height:1.7;color:#eee;margin-bottom:24px;flex:1;cursor:pointer;min-height:1.7em}
-.scene-text .caret{display:inline-block;width:2px;background:#ffd200;animation:blink 1s steps(2) infinite;margin-left:2px;vertical-align:text-bottom;height:1em}
+
+.scene-image{position:absolute;inset:0;z-index:1;overflow:hidden;background:#000}
+.scene-image img,.scene-image video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:heroZoom 18s ease-out forwards}
+@keyframes heroZoom{from{transform:scale(1.02)}to{transform:scale(1.16)}}
+.scene-image-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 30%,transparent 25%,rgba(0,0,0,0.4) 80%,rgba(0,0,0,0.85) 100%),
+    linear-gradient(180deg,rgba(0,0,0,0.45) 0%,transparent 25%,transparent 42%,rgba(8,8,15,0.88) 76%,rgba(8,8,15,0.99) 100%);
+}
+
+.letterbox{position:fixed;left:0;right:0;height:18px;background:#000;z-index:25;pointer-events:none}
+.letterbox.top{top:0}
+.letterbox.bottom{bottom:0}
+
+.timer-track{position:absolute;top:18px;left:0;right:0;height:3px;background:rgba(255,255,255,0.08);z-index:20}
+.timer-fill{height:100%;background:linear-gradient(90deg,#7fffa1 0%,var(--gold-2) 60%,var(--gold) 100%);transition:width 0.95s linear;box-shadow:0 0 10px rgba(255,210,0,0.5)}
+.timer-fill.warn{background:linear-gradient(90deg,#ff5050,#ff7878);animation:pulseWarn 0.6s infinite;box-shadow:0 0 14px rgba(255,80,80,0.7)}
+@keyframes pulseWarn{50%{opacity:0.55}}
+
+.scene-body{
+  position:absolute;left:0;right:0;bottom:18px;
+  max-height:64vh;
+  background:linear-gradient(180deg,rgba(8,8,15,0.0) 0%,rgba(8,8,15,0.85) 18%,rgba(8,8,15,0.96) 60%);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:32px 22px 26px;
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+  z-index:10;
+}
+.scene-chapter{
+  display:inline-block;align-self:flex-start;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:3.5px;
+  color:var(--gold);font-weight:800;
+  background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.25);
+  padding:6px 12px;border-radius:999px;margin-bottom:16px;
+}
+.scene-chapter:empty{display:none}
+.scene-text{font-size:19px;line-height:1.65;color:var(--text-1);margin-bottom:24px;flex:1;cursor:pointer;min-height:1.65em;font-weight:400;letter-spacing:0.1px}
+.scene-text .caret{display:inline-block;width:2px;background:var(--gold);animation:blink 1s steps(2) infinite;margin-left:2px;vertical-align:text-bottom;height:1em;border-radius:1px}
 @keyframes blink{50%{opacity:0}}
+
 .choices-wrap{display:flex;flex-direction:column;gap:10px;transition:opacity 0.25s}
 .choices-wrap.hidden{opacity:0;pointer-events:none}
-.choice-btn{padding:16px 18px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;text-align:left;cursor:pointer;transition:transform 0.1s,background 0.2s,border-color 0.2s;display:flex;align-items:center;gap:12px;font-family:inherit}
-.choice-btn:hover{background:rgba(255,210,0,0.15);border-color:#ffd200}
-.choice-btn:active{transform:scale(0.97);background:rgba(255,210,0,0.25)}
-.choice-key{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;color:#ffd200}
-.timer-track{height:5px;background:rgba(255,255,255,0.1);width:100%}
-.timer-fill{height:100%;background:linear-gradient(90deg,#f7971e,#ffd200);transition:width 0.5s linear,background 0.3s}
-.timer-fill.warn{background:linear-gradient(90deg,#ff4444,#ff7070);animation:pulse 0.6s infinite}
-@keyframes pulse{50%{opacity:0.5}}
+
+.choice-btn{
+  position:relative;
+  padding:16px 44px 16px 18px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
+  border:1.5px solid var(--border-2);
+  border-radius:14px;
+  color:#fff;font-size:16px;text-align:left;
+  cursor:pointer;display:flex;align-items:center;gap:12px;
+  font-family:inherit;font-weight:500;line-height:1.35;
+  transition:transform 0.12s,background 0.25s,border-color 0.25s,box-shadow 0.25s;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.choice-btn::after{content:'›';position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:22px;font-weight:300;line-height:1;opacity:0.5;transition:opacity 0.2s,transform 0.2s}
+.choice-btn:hover{background:linear-gradient(135deg,rgba(255,210,0,0.18),rgba(255,210,0,0.06));border-color:var(--gold);box-shadow:0 8px 28px rgba(255,210,0,0.18)}
+.choice-btn:hover::after{opacity:1;transform:translateY(-50%) translateX(4px)}
+.choice-btn:active{transform:scale(0.97);background:linear-gradient(135deg,rgba(255,210,0,0.28),rgba(255,210,0,0.12))}
+.choice-key{width:32px;height:32px;border-radius:9px;background:rgba(0,0,0,0.6);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;color:var(--gold);box-shadow:0 0 12px rgba(255,210,0,0.18) inset}
 
 /* Interactive input */
-.interactive-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:border-color 0.2s}
-.interactive-input:focus{border-color:#ffd200;background:rgba(255,255,255,0.12)}
-.interactive-submit{margin-top:10px;padding:14px;background:#ffd200;color:#111;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s}
+.interactive-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.07);border:1.5px solid var(--border-2);border-radius:14px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.interactive-input:focus{border-color:var(--gold);background:rgba(255,255,255,0.12);box-shadow:0 0 0 4px rgba(255,210,0,0.1)}
+.interactive-submit{margin-top:10px;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s,box-shadow 0.2s;box-shadow:0 8px 24px rgba(255,210,0,0.3)}
 .interactive-submit:active{transform:scale(0.97)}
-.interactive-hint{color:#888;font-size:12px;margin-top:8px;text-align:center}
-.ai-response{margin-top:16px;padding:14px;background:rgba(255,210,0,0.08);border-left:3px solid #ffd200;border-radius:8px;color:#ddd;font-size:15px;line-height:1.5;font-style:italic}
+.interactive-hint{color:var(--text-3);font-size:12px;margin-top:8px;text-align:center}
+.ai-response{margin-top:16px;padding:14px;background:rgba(255,210,0,0.08);border-left:3px solid var(--gold);border-radius:8px;color:var(--text-1);font-size:15px;line-height:1.5;font-style:italic}
 
-/* "What Would You Do?" overlay */
-.wwyd-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.4s}
+/* WWYD overlay */
+.wwyd-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.4s}
 .wwyd-overlay.active{opacity:1;pointer-events:auto}
-.wwyd-text{font-size:32px;font-weight:900;color:#fff;text-align:center;padding:0 24px;letter-spacing:1px;transform:scale(0.9);transition:transform 0.4s}
+.wwyd-text{font-size:36px;font-weight:900;color:#fff;text-align:center;padding:0 24px;letter-spacing:-0.5px;transform:scale(0.9);transition:transform 0.4s}
 .wwyd-overlay.active .wwyd-text{transform:scale(1)}
-.wwyd-text span{background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wwyd-text span{background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 
 /* Scene fade */
-.scene-fade{opacity:1;transition:opacity 0.4s ease}
+.scene-fade{transition:opacity 0.4s ease}
 .scene-fade.fading{opacity:0}
 
-/* Ending */
-#ending-screen{background:linear-gradient(160deg,#0f3460,#16213e,#1a1a2e);align-items:center;justify-content:center;padding:24px;overflow-y:auto}
-.ending-wrap{max-width:480px;width:100%;text-align:center;padding:20px 0}
-.ending-emoji{font-size:72px;margin-bottom:12px;animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1)}
-@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-.ending-type{font-size:12px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:8px}
-.ending-title{font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
-.ending-text{font-size:17px;line-height:1.6;color:#bbb;margin-bottom:20px}
-.ending-progress{font-size:13px;color:#7fffa1;margin-bottom:16px;letter-spacing:1px}
-.ending-lesson{background:rgba(255,210,0,0.1);border:2px solid #ffd200;border-radius:14px;padding:16px;margin-bottom:24px}
-.ending-lesson-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#ffd200;margin-bottom:6px}
-.ending-lesson-text{font-size:16px;color:#fff;line-height:1.5}
-.reflect-title{font-size:14px;text-transform:uppercase;letter-spacing:2px;color:#ffd200;margin-bottom:12px}
-.reflect-list{list-style:none;margin-bottom:28px;text-align:left}
-.reflect-list li{color:#ccc;font-size:15px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);padding-left:20px;position:relative}
-.reflect-list li::before{content:'?';position:absolute;left:0;color:#ffd200;font-weight:700}
-.ending-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.end-btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:transform 0.1s}
-.end-btn:active{transform:scale(0.96)}
-.end-btn.primary{background:#ffd200;color:#111}
-.end-btn.secondary{background:rgba(255,255,255,0.08);color:#ccc;border:2px solid rgba(255,255,255,0.15)}
-
-/* Mode toggle */
-.mode-pill{display:inline-flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:3px;margin:0 auto 24px;gap:2px}
-.mode-pill button{background:transparent;border:none;color:#aac;padding:6px 14px;font-size:12px;font-weight:700;border-radius:999px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1px;transition:background 0.2s,color 0.2s}
-.mode-pill button.active{background:#ffd200;color:#111}
-
-/* AI badge on cards */
-.card-ai-tag{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#f7971e,#ffd200);color:#111;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:800;letter-spacing:0.5px}
-
-/* AI loading overlay (cinematic "the story unfolds…") */
-.ai-loading{position:fixed;inset:0;background:rgba(0,0,0,0.86);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;opacity:0;pointer-events:none;transition:opacity 0.35s}
+/* AI loading */
+.ai-loading{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:350;opacity:0;pointer-events:none;transition:opacity 0.35s}
 .ai-loading.active{opacity:1;pointer-events:auto}
-.ai-loading-label{color:#ffd200;font-size:12px;text-transform:uppercase;letter-spacing:5px;margin-bottom:24px;font-weight:800}
+.ai-loading-label{color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:6px;margin-bottom:24px;font-weight:800}
 .ai-loading-bar{width:240px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;position:relative}
-.ai-loading-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffd200,transparent);background-size:50% 100%;background-repeat:no-repeat;animation:shimmer 1.4s infinite linear}
+.ai-loading-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--gold),transparent);background-size:50% 100%;background-repeat:no-repeat;animation:shimmer 1.4s infinite linear}
 @keyframes shimmer{from{background-position:-50% 0}to{background-position:150% 0}}
-.ai-loading-hint{color:#888;font-size:12px;margin-top:18px;letter-spacing:1px}
+.ai-loading-hint{color:var(--text-3);font-size:12px;margin-top:18px;letter-spacing:1px}
 
-/* AI error surface */
-.ai-error{padding:18px;background:rgba(255,80,80,0.08);border:2px solid rgba(255,120,120,0.4);border-radius:14px;color:#fff;margin-bottom:10px}
+/* AI error */
+.ai-error{padding:18px;background:rgba(255,80,80,0.08);border:1.5px solid rgba(255,120,120,0.4);border-radius:14px;color:#fff;margin-bottom:10px}
 .ai-error strong{display:block;color:#ff8e8e;margin-bottom:6px;font-size:15px}
-.ai-error-msg{color:#ddd;font-size:13px;line-height:1.5;margin-bottom:12px;word-break:break-word}
+.ai-error-msg{color:var(--text-2);font-size:13px;line-height:1.5;margin-bottom:12px;word-break:break-word}
 
-@media(max-width:400px){.story-grid{grid-template-columns:1fr}.home-title{font-size:32px}.scene-text{font-size:17px}.wwyd-text{font-size:24px}}
+/* ---------- Ending screen ---------- */
+#ending-screen{
+  background:
+    radial-gradient(ellipse at top,rgba(255,210,0,0.1) 0%,transparent 55%),
+    linear-gradient(180deg,var(--bg-3) 0%,var(--bg-1) 70%);
+  align-items:center;justify-content:flex-start;
+  padding:72px 24px 40px;overflow-y:auto;
+}
+.ending-wrap{max-width:520px;width:100%;text-align:center}
+.ending-emoji{font-size:96px;margin-bottom:16px;filter:drop-shadow(0 0 28px rgba(255,210,0,0.45));animation:emojiReveal 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes emojiReveal{from{transform:scale(0) rotate(-180deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.ending-type{font-size:11px;text-transform:uppercase;letter-spacing:5px;color:var(--gold);margin-bottom:10px;font-weight:800;animation:fadeUp 0.5s 0.1s both}
+.ending-title{
+  font-size:38px;font-weight:900;
+  margin-bottom:14px;line-height:1.05;letter-spacing:-0.8px;
+  background:linear-gradient(180deg,#fff 60%,#cdd1e0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  animation:fadeUp 0.6s 0.2s both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.ending-progress{font-size:12px;color:#7fffa1;margin-bottom:18px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;animation:fadeUp 0.6s 0.3s both}
+.ending-text{font-size:17px;line-height:1.65;color:var(--text-2);margin-bottom:28px;animation:fadeUp 0.6s 0.4s both}
+.ending-lesson{
+  background:linear-gradient(135deg,rgba(255,210,0,0.12),rgba(247,151,30,0.05));
+  border:1.5px solid rgba(255,210,0,0.4);border-radius:18px;padding:20px;
+  margin-bottom:32px;text-align:left;
+  box-shadow:0 12px 40px rgba(255,210,0,0.12);
+  animation:fadeUp 0.6s 0.5s both;
+}
+.ending-lesson-label{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:8px;font-weight:800}
+.ending-lesson-text{font-size:16.5px;color:#fff;line-height:1.55;font-weight:500}
+.reflect-title{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--gold);margin-bottom:14px;font-weight:800;animation:fadeUp 0.6s 0.6s both}
+.reflect-list{list-style:none;margin-bottom:32px;text-align:left;display:flex;flex-direction:column;gap:8px;animation:fadeUp 0.6s 0.7s both}
+.reflect-list li{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px 14px 48px;
+  color:var(--text-2);font-size:15px;line-height:1.5;
+  position:relative;transition:background 0.2s,border-color 0.2s;
+}
+.reflect-list li:hover{background:rgba(255,210,0,0.06);border-color:rgba(255,210,0,0.25)}
+.reflect-list li::before{
+  content:'?';position:absolute;left:14px;top:14px;
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;
+}
+.ending-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.6s 0.8s both}
+.end-btn{padding:14px 22px;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:inherit;letter-spacing:0.3px;transition:transform 0.1s,box-shadow 0.2s,background 0.2s}
+.end-btn:active{transform:scale(0.96)}
+.end-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111;box-shadow:0 8px 28px rgba(255,210,0,0.35)}
+.end-btn.primary:hover{box-shadow:0 12px 38px rgba(255,210,0,0.5)}
+.end-btn.secondary{background:rgba(255,255,255,0.06);color:var(--text-2);border:1px solid var(--border-2);backdrop-filter:blur(6px)}
+.end-btn.secondary:hover{background:rgba(255,255,255,0.12);color:#fff;border-color:var(--gold)}
+
+/* Mobile */
+@media(max-width:400px){
+  .home-title{font-size:38px}
+  .scene-text{font-size:17px}
+  .wwyd-text{font-size:28px}
+  .ending-title{font-size:30px}
+  .ending-emoji{font-size:80px}
+  .story-card{flex-basis:148px;height:212px}
+  .home-hero{padding:52px 20px 12px}
+}
 </style>
 </head>
-<body>
+<body data-screen="home-screen">
 
+<div class="vignette"></div>
+
+<button class="top-btn top-back" onclick="goHome()" title="Back to stories" aria-label="Back to stories">←</button>
 <div class="top-bar">
   <button class="top-btn on" id="sound-toggle" onclick="toggleSound()" title="Sound on/off">🔊</button>
 </div>
 
 <div id="home-screen" class="screen active">
-  <div class="home-wrap">
+  <div class="home-hero">
     <div class="home-title">Choose Your<br><span>Adventure</span></div>
     <p class="home-sub">Step into the story. Every choice matters.</p>
     <div class="mode-pill" role="group" aria-label="Mode">
       <button id="mode-story" class="active" onclick="setMode('story')">Story Mode</button>
       <button id="mode-reflect" onclick="setMode('reflect')">Reflection Mode</button>
     </div>
-    <div id="categories-wrap"></div>
   </div>
+  <div id="categories-wrap"></div>
 </div>
 
 <div id="player-screen" class="screen">
+  <div class="letterbox top"></div>
   <div class="scene-image" id="scene-image-wrap">
     <img id="scene-img" src="" alt="">
     <video id="scene-video" muted loop playsinline style="display:none"></video>
@@ -155,6 +294,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222;-
     <div class="scene-text" id="scene-text" onclick="skipTypewriter()"></div>
     <div class="choices-wrap" id="choices-wrap"></div>
   </div>
+  <div class="letterbox bottom"></div>
 </div>
 
 <div id="ending-screen" class="screen">
@@ -203,12 +343,12 @@ const STORIES=[
   s1:{chapter:"AI Adventure · A Path Begins",mood:"calm",text:"You arrive at a crossroads at golden hour. Three paths fan out from a weathered stone marker. A traveler with kind eyes nods to you and says, 'Each one leads somewhere true. Choose by what's calling you — not what's safe.' Wind moves through the grass. Somewhere far off, a bell rings once. You feel your pulse in your fingertips. The story is about to be yours.",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",choices:[{text:"Take the forest path — follow the wild call of curiosity",next:"ai"},{text:"Take the mountain path — climb toward what scares you",next:"ai"},{text:"Take the town path — walk toward people who need you",next:"ai"}]}
 }},
 
-{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{
+{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",seed:{tone:"biblical narrative, present-tense, sensory, ages 10+, reverent but not preachy",lesson:"real courage trusts something bigger than fear"},scenes:{
   s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},
   s2a:{chapter:"The Volunteer",mood:"tension",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},
   s2b:{chapter:"Staying Back",mood:"calm",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},
   s2c:{chapter:"The Plan",mood:"calm",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},
-  s3:{chapter:"The Valley",mood:"tension",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — look back at the soldiers watching you",next:"end_neutral"}]},
+  s3:{chapter:"The Valley",mood:"tension",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — let the story write itself from here ✨",next:"ai"}]},
   end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},
   end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. Another soldier eventually fights Goliath — and loses. You head home thinking about what might have been different.",lesson:"God gives each of us unique gifts. Trying to be someone else can hold you back.",reflect:["David's gift was his sling and his faith. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},
   end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away. The standoff continues for forty more days. Later you hear that another boy — just like you — finally stood up and defeated the giant. You wonder what would have happened if you had been brave enough to try.",lesson:"Doing nothing is still a choice. When fear stops us from acting, we miss the chance to do great things.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if you had tried and failed?","What is one small brave thing you could do TODAY?"]}
@@ -388,15 +528,16 @@ function buildHome(){
       const found=discoveredCount(s.id);
       const isAI=!!s.aiStory;
       const complete=!isAI&&found>=total&&total>0;
-      const badge=complete?'<div class="card-badge">✓ COMPLETE</div>':'';
-      const aiTag=isAI?'<div class="card-ai-tag">✨ AI</div>':'';
+      // AI tag and Complete badge share the top-left slot — AI stories never reach "complete".
+      const cornerTag=isAI?'<div class="card-ai-tag">✨ AI</div>':(complete?'<div class="card-badge">✓ COMPLETE</div>':'');
       let prog='';
       if(isAI){
         prog=`<div class="card-progress">${found} ${found===1?'path':'paths'} explored</div>`;
       }else if(total>0){
         prog=`<div class="card-progress${complete?' complete':''}">${found}/${total} endings</div>`;
       }
-      return `<div class="story-card" onclick="startStory('${s.id}')">${badge}${aiTag}<div class="card-emoji">${s.emoji}</div><div class="card-title">${s.title}</div><div class="card-theme">${s.theme}</div>${prog}</div>`;
+      const bg=s.image?`style="background-image:url('${s.image}')"`:'';
+      return `<div class="story-card" ${bg} onclick="startStory('${s.id}')">${cornerTag}<div class="card-emoji">${s.emoji}</div><div class="card-overlay"><div class="card-theme">${s.theme}</div><div class="card-title">${s.title}</div>${prog}</div></div>`;
     }).join('');
     return `<div class="category-section"><div class="category-title">${cat}</div><div class="story-grid">${cards}</div></div>`;
   }).join('');
@@ -408,6 +549,7 @@ function buildHome(){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  document.body.dataset.screen=id;
 }
 
 function startStory(id){
