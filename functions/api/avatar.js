@@ -51,7 +51,7 @@ export async function onRequestPost(context) {
   upstream.append("image", file);
   upstream.append("prompt", prompt);
   upstream.append("n", "1");
-  upstream.append("size", "512x512");
+  upstream.append("size", "1024x1024");
 
   let resp;
   try {
