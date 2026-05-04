@@ -44,6 +44,24 @@ Already wired up — push to the configured branch and Pages auto-deploys.
 
 If the key isn't set, AI scenes show a clear error and the rest of the app still works.
 
+### Enable Cartoon Avatars (optional)
+
+When a reader adds their photo in the profile setup, the app converts it
+into a cartoon portrait via OpenAI's image edits API. Cost is ~$0.04 per
+avatar (one-time per kid). Without this key, the app still works — the
+avatar field just stays as an emoji.
+
+1. Get a key from https://platform.openai.com/api-keys.
+2. Cloudflare → **Pages** → `adventure-movie` → **Settings** → **Environment variables**.
+3. Add a **Production** variable:
+   - Name: `OPENAI_API_KEY`
+   - Value: your key
+4. Redeploy.
+
+Privacy note: the original photo is sent once to OpenAI for the conversion
+and never stored server-side. Only the resulting cartoon (base64) is saved
+in the kid's localStorage on their device.
+
 ## How it works
 
 - **Hand-crafted stories** live in the `STORIES` array in `index.html`. Each scene has `text`, `image`, optional `mood`, and `choices: [{text, next}]`.

@@ -343,6 +343,31 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .switcher-remove{background:transparent;border:none;color:#888;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background 0.2s,color 0.2s}
 .switcher-remove:hover{background:rgba(255,80,80,0.2);color:#ff7878}
 
+/* Avatars */
+.pill-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gold);flex-shrink:0}
+.welcome-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);vertical-align:middle;margin-right:4px}
+.switcher-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gold-soft)}
+
+.avatar-section{margin-bottom:12px;text-align:center}
+.avatar-preview{
+  width:104px;height:104px;border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  border:2px dashed var(--border-2);
+  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  position:relative;transition:border-color 0.2s,background 0.2s;
+}
+.avatar-preview.has-image{border-style:solid;border-color:var(--gold);box-shadow:0 4px 24px rgba(255,210,0,0.25)}
+.avatar-preview img{width:100%;height:100%;object-fit:cover}
+.avatar-placeholder{font-size:42px;opacity:0.5}
+.avatar-loading{position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gold);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;gap:8px}
+.avatar-loading::before{content:'';width:24px;height:24px;border:2px solid rgba(255,210,0,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.avatar-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.avatar-btn{padding:8px 14px;background:rgba(255,255,255,0.06);border:1px solid var(--border-2);border-radius:10px;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s}
+.avatar-btn:hover{background:rgba(255,210,0,0.15);color:#fff;border-color:var(--gold)}
+.avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
+.avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
+
 /* Chips for custom story */
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .chip{
@@ -441,10 +466,23 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div class="modal" id="name-modal">
   <div class="modal-card">
-    <h2>What's your name?</h2>
+    <h2 id="name-modal-title">What's your name?</h2>
     <p>So we can use it inside your stories.</p>
     <input class="interactive-input" id="name-input" placeholder="Type your name" maxlength="20" autocomplete="off">
-    <button class="interactive-submit" onclick="submitFirstName()">Let's go!</button>
+
+    <div class="avatar-section">
+      <div class="avatar-preview" id="avatar-preview">
+        <span class="avatar-placeholder">📸</span>
+      </div>
+      <input type="file" accept="image/*" capture="user" id="avatar-file" style="display:none" onchange="onAvatarPicked(event)">
+      <div class="avatar-actions" id="avatar-actions">
+        <button class="avatar-btn" onclick="document.getElementById('avatar-file').click()">📷 Add a cartoon photo</button>
+      </div>
+      <p class="avatar-hint">Optional. Your photo is sent once to make a cartoon, then never saved. Only the cartoon stays on this device.</p>
+    </div>
+
+    <button class="interactive-submit" onclick="submitNameModal()">Let's go!</button>
+    <button class="modal-close" onclick="closeNameModal()" id="name-cancel" style="display:none">Cancel</button>
   </div>
 </div>
 
@@ -1043,14 +1081,42 @@ function addPlayer(name){
 function removePlayer(name){
   const list=getPlayers().filter(n=>n!==name);
   setPlayers(list);
+  clearAvatar(name);
   if(getActivePlayer()===name)setActivePlayer(list[0]||'');
   renderSwitcherList();
   refreshWelcome();
 }
+
+/* Avatars (per-profile cartoon portraits, base64 in localStorage) */
+function getAvatars(){
+  try{return JSON.parse(localStorage.getItem('am_avatars')||'{}');}catch(e){return {};}
+}
+function getAvatar(name){return getAvatars()[name]||null;}
+function setAvatar(name,dataUrl){
+  const map=getAvatars();
+  map[name]=dataUrl;
+  try{localStorage.setItem('am_avatars',JSON.stringify(map));}catch(e){
+    // localStorage quota — drop other avatars to make room for this one
+    try{localStorage.setItem('am_avatars',JSON.stringify({[name]:dataUrl}));}catch(e2){}
+  }
+}
+function clearAvatar(name){
+  const map=getAvatars();delete map[name];
+  try{localStorage.setItem('am_avatars',JSON.stringify(map));}catch(e){}
+}
+function avatarHtml(name,cls){
+  const url=getAvatar(name);
+  if(url)return `<img src="${url}" class="${cls}" alt="">`;
+  return '<span style="font-size:24px">👤</span>';
+}
+
 function refreshProfileUI(){
   const p=getActivePlayer();
   const pill=document.getElementById('profile-pill');
-  if(pill)pill.textContent=p?'👤 '+p:'👤 Add name';
+  if(!pill)return;
+  if(!p){pill.innerHTML='👤 Add name';return;}
+  const av=getAvatar(p);
+  pill.innerHTML=av?`<img src="${av}" class="pill-avatar" alt=""> ${escapeHtml(p)}`:`👤 ${escapeHtml(p)}`;
 }
 function refreshWelcome(){
   const p=getActivePlayer();
@@ -1058,22 +1124,107 @@ function refreshWelcome(){
   if(!el)return;
   if(!p){el.innerHTML='';return;}
   const streak=getStreakDisplay();
-  el.innerHTML=`<span>Hi <strong style="color:#fff">${escapeHtml(p)}</strong>!</span>${streak?`<span class="streak-chip">${streak}</span>`:''}`;
+  const av=getAvatar(p);
+  const avHtml=av?`<img src="${av}" class="welcome-avatar" alt=""> `:'';
+  el.innerHTML=`<span>${avHtml}Hi <strong style="color:#fff">${escapeHtml(p)}</strong>!</span>${streak?`<span class="streak-chip">${streak}</span>`:''}`;
 }
-function showFirstNamePrompt(){
-  document.getElementById('name-modal').classList.add('active');
-  setTimeout(()=>{const i=document.getElementById('name-input');i&&i.focus();},150);
+
+/* Modal flow — used for both first-time and "add another" */
+let pendingAvatar=null;
+function openNameModal(opts){
+  pendingAvatar=null;
+  resetAvatarPreview();
+  const modal=document.getElementById('name-modal');
+  document.getElementById('name-input').value='';
+  document.getElementById('name-modal-title').textContent=(opts&&opts.title)||"What's your name?";
+  // Show cancel only when user already has at least one profile (so they can back out)
+  document.getElementById('name-cancel').style.display=getPlayers().length>0?'block':'none';
+  modal.classList.add('active');
+  setTimeout(()=>document.getElementById('name-input').focus(),150);
 }
-function submitFirstName(){
+function showFirstNamePrompt(){openNameModal();}
+function closeNameModal(){
+  document.getElementById('name-modal').classList.remove('active');
+  pendingAvatar=null;
+  resetAvatarPreview();
+}
+function submitNameModal(){
   const inp=document.getElementById('name-input');
-  if(!inp)return;
-  if(addPlayer(inp.value)){
+  const name=(inp.value||'').trim();
+  if(!name){inp.focus();return;}
+  if(addPlayer(name)){
+    if(pendingAvatar)setAvatar(name,pendingAvatar);
+    pendingAvatar=null;
     document.getElementById('name-modal').classList.remove('active');
     inp.value='';
-  }else{
-    inp.focus();
+    resetAvatarPreview();
+    refreshProfileUI();
+    refreshWelcome();
+    renderSwitcherList();
+    buildHome();
   }
 }
+// Backwards-compat alias kept so existing handler bindings still work
+function submitFirstName(){submitNameModal();}
+
+/* Avatar capture flow */
+async function onAvatarPicked(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file)return;
+  setAvatarLoading(true);
+  try{
+    const fd=new FormData();
+    fd.append('image',file);
+    const resp=await fetch('/api/avatar',{method:'POST',body:fd});
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok||!data.dataUrl){
+      throw new Error(data.error||('HTTP '+resp.status));
+    }
+    pendingAvatar=data.dataUrl;
+    showAvatarPreview(data.dataUrl);
+  }catch(e){
+    alert("Couldn't make the cartoon.\n\n"+e.message+"\n\nIf this keeps happening, the OPENAI_API_KEY may not be set in Cloudflare.");
+  }
+  setAvatarLoading(false);
+  // Clear file input so picking the same file again still triggers change
+  event.target.value='';
+}
+function setAvatarLoading(on){
+  const el=document.getElementById('avatar-preview');
+  if(!el)return;
+  if(on){
+    el.insertAdjacentHTML('beforeend','<div class="avatar-loading" id="avatar-loading-el">Drawing</div>');
+  }else{
+    const l=document.getElementById('avatar-loading-el');
+    if(l)l.remove();
+  }
+}
+function showAvatarPreview(dataUrl){
+  const el=document.getElementById('avatar-preview');
+  if(!el)return;
+  el.classList.add('has-image');
+  el.innerHTML=`<img src="${dataUrl}" alt="">`;
+  const actions=document.getElementById('avatar-actions');
+  if(actions){
+    actions.innerHTML=`
+      <button class="avatar-btn" onclick="document.getElementById('avatar-file').click()">📷 Retake</button>
+      <button class="avatar-btn danger" onclick="resetAvatarPreview()">Remove</button>
+    `;
+  }
+}
+function resetAvatarPreview(){
+  pendingAvatar=null;
+  const el=document.getElementById('avatar-preview');
+  if(el){
+    el.classList.remove('has-image');
+    el.innerHTML='<span class="avatar-placeholder">📸</span>';
+  }
+  const actions=document.getElementById('avatar-actions');
+  if(actions){
+    actions.innerHTML=`<button class="avatar-btn" onclick="document.getElementById('avatar-file').click()">📷 Add a cartoon photo</button>`;
+  }
+}
+
 function openSwitcher(){
   renderSwitcherList();
   document.getElementById('switcher-modal').classList.add('active');
@@ -1085,25 +1236,26 @@ function renderSwitcherList(){
   const wrap=document.getElementById('switcher-list');
   if(!wrap)return;
   if(list.length===0){wrap.innerHTML='<p style="color:#888;text-align:center;padding:12px">No readers yet. Add one below.</p>';return;}
-  wrap.innerHTML=list.map(name=>`
-    <div class="switcher-item${name===active?' active':''}" onclick="pickPlayer('${name.replace(/'/g,"\\'")}')">
-      <div class="switcher-name">👤 ${escapeHtml(name)}${name===active?' <span class="switcher-active-tag">Active</span>':''}</div>
-      <button class="switcher-remove" onclick="event.stopPropagation();confirmRemovePlayer('${name.replace(/'/g,"\\'")}')" title="Remove">×</button>
-    </div>
-  `).join('');
+  wrap.innerHTML=list.map(name=>{
+    const safeName=name.replace(/'/g,"\\'");
+    return `
+    <div class="switcher-item${name===active?' active':''}" onclick="pickPlayer('${safeName}')">
+      <div class="switcher-name">${avatarHtml(name,'switcher-avatar')} <span>${escapeHtml(name)}${name===active?' <span class="switcher-active-tag">Active</span>':''}</span></div>
+      <button class="switcher-remove" onclick="event.stopPropagation();confirmRemovePlayer('${safeName}')" title="Remove">×</button>
+    </div>`;
+  }).join('');
 }
 function pickPlayer(name){
   setActivePlayer(name);
   renderSwitcherList();
-  buildHome(); // refresh streak/welcome
+  buildHome(); // refresh streak/welcome (per-profile)
 }
 function confirmRemovePlayer(name){
-  if(confirm(`Remove ${name} from this device?\nTheir streak will be lost.`))removePlayer(name);
+  if(confirm(`Remove ${name} from this device?\nTheir streak and avatar will be lost.`))removePlayer(name);
 }
 function addPlayerPrompt(){
-  const name=prompt("Reader's name?");
-  if(name)addPlayer(name);
-  renderSwitcherList();
+  closeSwitcher();
+  openNameModal({title:"Add another reader"});
 }
 
 /* =========================================================
