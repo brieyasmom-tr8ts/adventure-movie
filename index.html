@@ -7,39 +7,86 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222;-webkit-tap-highlight-color:transparent}
 .screen{display:none;position:fixed;inset:0;flex-direction:column}
 .screen.active{display:flex}
-#home-screen{background:linear-gradient(160deg,#1a1a2e,#16213e,#0f3460);align-items:center;justify-content:center;padding:24px}
-.home-wrap{max-width:480px;width:100%;text-align:center}
-.home-title{font-size:40px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.1}
+
+/* Home */
+#home-screen{background:linear-gradient(160deg,#1a1a2e,#16213e,#0f3460);padding:24px;overflow-y:auto;align-items:center}
+.home-wrap{max-width:560px;width:100%;text-align:center;padding-bottom:40px}
+.home-title{font-size:40px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.1;margin-top:24px}
 .home-title span{background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.home-sub{color:#aac;font-size:16px;margin-bottom:32px}
-.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-.story-card{background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 12px;cursor:pointer;transition:all 0.2s;text-align:center}
+.home-sub{color:#aac;font-size:16px;margin-bottom:28px}
+.category-section{margin-bottom:28px;text-align:left}
+.category-title{color:#ffd200;font-size:13px;text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;padding-left:4px;font-weight:700}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.story-card{position:relative;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 12px;cursor:pointer;transition:transform 0.15s,background 0.2s,border-color 0.2s;text-align:center;overflow:hidden}
 .story-card:hover{background:rgba(255,255,255,0.16);border-color:#ffd200;transform:translateY(-3px)}
+.story-card:active{transform:translateY(0) scale(0.97)}
 .story-card .card-emoji{font-size:36px;margin-bottom:8px}
 .story-card .card-title{color:#fff;font-size:14px;font-weight:700;margin-bottom:4px}
 .story-card .card-theme{color:#ffd200;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.card-progress{margin-top:8px;font-size:11px;color:#aac;letter-spacing:0.5px}
+.card-progress.complete{color:#7fffa1}
+.card-badge{position:absolute;top:8px;right:8px;background:rgba(127,255,161,0.15);border:1px solid #7fffa1;color:#7fffa1;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700}
+
+/* Top bar */
+.top-bar{position:fixed;top:10px;right:10px;z-index:30;display:flex;gap:8px}
+.top-btn{background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);color:#fff;width:40px;height:40px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform 0.15s,background 0.2s}
+.top-btn:hover{background:rgba(255,210,0,0.2)}
+.top-btn:active{transform:scale(0.92)}
+.top-btn.on{background:rgba(255,210,0,0.25);border-color:#ffd200}
+
+/* Player */
 #player-screen{background:#000}
-.scene-image{width:100%;height:40vh;object-fit:cover;flex-shrink:0;position:relative}
-.scene-image img{width:100%;height:100%;object-fit:cover}
-.scene-image-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,#111 100%)}
+.scene-image{width:100%;height:40vh;flex-shrink:0;position:relative;overflow:hidden;background:#000}
+.scene-image img,.scene-image video{width:100%;height:100%;object-fit:cover;animation:zoomIn 12s ease-out forwards}
+@keyframes zoomIn{from{transform:scale(1)}to{transform:scale(1.08)}}
+.scene-image-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,#111 100%);pointer-events:none}
 .scene-body{flex:1;overflow-y:auto;background:#111;padding:20px 20px 100px;display:flex;flex-direction:column}
 .scene-chapter{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:10px}
-.scene-text{font-size:19px;line-height:1.7;color:#eee;margin-bottom:24px;flex:1}
-.choices-wrap{display:flex;flex-direction:column;gap:10px}
-.choice-btn{padding:16px 18px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;text-align:left;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:12px}
-.choice-btn:hover,.choice-btn:active{background:rgba(255,210,0,0.15);border-color:#ffd200}
+.scene-text{font-size:19px;line-height:1.7;color:#eee;margin-bottom:24px;flex:1;cursor:pointer;min-height:1.7em}
+.scene-text .caret{display:inline-block;width:2px;background:#ffd200;animation:blink 1s steps(2) infinite;margin-left:2px;vertical-align:text-bottom;height:1em}
+@keyframes blink{50%{opacity:0}}
+.choices-wrap{display:flex;flex-direction:column;gap:10px;transition:opacity 0.25s}
+.choices-wrap.hidden{opacity:0;pointer-events:none}
+.choice-btn{padding:16px 18px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;text-align:left;cursor:pointer;transition:transform 0.1s,background 0.2s,border-color 0.2s;display:flex;align-items:center;gap:12px;font-family:inherit}
+.choice-btn:hover{background:rgba(255,210,0,0.15);border-color:#ffd200}
+.choice-btn:active{transform:scale(0.97);background:rgba(255,210,0,0.25)}
 .choice-key{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;color:#ffd200}
 .timer-track{height:5px;background:rgba(255,255,255,0.1);width:100%}
-.timer-fill{height:100%;background:linear-gradient(90deg,#f7971e,#ffd200);transition:width 0.5s linear}
+.timer-fill{height:100%;background:linear-gradient(90deg,#f7971e,#ffd200);transition:width 0.5s linear,background 0.3s}
+.timer-fill.warn{background:linear-gradient(90deg,#ff4444,#ff7070);animation:pulse 0.6s infinite}
+@keyframes pulse{50%{opacity:0.5}}
+
+/* Interactive input */
+.interactive-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);border-radius:14px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:border-color 0.2s}
+.interactive-input:focus{border-color:#ffd200;background:rgba(255,255,255,0.12)}
+.interactive-submit{margin-top:10px;padding:14px;background:#ffd200;color:#111;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s}
+.interactive-submit:active{transform:scale(0.97)}
+.interactive-hint{color:#888;font-size:12px;margin-top:8px;text-align:center}
+.ai-response{margin-top:16px;padding:14px;background:rgba(255,210,0,0.08);border-left:3px solid #ffd200;border-radius:8px;color:#ddd;font-size:15px;line-height:1.5;font-style:italic}
+
+/* "What Would You Do?" overlay */
+.wwyd-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.4s}
+.wwyd-overlay.active{opacity:1;pointer-events:auto}
+.wwyd-text{font-size:32px;font-weight:900;color:#fff;text-align:center;padding:0 24px;letter-spacing:1px;transform:scale(0.9);transition:transform 0.4s}
+.wwyd-overlay.active .wwyd-text{transform:scale(1)}
+.wwyd-text span{background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* Scene fade */
+.scene-fade{opacity:1;transition:opacity 0.4s ease}
+.scene-fade.fading{opacity:0}
+
+/* Ending */
 #ending-screen{background:linear-gradient(160deg,#0f3460,#16213e,#1a1a2e);align-items:center;justify-content:center;padding:24px;overflow-y:auto}
 .ending-wrap{max-width:480px;width:100%;text-align:center;padding:20px 0}
-.ending-emoji{font-size:72px;margin-bottom:12px}
+.ending-emoji{font-size:72px;margin-bottom:12px;animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 .ending-type{font-size:12px;text-transform:uppercase;letter-spacing:3px;color:#ffd200;margin-bottom:8px}
 .ending-title{font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
 .ending-text{font-size:17px;line-height:1.6;color:#bbb;margin-bottom:20px}
+.ending-progress{font-size:13px;color:#7fffa1;margin-bottom:16px;letter-spacing:1px}
 .ending-lesson{background:rgba(255,210,0,0.1);border:2px solid #ffd200;border-radius:14px;padding:16px;margin-bottom:24px}
 .ending-lesson-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#ffd200;margin-bottom:6px}
 .ending-lesson-text{font-size:16px;color:#fff;line-height:1.5}
@@ -48,37 +95,57 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222}
 .reflect-list li{color:#ccc;font-size:15px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);padding-left:20px;position:relative}
 .reflect-list li::before{content:'?';position:absolute;left:0;color:#ffd200;font-weight:700}
 .ending-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.end-btn{padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer}
+.end-btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:transform 0.1s}
+.end-btn:active{transform:scale(0.96)}
 .end-btn.primary{background:#ffd200;color:#111}
 .end-btn.secondary{background:rgba(255,255,255,0.08);color:#ccc;border:2px solid rgba(255,255,255,0.15)}
-@media(max-width:400px){.story-grid{grid-template-columns:1fr}.home-title{font-size:32px}.scene-text{font-size:17px}}
+
+/* Mode toggle */
+.mode-pill{display:inline-flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:3px;margin:0 auto 24px;gap:2px}
+.mode-pill button{background:transparent;border:none;color:#aac;padding:6px 14px;font-size:12px;font-weight:700;border-radius:999px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1px;transition:background 0.2s,color 0.2s}
+.mode-pill button.active{background:#ffd200;color:#111}
+
+@media(max-width:400px){.story-grid{grid-template-columns:1fr}.home-title{font-size:32px}.scene-text{font-size:17px}.wwyd-text{font-size:24px}}
 </style>
 </head>
 <body>
+
+<div class="top-bar">
+  <button class="top-btn on" id="sound-toggle" onclick="toggleSound()" title="Sound on/off">🔊</button>
+</div>
+
 <div id="home-screen" class="screen active">
   <div class="home-wrap">
     <div class="home-title">Choose Your<br><span>Adventure</span></div>
     <p class="home-sub">Step into the story. Every choice matters.</p>
-    <div class="story-grid" id="story-grid"></div>
+    <div class="mode-pill" role="group" aria-label="Mode">
+      <button id="mode-story" class="active" onclick="setMode('story')">Story Mode</button>
+      <button id="mode-reflect" onclick="setMode('reflect')">Reflection Mode</button>
+    </div>
+    <div id="categories-wrap"></div>
   </div>
 </div>
+
 <div id="player-screen" class="screen">
   <div class="scene-image" id="scene-image-wrap">
     <img id="scene-img" src="" alt="">
+    <video id="scene-video" muted loop playsinline style="display:none"></video>
     <div class="scene-image-overlay"></div>
   </div>
   <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
-  <div class="scene-body">
+  <div class="scene-body scene-fade" id="scene-body">
     <div class="scene-chapter" id="scene-chapter"></div>
-    <div class="scene-text" id="scene-text"></div>
+    <div class="scene-text" id="scene-text" onclick="skipTypewriter()"></div>
     <div class="choices-wrap" id="choices-wrap"></div>
   </div>
 </div>
+
 <div id="ending-screen" class="screen">
   <div class="ending-wrap">
     <div class="ending-emoji" id="ending-emoji"></div>
     <div class="ending-type" id="ending-type"></div>
     <div class="ending-title" id="ending-title"></div>
+    <div class="ending-progress" id="ending-progress"></div>
     <div class="ending-text" id="ending-text"></div>
     <div class="ending-lesson">
       <div class="ending-lesson-label">Life Lesson</div>
@@ -87,57 +154,482 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#222}
     <div class="reflect-title">Think About It</div>
     <ul class="reflect-list" id="reflect-list"></ul>
     <div class="ending-actions">
-      <button class="end-btn primary" onclick="restartStory()">Play Again</button>
+      <button class="end-btn primary" onclick="restartStory()">Replay from beginning</button>
+      <button class="end-btn secondary" onclick="tryDifferentPath()">Try a different path</button>
       <button class="end-btn secondary" onclick="goHome()">All Stories</button>
     </div>
   </div>
 </div>
+
+<div class="wwyd-overlay" id="wwyd-overlay">
+  <div class="wwyd-text">What would <span>YOU</span> do?</div>
+</div>
+
 <script>
-const STORIES=[{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{s1:{chapter:"Bible Story · 1 Samuel 17",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},s2a:{chapter:"The Volunteer",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},s2b:{chapter:"Staying Back",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage. A soldier next to you says the king has promised great rewards to whoever defeats Goliath.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},s2c:{chapter:"The Plan",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},s3:{chapter:"The Valley",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — look back at the soldiers watching you",next:"end_neutral"}]},end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's. That day, one brave shepherd boy changed everything.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. You take it off, confused about what to do next. Another soldier eventually fights Goliath — and loses. The battle is lost that day. You head home thinking about what might have been different if you had trusted your own gifts and God's help.",lesson:"God gives each of us unique gifts. Trying to be someone else instead of trusting who God made you to be can hold you back.",reflect:["David's gift was his sling and his faith — not a soldier's armor. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away and go back home. The standoff with Goliath continues for forty more days. No one is brave enough to step forward. Later, you hear that a boy — just like you — from another village finally stood up and defeated the giant. You wonder: what would have happened if you had been brave enough to try?",lesson:"Doing nothing is still a choice. When we let fear stop us from acting, we miss the chance to do great things — and others miss out too.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if David had tried and failed?","What is one small brave thing you could do TODAY?"]}}}];
-let currentStory=null,timerInterval=null;
+/* =========================================================
+   STORIES — grouped by category
+   Scene types:
+   - Branching: { chapter, text, image|video, mood, choices:[{text,next}] }
+   - Ending:    { ending:true, type, emoji, title, text, lesson, reflect[] }
+   - Interactive (AI-ready): { interactive:true, chapter, text, image, prompt, next }
+   ========================================================= */
+const STORIES=[
+{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{
+  s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},
+  s2a:{chapter:"The Volunteer",mood:"tension",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},
+  s2b:{chapter:"Staying Back",mood:"calm",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},
+  s2c:{chapter:"The Plan",mood:"calm",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},
+  s3:{chapter:"The Valley",mood:"tension",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — look back at the soldiers watching you",next:"end_neutral"}]},
+  end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},
+  end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. Another soldier eventually fights Goliath — and loses. You head home thinking about what might have been different.",lesson:"God gives each of us unique gifts. Trying to be someone else can hold you back.",reflect:["David's gift was his sling and his faith. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},
+  end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away. The standoff continues for forty more days. Later you hear that another boy — just like you — finally stood up and defeated the giant. You wonder what would have happened if you had been brave enough to try.",lesson:"Doing nothing is still a choice. When fear stops us from acting, we miss the chance to do great things.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if you had tried and failed?","What is one small brave thing you could do TODAY?"]}
+}},
+
+{id:"jonah",title:"Run from the Call",theme:"Obedience",emoji:"🐋",category:"Bible",image:"https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80",scenes:{
+  s1:{chapter:"Bible Story · Jonah 1",mood:"calm",text:"You are Jonah, a prophet. One night God speaks to you clearly: 'Go to the great city of Nineveh and warn them to turn from their evil ways.' Your stomach drops. Nineveh is the capital of your enemies — cruel, violent people. You don't want them to be saved. You want them destroyed.",image:"https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80",choices:[{text:"Obey — pack your bags and head to Nineveh",next:"s2a"},{text:"Run the other way — buy a ticket on a ship to Tarshish",next:"s2b"}]},
+  s2a:{chapter:"The Long Road",mood:"calm",text:"You travel for weeks across dusty roads, your heart heavy. When you finally reach Nineveh, you walk into the city square and shout God's warning. To your shock, the king himself takes off his crown, puts on rough cloth, and orders everyone to repent. The whole city turns from evil. God spares them.",image:"https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80",choices:[{text:"Rejoice that they were saved",next:"end_best"},{text:"Get angry that your enemies got mercy",next:"end_neutral"}]},
+  s2b:{chapter:"The Storm",mood:"tension",text:"The ship sails. You go below deck and fall asleep. But a violent storm crashes over the boat — waves like mountains. The sailors throw cargo overboard, terrified. The captain shakes you awake: 'How can you sleep? Pray to your God!' The sailors cast lots, and the lot falls on you. They demand: 'WHO ARE YOU? What have you done?'",image:"https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&q=80",choices:[{text:"Tell them the truth and offer to be thrown overboard",next:"s3"},{text:"Lie and blame the storm on bad luck",next:"end_poor"}]},
+  s3:{chapter:"The Belly of the Fish",mood:"tension",text:"They throw you into the sea. The storm stops instantly. You sink down, down — and a massive fish swallows you whole. Three days in the dark. You pray. You repent. The fish spits you out on the shore. God speaks again: 'Now go to Nineveh.'",image:"https://images.unsplash.com/photo-1551244072-5d12893278ab?w=800&q=80",choices:[{text:"Go this time — no more running",next:"end_best"},{text:"Hesitate again",next:"end_poor"}]},
+  end_best:{ending:true,type:"Best Ending",emoji:"🌟",title:"Mercy Wins",text:"You delivered the message. A whole city turned from destruction toward life. You learned that God's love stretches further than your prejudice — and obedience, even when it's hard, brings life to others.",lesson:"God's calling is rarely convenient. But running from it costs more than obeying it.",reflect:["Is there something you know you should do but keep avoiding?","Who has God put on your heart that you'd rather not love?","What 'storm' might be God getting your attention?"]},
+  end_neutral:{ending:true,type:"Neutral Ending",emoji:"🌧️",title:"Bitter Victory",text:"You did the job, but your heart stayed angry. You sat outside the city sulking, wishing fire would fall. God asked: 'Should I not have compassion?' You had no answer.",lesson:"Doing the right thing with the wrong heart leaves you empty.",reflect:["Is there someone you don't WANT to forgive?","Why is mercy hard when it's for someone we dislike?","What would change if you saw your enemies the way God sees them?"]},
+  end_poor:{ending:true,type:"Learning Ending",emoji:"🌊",title:"Lost at Sea",text:"You ran. You hid. You pretended the call wasn't real. The story didn't end the way it could have. Sometimes the longest road is the one that runs from God.",lesson:"Avoidance is a kind of answer — and usually the most expensive one.",reflect:["What 'ship to Tarshish' have you taken in your own life?","What's the cost of running?","What would it look like to turn around today?"]}
+}},
+
+{id:"first-hire",title:"The First Hire",theme:"Leadership",emoji:"💼",category:"Leadership",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",scenes:{
+  s1:{chapter:"Day One Of Your Startup",mood:"calm",text:"Your young company has finally raised enough to make its first hire. You've narrowed it down to two candidates. Maya is brilliant, fast, and ambitious — but she's burned bridges at every job. Jordan is solid, kind, and a true team player — but average in skill. Your co-founder is pushing for Maya. Your gut is unsure. The contract is on your desk.",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",choices:[{text:"Hire Maya — bet on raw talent",next:"s2a"},{text:"Hire Jordan — bet on character",next:"s2b"},{text:"Talk to one more reference before deciding",next:"s2c"}]},
+  s2a:{chapter:"Six Weeks In",mood:"tension",text:"Maya ships incredible work — twice as fast as anyone expected. But she also tears down a junior teammate in a meeting and quietly criticizes your leadership in DMs. Two engineers tell you privately they're considering leaving.",image:"https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",choices:[{text:"Have a direct conversation about behavior",next:"s3"},{text:"Stay silent — the work is too good to lose",next:"end_poor"}]},
+  s2b:{chapter:"Six Weeks In",mood:"calm",text:"Jordan is steady. Their work is good, not amazing — but they make everyone around them better. Morale is high. Your co-founder is frustrated: 'We needed a star, not a babysitter.' But the team is shipping.",image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",choices:[{text:"Trust the long game — invest in Jordan's growth",next:"end_best"},{text:"Second-guess and try to hire a 'star' on top",next:"end_neutral"}]},
+  s2c:{chapter:"The Reference Call",interactive:true,prompt:"Imagine you're on the phone with Maya's last manager. What's the ONE question you'd ask?",image:"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",next:"s2a"},
+  s3:{chapter:"The Hard Talk",mood:"tension",text:"You sit Maya down. You name the behavior — directly, without anger. She's defensive at first. Then quiet. Then, surprising you, she says: 'No one's ever told me that. I'll work on it.' The next month, things start to shift.",image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",choices:[{text:"Keep the relationship going with regular feedback",next:"end_best"},{text:"Assume the problem is now solved and move on",next:"end_neutral"}]},
+  end_best:{ending:true,type:"Best Ending",emoji:"🚀",title:"Built To Last",text:"A year later, the team is humming. You learned that leadership isn't choosing the brightest star — it's building the soil that lets people grow. Your hardest decisions paid off.",lesson:"Character compounds. Skill can be coached. Culture is built one hard conversation at a time.",reflect:["When did you last give someone honest feedback?","Are you choosing people for what they ARE or what they could BECOME?","What does your team's culture say about you?"]},
+  end_neutral:{ending:true,type:"Neutral Ending",emoji:"⚖️",title:"Holding Steady",text:"The company survives. Not great, not terrible. You wonder, sometimes, what might have been if you'd been more decisive — or more patient.",lesson:"Avoiding hard choices is itself a choice — and it usually means you stay average.",reflect:["Where are you avoiding a leadership decision right now?","What's the cost of staying in the middle?","What would 'going all in' look like?"]},
+  end_poor:{ending:true,type:"Learning Ending",emoji:"💔",title:"The Slow Bleed",text:"Maya stayed. Two of your best engineers left. By month nine, the team is fractured. Your co-founder leaves. The company doesn't make it.",lesson:"Tolerating toxic talent is the most expensive thing a leader can do.",reflect:["Whose behavior are you tolerating because they're 'productive'?","What did you wish someone had done sooner in your past?","Who do you owe a hard conversation to this week?"]}
+}},
+
+{id:"the-party",title:"The Invite",theme:"Pressure",emoji:"📱",category:"Teen / Social",image:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",scenes:{
+  s1:{chapter:"Friday, 7:42 PM",mood:"calm",text:"Your phone lights up. It's Sam, your best friend since fifth grade. 'Big party at Alex's house. Parents are out of town. Everyone's going. Pick you up in 20?' You hear voices and laughter in the background. You know there will be drinking. You also know your parents trust you to be home by eleven.",image:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",choices:[{text:"Go — just be careful and stay sober",next:"s2a"},{text:"Decline politely — you've got plans",next:"s2b"},{text:"Reply: 'What's actually going to be there?'",next:"s2c"}]},
+  s2a:{chapter:"At The Party",mood:"tension",text:"Music is loud. There are red cups. Sam hands you one. 'Just one. Live a little.' Across the room, someone you don't know is filming the crowd on their phone. Your heart is suddenly louder than the bass.",image:"https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",choices:[{text:"Take the cup so you don't seem weird",next:"end_poor"},{text:"Hand it back — 'I'm good' — and find a corner with friends",next:"s3"}]},
+  s2b:{chapter:"Home, 8:30 PM",mood:"calm",text:"You text Sam: 'Can't make it — catch you tomorrow.' Three dots. Then: 'lame.' You feel the sting. You also feel the quiet. You make tea, open a book, and let your shoulders drop.",image:"https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80",choices:[{text:"Stay home and trust the choice",next:"end_best"},{text:"Cave at 9pm and head over anyway",next:"s2a"}]},
+  s2c:{chapter:"The Honest Question",interactive:true,prompt:"Type what you'd actually say to Sam in this moment:",image:"https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&q=80",next:"s3"},
+  s3:{chapter:"Holding The Line",mood:"calm",text:"You stay. You don't drink. You laugh, you dance a little, and at 10:45 you tell Sam: 'I'm heading out.' Sam looks up, slightly surprised. 'Yeah, alright. I respect that.'",image:"https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",choices:[{text:"Walk home, on time, head clear",next:"end_best"},{text:"Stay 'just one more hour'",next:"end_neutral"}]},
+  end_best:{ending:true,type:"Best Ending",emoji:"🌙",title:"Yourself, Intact",text:"You went home. You slept easy. Monday at school, two friends quietly told you they wished they'd done what you did. Real courage is rarely loud.",lesson:"You don't have to be at every party to be liked. The people who matter respect a clear no.",reflect:["What's the hardest part of saying no to friends?","Who in your life respects your boundaries?","What do you actually want — under the pressure?"]},
+  end_neutral:{ending:true,type:"Neutral Ending",emoji:"🕒",title:"Almost",text:"You stayed too long. Your parents were waiting up. The trust took weeks to repair. Nothing 'bad' happened — but something shifted.",lesson:"Trust is built slowly and broken quickly. Small choices add up to a reputation.",reflect:["When have you broken a small promise?","What does it take to rebuild trust?","Where are you saying yes when you mean no?"]},
+  end_poor:{ending:true,type:"Learning Ending",emoji:"📸",title:"Online Forever",text:"Someone filmed it. By Sunday morning the clip was everywhere. Your parents found out before lunch. The conversation was long. The internet doesn't forget.",lesson:"Every choice now lives twice — in your life, and on someone's phone.",reflect:["What would you do differently if you knew it'd be public?","Who's actually pressuring you — and why do they get to?","What's the SMALLEST first 'no' you could practice today?"]}
+}}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
 const TIMER_SECONDS=40;
-function buildHome(){document.getElementById('story-grid').innerHTML=STORIES.map(s=>'<div class="story-card" onclick="startStory(\''+s.id+'\')"><div class="card-emoji">'+s.emoji+'</div><div class="card-title">'+s.title+'</div><div class="card-theme">'+s.theme+'</div></div>').join('')}
-function goHome(){if(timerInterval)clearInterval(timerInterval);showScreen('home-screen')}
-function startStory(id){currentStory=STORIES.find(s=>s.id===id);if(!currentStory)return;showScreen('player-screen');playScene('s1')}
-function restartStory(){if(!currentStory)return;showScreen('player-screen');playScene('s1')}
+let currentStory=null;
+let currentSceneId=null;
+let visitedScenes=[];
+let timerInterval=null;
+let timerWarned=false;
+let typewriterTimeout=null;
+let typewriterDone=true;
+let typewriterFull="";
+let mode=localStorage.getItem('am_mode')||'story';
+let soundOn=localStorage.getItem('am_sound')!=='off';
+let progress=loadProgress();
+
+/* =========================================================
+   AUDIO — Web Audio API (no external assets)
+   ========================================================= */
+let audioCtx=null;
+let musicNodes=null;
+let currentMood=null;
+
+function ensureAudio(){
+  if(audioCtx)return audioCtx;
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  return audioCtx;
+}
+function stopMusic(){
+  if(!musicNodes)return;
+  try{musicNodes.forEach(n=>{try{n.stop&&n.stop();n.disconnect&&n.disconnect();}catch(e){}});}catch(e){}
+  musicNodes=null;
+}
+function playMusic(mood){
+  if(!soundOn){stopMusic();currentMood=null;return;}
+  if(currentMood===mood)return;
+  currentMood=mood;
+  stopMusic();
+  const ctx=ensureAudio();if(!ctx)return;
+  if(ctx.state==='suspended')ctx.resume();
+  const master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+  master.gain.linearRampToValueAtTime(0.08,ctx.currentTime+1.5);
+  const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=mood==='tension'?900:mood==='victory'?2400:1400;filter.connect(master);
+  const freqs=mood==='tension'?[55,82.4,110]:mood==='victory'?[130.8,164.8,196,261.6]:[110,164.8,220];
+  const oscs=freqs.map((f,i)=>{
+    const o=ctx.createOscillator();o.type=mood==='victory'?'triangle':'sine';o.frequency.value=f;
+    const g=ctx.createGain();g.gain.value=0.5/(i+1);
+    const lfo=ctx.createOscillator();lfo.frequency.value=0.1+i*0.07;
+    const lfoGain=ctx.createGain();lfoGain.gain.value=mood==='tension'?2:1;
+    lfo.connect(lfoGain);lfoGain.connect(o.frequency);
+    o.connect(g);g.connect(filter);
+    o.start();lfo.start();
+    return [o,lfo];
+  }).flat();
+  musicNodes=[master,filter,...oscs];
+}
+function playSfx(type){
+  if(!soundOn)return;
+  const ctx=ensureAudio();if(!ctx)return;
+  if(ctx.state==='suspended')ctx.resume();
+  const o=ctx.createOscillator();const g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  const t=ctx.currentTime;
+  if(type==='click'){o.type='triangle';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(400,t+0.08);g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);o.start(t);o.stop(t+0.13);}
+  else if(type==='warn'){o.type='square';o.frequency.value=1200;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.12,t+0.02);g.gain.linearRampToValueAtTime(0.0001,t+0.18);o.start(t);o.stop(t+0.2);}
+  else if(type==='reveal'){
+    [261.6,329.6,392,523.2].forEach((f,i)=>{
+      const oo=ctx.createOscillator();const gg=ctx.createGain();
+      oo.type='triangle';oo.frequency.value=f;
+      oo.connect(gg);gg.connect(ctx.destination);
+      const start=t+i*0.12;
+      gg.gain.setValueAtTime(0.0001,start);gg.gain.linearRampToValueAtTime(0.18,start+0.03);gg.gain.exponentialRampToValueAtTime(0.0001,start+0.5);
+      oo.start(start);oo.stop(start+0.55);
+    });
+  }
+}
+
+/* =========================================================
+   SOUND TOGGLE + MODE
+   ========================================================= */
+function toggleSound(){
+  soundOn=!soundOn;
+  localStorage.setItem('am_sound',soundOn?'on':'off');
+  const btn=document.getElementById('sound-toggle');
+  btn.textContent=soundOn?'🔊':'🔇';
+  btn.classList.toggle('on',soundOn);
+  if(!soundOn){stopMusic();currentMood=null;}
+  else if(currentStory&&currentSceneId){
+    const s=currentStory.scenes[currentSceneId];
+    if(s)playMusic(s.mood||'calm');
+  }
+}
+function setMode(m){
+  mode=m;
+  localStorage.setItem('am_mode',m);
+  document.getElementById('mode-story').classList.toggle('active',m==='story');
+  document.getElementById('mode-reflect').classList.toggle('active',m==='reflect');
+}
+
+/* =========================================================
+   PROGRESS TRACKING (localStorage)
+   ========================================================= */
+function loadProgress(){
+  try{return JSON.parse(localStorage.getItem('am_progress')||'{}');}catch(e){return {};}
+}
+function saveProgress(){
+  localStorage.setItem('am_progress',JSON.stringify(progress));
+}
+function recordEnding(storyId,endingId){
+  if(!progress[storyId])progress[storyId]={endings:[]};
+  if(!progress[storyId].endings.includes(endingId))progress[storyId].endings.push(endingId);
+  saveProgress();
+}
+function endingCount(story){
+  return Object.keys(story.scenes).filter(k=>story.scenes[k].ending).length;
+}
+function discoveredCount(storyId){
+  return progress[storyId]?progress[storyId].endings.length:0;
+}
+
+/* =========================================================
+   HOME — grouped by category
+   ========================================================= */
+function buildHome(){
+  const wrap=document.getElementById('categories-wrap');
+  const cats={};
+  STORIES.forEach(s=>{(cats[s.category]=cats[s.category]||[]).push(s);});
+  const order=['Bible','Leadership','Life Decisions','Teen / Social'];
+  const sortedCats=Object.keys(cats).sort((a,b)=>{
+    const ai=order.indexOf(a),bi=order.indexOf(b);
+    return (ai===-1?99:ai)-(bi===-1?99:bi);
+  });
+  wrap.innerHTML=sortedCats.map(cat=>{
+    const cards=cats[cat].map(s=>{
+      const total=endingCount(s);
+      const found=discoveredCount(s.id);
+      const complete=found>=total&&total>0;
+      const badge=complete?'<div class="card-badge">✓ COMPLETE</div>':'';
+      const prog=total>0?`<div class="card-progress${complete?' complete':''}">${found}/${total} endings</div>`:'';
+      return `<div class="story-card" onclick="startStory('${s.id}')">${badge}<div class="card-emoji">${s.emoji}</div><div class="card-title">${s.title}</div><div class="card-theme">${s.theme}</div>${prog}</div>`;
+    }).join('');
+    return `<div class="category-section"><div class="category-title">${cat}</div><div class="story-grid">${cards}</div></div>`;
+  }).join('');
+}
+
+/* =========================================================
+   SCREEN MGMT
+   ========================================================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startStory(id){
+  currentStory=STORIES.find(s=>s.id===id);
+  if(!currentStory)return;
+  visitedScenes=[];
+  showScreen('player-screen');
+  playScene('s1');
+}
+function restartStory(){
+  if(!currentStory)return;
+  visitedScenes=[];
+  showScreen('player-screen');
+  playScene('s1');
+}
+function tryDifferentPath(){
+  if(!currentStory)return;
+  visitedScenes=[];
+  showScreen('player-screen');
+  playScene('s1');
+}
+function goHome(){
+  if(timerInterval)clearInterval(timerInterval);
+  stopMusic();currentMood=null;
+  buildHome();
+  showScreen('home-screen');
+}
+
+/* =========================================================
+   SCENE PLAYBACK
+   ========================================================= */
 function playScene(id){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null}
-  const s=currentStory.scenes[id];if(!s)return;
-  if(s.ending){showEnding(s);return}
-  document.getElementById('scene-chapter').textContent=s.chapter||'';
-  document.getElementById('scene-text').textContent=s.text;
-  document.getElementById('scene-img').src=s.image||currentStory.image;
-  const keys=['A','B','C'];
-  document.getElementById('choices-wrap').innerHTML=s.choices.map((c,i)=>'<button class="choice-btn" onclick="choose(\''+c.next+'\')"><span class="choice-key">'+keys[i]+'</span>'+c.text+'</button>').join('');
-  document.querySelector('.scene-body').scrollTop=0;
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  const s=currentStory.scenes[id];
+  if(!s)return;
+  currentSceneId=id;
+  visitedScenes.push(id);
+
+  if(s.ending){showEnding(s,id);return;}
+  playMusic(s.mood||'calm');
+
+  const body=document.getElementById('scene-body');
+  body.classList.add('fading');
+
+  setTimeout(()=>{
+    // Image vs video
+    const imgEl=document.getElementById('scene-img');
+    const videoEl=document.getElementById('scene-video');
+    if(s.video){
+      videoEl.src=s.video;videoEl.style.display='block';imgEl.style.display='none';
+      videoEl.play().catch(()=>{});
+    }else{
+      imgEl.src=s.image||currentStory.image;imgEl.style.display='block';videoEl.style.display='none';
+      try{videoEl.pause();}catch(e){}
+    }
+    // Force restart of zoom animation
+    const wrap=document.getElementById('scene-image-wrap');
+    const visual=s.video?videoEl:imgEl;
+    visual.style.animation='none';void visual.offsetWidth;visual.style.animation='';
+
+    document.getElementById('scene-chapter').textContent=s.chapter||'';
+    document.querySelector('.scene-body').scrollTop=0;
+
+    if(s.interactive){
+      renderInteractive(s);
+    }else{
+      renderBranching(s);
+    }
+    body.classList.remove('fading');
+  },300);
+}
+
+function renderBranching(s){
+  const choicesWrap=document.getElementById('choices-wrap');
+  choicesWrap.classList.remove('hidden');
+  const keys=['A','B','C','D'];
+  choicesWrap.innerHTML=s.choices.map((c,i)=>
+    `<button class="choice-btn" onclick="choose('${c.next}')"><span class="choice-key">${keys[i]}</span>${c.text}</button>`
+  ).join('');
+  startTypewriter(s.text);
+  startTimer(s.choices[0].next);
+}
+
+function renderInteractive(s){
+  const choicesWrap=document.getElementById('choices-wrap');
+  choicesWrap.classList.remove('hidden');
+  choicesWrap.innerHTML=`
+    <input class="interactive-input" id="ai-input" placeholder="${(s.prompt||'What would you do?').replace(/"/g,'&quot;')}" autocomplete="off">
+    <button class="interactive-submit" onclick="submitInteractive('${s.next}')">Continue →</button>
+    <div class="interactive-hint">Your answer is just for you. No data is sent anywhere.</div>
+    <div id="ai-response-slot"></div>
+  `;
+  startTypewriter(s.text||s.prompt||'What would you do?');
+  // No countdown timer for interactive scenes
+  document.getElementById('timer-fill').style.width='0%';
+  setTimeout(()=>{const i=document.getElementById('ai-input');i&&i.focus();},400);
+}
+
+async function submitInteractive(nextId){
+  const input=document.getElementById('ai-input');
+  if(!input)return;
+  const val=input.value.trim();
+  if(!val){input.focus();return;}
+  playSfx('click');
+  const slot=document.getElementById('ai-response-slot');
+  slot.innerHTML=`<div class="ai-response">Thinking…</div>`;
+  const reply=await generateAIResponse(val,{storyId:currentStory.id,sceneId:currentSceneId});
+  slot.innerHTML=`<div class="ai-response">${reply}</div>`;
+  setTimeout(()=>choose(nextId),1500);
+}
+
+/* =========================================================
+   AI LAYER — placeholder, ready to wire to a real API later
+   ========================================================= */
+async function generateAIResponse(input,context){
+  // TODO: replace this body with a fetch() to your API endpoint.
+  // Keep the signature stable so callers don't change.
+  await new Promise(r=>setTimeout(r,700));
+  const mocks=[
+    "Interesting choice. That says a lot about how you handle pressure.",
+    "Most people don't think to do that. The story remembers.",
+    "There's wisdom in that. Let's see where it leads.",
+    "A bold answer. The next scene will weigh it."
+  ];
+  return mocks[Math.floor(Math.random()*mocks.length)];
+}
+
+/* =========================================================
+   TYPEWRITER
+   ========================================================= */
+function startTypewriter(fullText){
+  const el=document.getElementById('scene-text');
+  typewriterFull=fullText||'';
+  if(typewriterTimeout){clearTimeout(typewriterTimeout);typewriterTimeout=null;}
+  typewriterDone=false;
+  el.innerHTML='<span class="caret"></span>';
+  let i=0;
+  const step=()=>{
+    if(i>=typewriterFull.length){
+      el.textContent=typewriterFull;
+      typewriterDone=true;typewriterTimeout=null;return;
+    }
+    i++;
+    el.innerHTML=escapeHtml(typewriterFull.slice(0,i))+'<span class="caret"></span>';
+    typewriterTimeout=setTimeout(step,18);
+  };
+  step();
+}
+function skipTypewriter(){
+  if(typewriterDone)return;
+  if(typewriterTimeout){clearTimeout(typewriterTimeout);typewriterTimeout=null;}
+  document.getElementById('scene-text').textContent=typewriterFull;
+  typewriterDone=true;
+}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* =========================================================
+   TIMER
+   ========================================================= */
+function startTimer(defaultNext){
   let rem=TIMER_SECONDS;
+  timerWarned=false;
   const fill=document.getElementById('timer-fill');
+  fill.classList.remove('warn');
   fill.style.width='100%';
-  timerInterval=setInterval(()=>{rem--;fill.style.width=(rem/TIMER_SECONDS*100)+'%';if(rem<=0){clearInterval(timerInterval);timerInterval=null;choose(s.choices[0].next)}},1000)
+  timerInterval=setInterval(()=>{
+    rem--;
+    fill.style.width=(rem/TIMER_SECONDS*100)+'%';
+    if(rem<=5&&!timerWarned){timerWarned=true;fill.classList.add('warn');playSfx('warn');}
+    if(rem<=0){
+      clearInterval(timerInterval);timerInterval=null;
+      choose(defaultNext);
+    }
+  },1000);
 }
+
+/* =========================================================
+   CHOICE — with optional Reflection-Mode pause overlay
+   ========================================================= */
 function choose(next){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null}
-  const w=document.getElementById('choices-wrap');w.style.opacity='0.3';
-  setTimeout(()=>{w.style.opacity='1';playScene(next)},300)
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  playSfx('click');
+  const choicesWrap=document.getElementById('choices-wrap');
+  choicesWrap.classList.add('hidden');
+  if(mode==='reflect'){
+    showWWYD(()=>playScene(next));
+  }else{
+    setTimeout(()=>playScene(next),350);
+  }
 }
-function showEnding(s){
-  document.getElementById('ending-emoji').textContent=s.emoji;
-  document.getElementById('ending-type').textContent=s.type;
-  document.getElementById('ending-title').textContent=s.title;
-  document.getElementById('ending-text').textContent=s.text;
-  document.getElementById('ending-lesson').textContent=s.lesson;
-  document.getElementById('reflect-list').innerHTML=(s.reflect||[]).map(q=>'<li>'+q+'</li>').join('');
-  showScreen('ending-screen')
+function showWWYD(done){
+  const ov=document.getElementById('wwyd-overlay');
+  ov.classList.add('active');
+  setTimeout(()=>{
+    ov.classList.remove('active');
+    setTimeout(done,300);
+  },1500);
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+/* =========================================================
+   ENDING
+   ========================================================= */
+function showEnding(s,endingId){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  recordEnding(currentStory.id,endingId);
+  stopMusic();currentMood=null;
+  playMusic(s.type&&s.type.toLowerCase().includes('best')?'victory':'calm');
+  playSfx('reveal');
+  document.getElementById('ending-emoji').textContent=s.emoji||'🎬';
+  document.getElementById('ending-type').textContent=s.type||'Ending';
+  document.getElementById('ending-title').textContent=s.title||'';
+  document.getElementById('ending-text').textContent=s.text||'';
+  document.getElementById('ending-lesson').textContent=s.lesson||'';
+  const total=endingCount(currentStory);
+  const found=discoveredCount(currentStory.id);
+  document.getElementById('ending-progress').textContent=`★ You've discovered ${found} of ${total} endings`;
+  const reflect=(s.reflect||[]).slice();
+  if(mode==='reflect'){
+    reflect.unshift("Pause for 30 seconds. Sit with the choice you just made.");
+  }
+  document.getElementById('reflect-list').innerHTML=reflect.map(q=>`<li>${q}</li>`).join('');
+  showScreen('ending-screen');
+}
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
 document.addEventListener('keydown',e=>{
   if(!document.querySelector('#player-screen.active'))return;
+  // Skip typewriter on space/enter
+  if((e.key===' '||e.key==='Enter')&&!typewriterDone){
+    // don't intercept Enter inside the interactive input
+    if(document.activeElement&&document.activeElement.id==='ai-input')return;
+    e.preventDefault();skipTypewriter();return;
+  }
+  // Submit interactive on Enter
+  if(e.key==='Enter'&&document.activeElement&&document.activeElement.id==='ai-input'){
+    const btn=document.querySelector('.interactive-submit');btn&&btn.click();return;
+  }
   const btns=document.querySelectorAll('.choice-btn');
-  const map={a:0,b:1,c:2,'1':0,'2':1,'3':2};
+  const map={a:0,b:1,c:2,d:3,'1':0,'2':1,'3':2,'4':3};
   const i=map[e.key.toLowerCase()];
-  if(i!==undefined&&btns[i])btns[i].click()
+  if(i!==undefined&&btns[i])btns[i].click();
 });
+
+/* =========================================================
+   INIT
+   ========================================================= */
+setMode(mode);
+document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇';
+document.getElementById('sound-toggle').classList.toggle('on',soundOn);
 buildHome();
+
+// Resume audio context on first user gesture (browser autoplay policy)
+['click','touchstart','keydown'].forEach(ev=>{
+  document.addEventListener(ev,function once(){
+    const ctx=ensureAudio();
+    if(ctx&&ctx.state==='suspended')ctx.resume();
+    document.removeEventListener(ev,once);
+  });
+});
 </script>
 </body>
 </html>
