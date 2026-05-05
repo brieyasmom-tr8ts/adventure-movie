@@ -870,12 +870,145 @@ function recordEnding(storyId,endingId){
   if(!progress[storyId])progress[storyId]={endings:[]};
   if(!progress[storyId].endings.includes(endingId))progress[storyId].endings.push(endingId);
   saveProgress();
+  // Award XP for endings
+  const scene=currentStory&&currentStory.scenes[endingId];
+  if(scene){
+    const type=(scene.type||'').toLowerCase();
+    if(type.includes('best'))addXP(50,'Best Ending!');
+    else if(type.includes('neutral'))addXP(25,'Story Complete');
+    else addXP(15,'Story Complete');
+  }
+  checkBadges();
 }
 function endingCount(story){
   return Object.keys(story.scenes).filter(k=>story.scenes[k].ending).length;
 }
 function discoveredCount(storyId){
   return progress[storyId]?progress[storyId].endings.length:0;
+}
+
+/* =========================================================
+   SAVE / RESUME — auto-save current scene
+   ========================================================= */
+function saveCurrentScene(){
+  if(!currentStory||!currentSceneId)return;
+  const save={storyId:currentStory.id,sceneId:currentSceneId,journey:[...journey],visitedScenes:[...visitedScenes],ts:Date.now()};
+  localStorage.setItem('am_save_'+currentStory.id,JSON.stringify(save));
+}
+function getSavedGame(storyId){
+  try{return JSON.parse(localStorage.getItem('am_save_'+storyId));}catch(e){return null;}
+}
+function clearSave(storyId){
+  localStorage.removeItem('am_save_'+storyId);
+}
+
+/* =========================================================
+   XP + LEVEL SYSTEM
+   ========================================================= */
+function getXPData(){
+  try{return JSON.parse(localStorage.getItem('am_xp')||'{"xp":0,"level":1,"history":[]}');}catch(e){return {xp:0,level:1,history:[]};}
+}
+function saveXPData(d){localStorage.setItem('am_xp',JSON.stringify(d));}
+function xpForLevel(lvl){return lvl*100;} // 100 XP per level
+function addXP(amount,reason){
+  const d=getXPData();
+  d.xp+=amount;
+  d.history.push({amount,reason,ts:Date.now()});
+  if(d.history.length>50)d.history=d.history.slice(-50);
+  // Level up check
+  while(d.xp>=xpForLevel(d.level)){
+    d.xp-=xpForLevel(d.level);
+    d.level++;
+    showLevelUp(d.level);
+  }
+  saveXPData(d);
+  updateXPDisplay();
+}
+function showLevelUp(level){
+  // Quick visual flash
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111;padding:24px 40px;border-radius:20px;font-size:24px;font-weight:900;z-index:9999;animation:fadeUp 0.5s both;box-shadow:0 12px 40px rgba(255,210,0,0.5)';
+  el.textContent='Level '+level+'!';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2500);
+}
+function updateXPDisplay(){
+  const d=getXPData();
+  const el=document.getElementById('xp-display');
+  if(el){
+    const pct=Math.round((d.xp/xpForLevel(d.level))*100);
+    el.innerHTML=`<span class="xp-level">Lv ${d.level}</span><span class="xp-bar"><span class="xp-fill" style="width:${pct}%"></span></span><span class="xp-pts">${d.xp}/${xpForLevel(d.level)}</span>`;
+  }
+}
+
+/* =========================================================
+   BADGES / ACHIEVEMENTS
+   ========================================================= */
+const BADGE_DEFS=[
+  {id:'first_story',name:'First Adventure',emoji:'🎬',desc:'Complete your first story',check:()=>totalEndings()>=1},
+  {id:'five_stories',name:'Storyteller',emoji:'📚',desc:'Complete 5 stories',check:()=>totalEndings()>=5},
+  {id:'ten_stories',name:'Legend',emoji:'👑',desc:'Complete 10 stories',check:()=>totalEndings()>=10},
+  {id:'all_best',name:'Golden Path',emoji:'✨',desc:'Get 3 Best Endings',check:()=>bestEndingCount()>=3},
+  {id:'explorer',name:'Explorer',emoji:'🗺️',desc:'Try all endings in one story',check:()=>Object.keys(progress).some(k=>progress[k].endings&&progress[k].endings.length>=3)},
+  {id:'streak_3',name:'On a Roll',emoji:'🔥',desc:'3-day reading streak',check:()=>getStreakCount()>=3},
+  {id:'streak_7',name:'Dedicated',emoji:'💪',desc:'7-day reading streak',check:()=>getStreakCount()>=7},
+  {id:'level_5',name:'Rising Star',emoji:'⭐',desc:'Reach Level 5',check:()=>getXPData().level>=5},
+  {id:'level_10',name:'Master Reader',emoji:'🏆',desc:'Reach Level 10',check:()=>getXPData().level>=10}
+];
+function totalEndings(){
+  return Object.values(progress).reduce((sum,p)=>sum+(p.endings?p.endings.length:0),0);
+}
+function bestEndingCount(){
+  let count=0;
+  for(const[sid,p]of Object.entries(progress)){
+    const story=STORIES.find(s=>s.id===sid);
+    if(!story)continue;
+    for(const eid of(p.endings||[])){
+      const sc=story.scenes[eid];
+      if(sc&&sc.type&&sc.type.toLowerCase().includes('best'))count++;
+    }
+  }
+  return count;
+}
+function getStreakCount(){
+  try{const s=JSON.parse(localStorage.getItem('am_streak')||'{}');return s.count||0;}catch(e){return 0;}
+}
+function getUnlockedBadges(){
+  try{return JSON.parse(localStorage.getItem('am_badges')||'[]');}catch(e){return [];}
+}
+function checkBadges(){
+  const unlocked=getUnlockedBadges();
+  let newBadge=false;
+  for(const b of BADGE_DEFS){
+    if(unlocked.includes(b.id))continue;
+    if(b.check()){
+      unlocked.push(b.id);
+      newBadge=b;
+    }
+  }
+  localStorage.setItem('am_badges',JSON.stringify(unlocked));
+  if(newBadge)showBadgeUnlock(newBadge);
+}
+function showBadgeUnlock(badge){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border:2px solid var(--gold);color:#fff;padding:16px 24px;border-radius:16px;z-index:9999;text-align:center;animation:fadeUp 0.5s both;backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,0.6)';
+  el.innerHTML=`<div style="font-size:36px;margin-bottom:4px">${badge.emoji}</div><div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:2px;font-weight:800">Badge Unlocked!</div><div style="font-size:16px;font-weight:700;margin-top:4px">${badge.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">${badge.desc}</div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+/* =========================================================
+   CHARACTER TRAITS — tracks what kind of choices you make
+   ========================================================= */
+function recordTrait(trait){
+  try{
+    const t=JSON.parse(localStorage.getItem('am_traits')||'{}');
+    t[trait]=(t[trait]||0)+1;
+    localStorage.setItem('am_traits',JSON.stringify(t));
+  }catch(e){}
+}
+function getTraits(){
+  try{return JSON.parse(localStorage.getItem('am_traits')||'{}');}catch(e){return {};}
 }
 
 /* =========================================================
@@ -1375,6 +1508,19 @@ function getDailySeed(age){
   };
 }
 function dailyCacheKey(){return 'am_daily_story:'+(getActivePlayer()||'__guest__');}
+async function fetchPreGeneratedStory(){
+  try{
+    // Look up profile ID from localStorage registration
+    const profiles=await fetch('/api/profiles').then(r=>r.json()).catch(()=>({profiles:[]}));
+    const player=getActivePlayer();
+    const match=profiles.profiles&&profiles.profiles.find(p=>p.name===player);
+    if(!match)return null;
+    const resp=await fetch('/api/today?kid='+match.id);
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    return data.story||null;
+  }catch(e){return null;}
+}
 async function getOrCreateDailyStory(){
   const today=todayStr();
   const player=getActivePlayer();
@@ -1406,6 +1552,28 @@ async function startDailyStory(){
   if(player&&!getAge(player)){openAgeModal();return;}
   showAILoading();
   try{
+    // Try pre-generated story from cron first
+    const preGen=await fetchPreGeneratedStory();
+    if(preGen){
+      hideAILoading();
+      currentStory={
+        id:'daily_'+preGen.date,
+        title:preGen.title||"Today's Adventure",
+        theme:preGen.theme||'Adventure',
+        category:'Daily',
+        aiStory:true,
+        image:(preGen.scenes&&preGen.scenes[0]&&preGen.scenes[0].image)||'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
+        seed:{},
+        scenes:{}
+      };
+      visitedScenes=[];journey=[];currentAIScene=null;
+      showScreen('player-screen');
+      // Render first scene from pre-generated story
+      const firstScene=preGen.scenes[0];
+      if(firstScene)renderAIScene(firstScene);
+      return;
+    }
+    // Fall back to live generation
     const daily=await getOrCreateDailyStory();
     hideAILoading();
     currentStory={
@@ -1569,10 +1737,10 @@ function renderAIScene(scene){
   body.classList.add('fading');
 
   setTimeout(()=>{
-    // AI scenes reuse the story's hero image (no AI image generation here).
+    // Use scene-specific image if available, otherwise fall back to story hero image
     const imgEl=document.getElementById('scene-img');
     const videoEl=document.getElementById('scene-video');
-    imgEl.src=currentStory.image;
+    imgEl.src=scene.image||currentStory.image||'';
     imgEl.style.display='block';
     videoEl.style.display='none';
     try{videoEl.pause();}catch(e){}
@@ -1730,11 +1898,13 @@ function choose(next){
       journey.push({chapter:s.chapter||'',text:s.text||'',choice:c.text});
     }
   }
+  addXP(5,'Made a choice');
   const choicesWrap=document.getElementById('choices-wrap');
   choicesWrap.classList.add('hidden');
   setTimeout(()=>{
     if(next==='ai'||next==='AI')generateAIScene();
     else playScene(next);
+    saveCurrentScene();
   },350);
 }
 
