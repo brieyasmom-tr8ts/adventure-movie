@@ -1157,7 +1157,15 @@ function recordEnding(storyId,endingId){
   checkBadges();
 }
 function endingCount(story){
-  return Object.keys(story.scenes).filter(k=>story.scenes[k].ending).length;
+  let scenes=story.scenes;
+  if(!scenes&&story.levels){
+    // Multi-level story — count from any authored variant. The moral arc and
+    // ending count are shared across levels, so any one is representative.
+    const v=story.levels.L3||story.levels.L2||story.levels.L4||story.levels.L1;
+    scenes=v&&v.scenes;
+  }
+  if(!scenes)return 0;
+  return Object.keys(scenes).filter(k=>scenes[k].ending).length;
 }
 function discoveredCount(storyId){
   return progress[storyId]?progress[storyId].endings.length:0;
