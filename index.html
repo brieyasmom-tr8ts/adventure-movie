@@ -1681,6 +1681,9 @@ function submitAgeModal(){
 async function startDailyStory(){
   const player=getActivePlayer();
   if(player&&!getAge(player)){openAgeModal();return;}
+  // Fallback hero image: use the kid's cartoon avatar so they see themselves
+  // even when the cron Worker hasn't generated scene images for today.
+  const heroFallback=(player&&getAvatar(player))||'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80';
   showAILoading();
   try{
     // Try pre-generated story from cron first
@@ -1693,7 +1696,7 @@ async function startDailyStory(){
         theme:preGen.theme||'Adventure',
         category:preGen.ageGroup||'Daily',
         aiStory:true,
-        image:(preGen.scenes&&preGen.scenes[0]&&preGen.scenes[0].image)||'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
+        image:(preGen.scenes&&preGen.scenes[0]&&preGen.scenes[0].image)||heroFallback,
         seed:{},
         scenes:{}
       };
@@ -1714,7 +1717,7 @@ async function startDailyStory(){
       theme:daily.seed.theme,
       category:'Daily',
       aiStory:true,
-      image:'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
+      image:heroFallback,
       seed:daily.seed,
       scenes:{}
     };
