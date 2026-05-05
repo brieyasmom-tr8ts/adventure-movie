@@ -98,6 +98,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 
 .scene-image{position:absolute;inset:0;z-index:1;overflow:hidden;background:#000}
 .scene-image img,.scene-image video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:heroZoom 18s ease-out forwards}
+.scene-image.avatar-hero img{object-fit:contain;object-position:center top;animation:none;transform:none;background:#000}
 @keyframes heroZoom{from{transform:scale(1.02)}to{transform:scale(1.16)}}
 .scene-image-overlay{
   position:absolute;inset:0;pointer-events:none;
@@ -1875,10 +1876,16 @@ function renderAIScene(scene){
     // Use scene-specific image if available, otherwise fall back to story hero image
     const imgEl=document.getElementById('scene-img');
     const videoEl=document.getElementById('scene-video');
-    imgEl.src=scene.image||currentStory.image||'';
+    const finalSrc=scene.image||currentStory.image||'';
+    imgEl.src=finalSrc;
     imgEl.style.display='block';
     videoEl.style.display='none';
     try{videoEl.pause();}catch(e){}
+    // If we're showing the kid's cartoon avatar as the hero, contain it (no zoom)
+    // so the whole face is visible instead of cropping to just the forehead.
+    const wrap=document.getElementById('scene-image-wrap');
+    const isAvatarHero=!scene.image&&!!finalSrc&&finalSrc===getAvatar(getActivePlayer());
+    if(wrap)wrap.classList.toggle('avatar-hero',isAvatarHero);
     imgEl.style.animation='none';void imgEl.offsetWidth;imgEl.style.animation='';
 
     document.getElementById('scene-chapter').textContent=scene.chapter||'';
