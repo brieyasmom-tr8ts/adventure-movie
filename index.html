@@ -1852,7 +1852,6 @@ function startCustomStory(){
     lesson:isBible?'a real lesson from the Bible story unfolds through the choices the player makes':'every choice shapes the story',
     level:playerLevel
   };
-  const player=getActivePlayer();
   if(player)seed.playerName=player;
   currentStory={
     id:'custom_'+Date.now(),
