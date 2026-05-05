@@ -250,6 +250,22 @@ body.reader-early .choice-key{width:36px;height:36px;font-size:15px}
 .end-btn.secondary{background:rgba(255,255,255,0.06);color:var(--text-2);border:1px solid var(--border-2);backdrop-filter:blur(6px)}
 .end-btn.secondary:hover{background:rgba(255,255,255,0.12);color:#fff;border-color:var(--gold)}
 
+/* ---------- Stats / Trophy Room ---------- */
+.xp-level{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#111;font-size:12px;font-weight:900;padding:4px 10px;border-radius:8px;white-space:nowrap}
+.xp-bar{flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--gold-2),var(--gold));border-radius:4px;transition:width 0.4s}
+.xp-pts{font-size:11px;color:var(--text-3);white-space:nowrap}
+.badge-item{text-align:center;padding:10px 4px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border)}
+.badge-item.unlocked{background:rgba(255,210,0,0.08);border-color:rgba(255,210,0,0.3)}
+.badge-item.locked{opacity:0.35;filter:grayscale(1)}
+.badge-item .badge-emoji{font-size:24px;display:block;margin-bottom:2px}
+.badge-item .badge-name{font-size:9px;color:var(--text-3);line-height:1.2;font-weight:600}
+.badge-item.unlocked .badge-name{color:var(--gold)}
+.stat-row{display:flex;justify-content:center;gap:16px;margin-top:8px}
+.stat-box{text-align:center}
+.stat-box .stat-num{font-size:18px;font-weight:900;color:#fff}
+.stat-box .stat-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px}
+
 /* ---------- Print Book ---------- */
 @media print{
   body,html{background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important}
@@ -532,10 +548,17 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div class="modal" id="switcher-modal">
   <div class="modal-card">
-    <h2>Who's reading?</h2>
-    <p>Pick yourself, or add a brother/sister.</p>
-    <div class="switcher-list" id="switcher-list"></div>
-    <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
+    <div id="stats-panel" style="margin-bottom:18px">
+      <div id="stats-header" style="text-align:center;margin-bottom:14px"></div>
+      <div id="xp-display" style="display:flex;align-items:center;gap:8px;margin-bottom:12px"></div>
+      <div id="badges-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px"></div>
+      <div id="stats-extra" style="font-size:12px;color:var(--text-3);text-align:center"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
+      <h2 style="font-size:15px;margin-bottom:8px">Who's reading?</h2>
+      <div class="switcher-list" id="switcher-list"></div>
+      <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
+    </div>
     <button class="modal-close" onclick="closeSwitcher()">Done</button>
   </div>
 </div>
@@ -1464,7 +1487,34 @@ function resetAvatarPreview(){
 
 function openSwitcher(){
   renderSwitcherList();
+  renderStatsPanel();
   document.getElementById('switcher-modal').classList.add('active');
+}
+function renderStatsPanel(){
+  const player=getActivePlayer()||'';
+  const avatar=getAvatar(player);
+  const d=getXPData();
+  const pct=Math.round((d.xp/xpForLevel(d.level))*100);
+  const unlocked=getUnlockedBadges();
+  const streak=getStreakCount();
+  const total=totalEndings();
+
+  // Header with avatar + name
+  const avImg=avatar?`<img src="${avatar}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);margin-bottom:6px">`:`<div style="width:56px;height:56px;border-radius:50%;background:var(--bg-3);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:24px">👤</div>`;
+  document.getElementById('stats-header').innerHTML=`${avImg}<div style="font-size:16px;font-weight:800;color:#fff">${escapeHtml(player)}</div>`;
+
+  // XP bar
+  document.getElementById('xp-display').innerHTML=`<span class="xp-level">Lv ${d.level}</span><span class="xp-bar"><span class="xp-fill" style="width:${pct}%"></span></span><span class="xp-pts">${d.xp}/${xpForLevel(d.level)} XP</span>`;
+
+  // Badges grid
+  const badgesHtml=BADGE_DEFS.map(b=>{
+    const got=unlocked.includes(b.id);
+    return `<div class="badge-item ${got?'unlocked':'locked'}" title="${b.desc}"><span class="badge-emoji">${b.emoji}</span><span class="badge-name">${b.name}</span></div>`;
+  }).join('');
+  document.getElementById('badges-grid').innerHTML=badgesHtml;
+
+  // Extra stats
+  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>`;
 }
 function closeSwitcher(){document.getElementById('switcher-modal').classList.remove('active');}
 function renderSwitcherList(){
