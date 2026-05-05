@@ -1516,8 +1516,13 @@ async function onAvatarPicked(event){
   if(!file)return;
   setAvatarLoading(true);
   try{
+    // Library uploads on iPhone are often HEIC (camera output is JPEG), and
+    // OpenAI's image edits API rejects HEIC. Decoding through <img> and
+    // re-encoding via canvas normalizes any browser-renderable format to JPEG
+    // and downscales to keep upload size sane.
+    const normalized=await normalizeAvatarImage(file);
     const fd=new FormData();
-    fd.append('image',file);
+    fd.append('image',normalized,'avatar.jpg');
     const resp=await fetch('/api/avatar',{method:'POST',body:fd});
     const data=await resp.json().catch(()=>({}));
     if(!resp.ok||!data.dataUrl){
@@ -1531,6 +1536,29 @@ async function onAvatarPicked(event){
   setAvatarLoading(false);
   // Clear file input so picking the same file again still triggers change
   event.target.value='';
+}
+async function normalizeAvatarImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((resolve,reject)=>{
+      const i=new Image();
+      i.onload=()=>resolve(i);
+      i.onerror=()=>reject(new Error("This image format isn't supported on this device. Try another photo."));
+      i.src=url;
+    });
+    const MAX=2048;
+    const scale=Math.min(1,MAX/Math.max(img.naturalWidth,img.naturalHeight));
+    const w=Math.max(1,Math.round(img.naturalWidth*scale));
+    const h=Math.max(1,Math.round(img.naturalHeight*scale));
+    const canvas=document.createElement('canvas');
+    canvas.width=w;canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.92));
+    if(!blob)throw new Error("Couldn't read that photo. Try a different one.");
+    return blob;
+  }finally{
+    URL.revokeObjectURL(url);
+  }
 }
 function setAvatarLoading(on){
   const el=document.getElementById('avatar-preview');
