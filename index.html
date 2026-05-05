@@ -139,6 +139,16 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .scene-text .caret{display:inline-block;width:2px;background:var(--gold);animation:blink 1s steps(2) infinite;margin-left:2px;vertical-align:text-bottom;height:1em;border-radius:1px}
 @keyframes blink{50%{opacity:0}}
 
+/* Age-adaptive font sizes */
+body.reader-new .scene-text{font-size:28px;line-height:1.8;font-weight:500;letter-spacing:0.3px}
+body.reader-new .choice-btn{font-size:22px;padding:20px 48px 20px 20px}
+body.reader-new .choice-key{width:38px;height:38px;font-size:16px}
+body.reader-new .scene-chapter{font-size:13px}
+
+body.reader-early .scene-text{font-size:23px;line-height:1.7;font-weight:450}
+body.reader-early .choice-btn{font-size:19px;padding:18px 44px 18px 18px}
+body.reader-early .choice-key{width:36px;height:36px;font-size:15px}
+
 .choices-wrap{display:flex;flex-direction:column;gap:10px;transition:opacity 0.25s}
 .choices-wrap.hidden{opacity:0;pointer-events:none}
 
@@ -239,6 +249,27 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .end-btn.primary:hover{box-shadow:0 12px 38px rgba(255,210,0,0.5)}
 .end-btn.secondary{background:rgba(255,255,255,0.06);color:var(--text-2);border:1px solid var(--border-2);backdrop-filter:blur(6px)}
 .end-btn.secondary:hover{background:rgba(255,255,255,0.12);color:#fff;border-color:var(--gold)}
+
+/* ---------- Print Book ---------- */
+@media print{
+  body,html{background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important}
+  .screen,.vignette,.top-bar,.top-btn,.top-back,.profile-pill,.letterbox,.timer-track,.wwyd-overlay,.ai-loading,.modal{display:none!important}
+  #print-book{display:block!important}
+}
+#print-book{display:none;padding:0;font-family:Georgia,'Times New Roman',serif}
+#print-book .book-cover{page-break-after:always;text-align:center;padding:80px 40px}
+#print-book .book-cover h1{font-size:36px;margin-bottom:12px;color:#222}
+#print-book .book-cover .book-by{font-size:18px;color:#666;margin-bottom:24px}
+#print-book .book-cover img{width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #ddd}
+#print-book .book-page{page-break-after:always;padding:40px;max-width:700px;margin:0 auto}
+#print-book .book-page h2{font-size:20px;color:#333;margin-bottom:12px;border-bottom:2px solid #eee;padding-bottom:8px}
+#print-book .book-page .book-scene-img{width:100%;max-height:300px;object-fit:cover;border-radius:12px;margin-bottom:16px}
+#print-book .book-page p{font-size:16px;line-height:1.8;color:#222;margin-bottom:12px}
+#print-book .book-page .book-choice{font-style:italic;color:#555;margin-top:8px;padding-left:16px;border-left:3px solid #ddd}
+#print-book .book-ending{page-break-after:always;padding:40px;max-width:700px;margin:0 auto;text-align:center}
+#print-book .book-ending h2{font-size:28px;margin-bottom:16px}
+#print-book .book-ending .book-lesson{background:#f8f4e8;border:1px solid #e8dfc0;border-radius:12px;padding:20px;margin:20px 0;text-align:left}
+#print-book .book-ending .book-lesson strong{display:block;margin-bottom:6px;color:#8b6914}
 
 /* ---------- Profile pill (top-left, current kid) ---------- */
 .profile-pill{
@@ -454,6 +485,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <div class="ending-actions">
       <button class="end-btn primary" onclick="restartStory()">Replay from beginning</button>
       <button class="end-btn secondary" onclick="tryDifferentPath()">Try a different path</button>
+      <button class="end-btn secondary" onclick="printBook()">📖 Print My Book</button>
       <button class="end-btn secondary" onclick="goHome()">All Stories</button>
     </div>
   </div>
@@ -464,6 +496,8 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
   <div class="ai-loading-bar"></div>
   <div class="ai-loading-hint">We're writing your next scene…</div>
 </div>
+
+<div id="print-book"></div>
 
 <div class="modal" id="name-modal">
   <div class="modal-card">
@@ -1053,9 +1087,20 @@ function showScreen(id){
   document.body.dataset.screen=id;
 }
 
+function setReaderClass(){
+  document.body.classList.remove('reader-new','reader-early');
+  let cat=currentStory?(currentStory.category||''):'';
+  // For daily/AI stories, check kid's age group
+  if(cat==='Daily'||cat===''){
+    try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');const p=getActivePlayer();if(p&&ag[p])cat=ag[p];}catch(e){}
+  }
+  if(cat==='New Readers')document.body.classList.add('reader-new');
+  else if(cat==='1st & 2nd Grade')document.body.classList.add('reader-early');
+}
 function startStory(id){
   currentStory=STORIES.find(s=>s.id===id);
   if(!currentStory)return;
+  setReaderClass();
   visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
   playScene('s1');
@@ -1077,6 +1122,7 @@ function goHome(){
   stopMusic();currentMood=null;
   stopSpeech();
   hideAILoading();
+  document.body.classList.remove('reader-new','reader-early');
   buildHome();
   refreshWelcome();
   showScreen('home-screen');
@@ -1560,12 +1606,13 @@ async function startDailyStory(){
         id:'daily_'+preGen.date,
         title:preGen.title||"Today's Adventure",
         theme:preGen.theme||'Adventure',
-        category:'Daily',
+        category:preGen.ageGroup||'Daily',
         aiStory:true,
         image:(preGen.scenes&&preGen.scenes[0]&&preGen.scenes[0].image)||'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80',
         seed:{},
         scenes:{}
       };
+      setReaderClass();
       visitedScenes=[];journey=[];currentAIScene=null;
       showScreen('player-screen');
       // Render first scene from pre-generated story
@@ -1950,6 +1997,48 @@ function showEnding(s,endingId){
   const reflect=(s.reflect||[]).slice();
   document.getElementById('reflect-list').innerHTML=reflect.map(q=>`<li>${q}</li>`).join('');
   showScreen('ending-screen');
+}
+
+/* =========================================================
+   PRINT BOOK
+   ========================================================= */
+function printBook(){
+  const player=getActivePlayer()||'Adventurer';
+  const avatar=getAvatar(player);
+  const title=currentStory?currentStory.title:'My Adventure';
+  const el=document.getElementById('print-book');
+
+  let pages='';
+
+  // Cover page
+  const avatarImg=avatar?`<img src="${avatar}" alt="${escapeHtml(player)}">`:'';
+  pages+=`<div class="book-cover"><h1>${escapeHtml(title)}</h1><div class="book-by">A story starring ${escapeHtml(player)}</div>${avatarImg}</div>`;
+
+  // Journey pages — each scene the player visited
+  for(let i=0;i<journey.length;i++){
+    const j=journey[i];
+    const sceneId=visitedScenes[i];
+    let img='';
+    if(currentStory&&currentStory.scenes&&currentStory.scenes[sceneId]){
+      const sc=currentStory.scenes[sceneId];
+      if(sc.image)img=`<img class="book-scene-img" src="${sc.image}" alt="">`;
+    }
+    pages+=`<div class="book-page"><h2>${j.chapter||('Chapter '+(i+1))}</h2>${img}<p>${escapeHtml(j.text)}</p><div class="book-choice">${escapeHtml(player)} chose: "${escapeHtml(j.choice)}"</div></div>`;
+  }
+
+  // Ending page
+  const endTitle=document.getElementById('ending-title')?.textContent||'The End';
+  const endText=document.getElementById('ending-text')?.textContent||'';
+  const endLesson=document.getElementById('ending-lesson')?.textContent||'';
+  const endEmoji=document.getElementById('ending-emoji')?.textContent||'';
+  pages+=`<div class="book-ending"><div style="font-size:64px;margin-bottom:12px">${endEmoji}</div><h2>${escapeHtml(endTitle)}</h2><p>${escapeHtml(endText)}</p>`;
+  if(endLesson){
+    pages+=`<div class="book-lesson"><strong>Life Lesson</strong>${escapeHtml(endLesson)}</div>`;
+  }
+  pages+=`<p style="margin-top:24px;color:#888;font-size:14px">Created on ${new Date().toLocaleDateString()} at adventure-movie.pages.dev</p></div>`;
+
+  el.innerHTML=pages;
+  window.print();
 }
 
 /* =========================================================
