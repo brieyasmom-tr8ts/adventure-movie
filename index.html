@@ -1324,9 +1324,38 @@ function setAvatar(name,dataUrl){
   const map=getAvatars();
   map[name]=dataUrl;
   try{localStorage.setItem('am_avatars',JSON.stringify(map));}catch(e){
-    // localStorage quota — drop other avatars to make room for this one
     try{localStorage.setItem('am_avatars',JSON.stringify({[name]:dataUrl}));}catch(e2){}
   }
+  // Sync avatar to server for daily story image generation
+  syncAvatarToServer(name,dataUrl);
+}
+async function syncAvatarToServer(name,dataUrl){
+  if(!dataUrl||!dataUrl.startsWith('data:image'))return;
+  try{
+    // Find or create profile on server
+    const resp=await fetch('/api/profiles');
+    const data=await resp.json();
+    let profile=(data.profiles||[]).find(p=>p.name===name);
+    const profileId=profile?profile.id:(name.toLowerCase().replace(/[^a-z0-9]/g,'')+'-'+Date.now().toString(36));
+    // Upload avatar to R2
+    const uploadResp=await fetch('/api/upload-avatar',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({profileId,dataUrl})
+    });
+    const uploadData=await uploadResp.json();
+    const avatarUrl=uploadData.url?(window.location.origin+uploadData.url):null;
+    // Update/create profile with avatar URL
+    const ag=getAgeGroup(name);
+    await fetch('/api/profiles',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:profileId,name,ageGroup:ag||'4th & 5th Grade',avatarUrl})
+    });
+  }catch(e){console.error('Avatar sync failed:',e);}
+}
+function getAgeGroup(name){
+  try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');return ag[name]||null;}catch(e){return null;}
 }
 function clearAvatar(name){
   const map=getAvatars();delete map[name];
