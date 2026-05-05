@@ -608,7 +608,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
                        Story-level seed:{tone,lesson} steers the AI.
    ========================================================= */
 const STORIES=[
-{id:"crossroads",title:"The Crossroads",theme:"Choose Your Path",emoji:"✨",category:"AI Adventures",aiStory:true,image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",seed:{tone:"cinematic, sensory, present-tense, ages 10+, emotionally honest",lesson:"the meaning of the journey emerges from the choices the player actually makes"},scenes:{
+{id:"crossroads",title:"The Crossroads",theme:"Choose Your Path",emoji:"✨",category:"Story Master",aiStory:true,image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",seed:{tone:"cinematic, sensory, present-tense, ages 10+, emotionally honest",lesson:"the meaning of the journey emerges from the choices the player actually makes",level:"L4"},scenes:{
   s1:{chapter:"AI Adventure · A Path Begins",mood:"calm",text:"You arrive at a crossroads at golden hour. Three paths fan out from a weathered stone marker. A traveler with kind eyes nods to you and says, 'Each one leads somewhere true. Choose by what's calling you — not what's safe.' Wind moves through the grass. Somewhere far off, a bell rings once. You feel your pulse in your fingertips. The story is about to be yours.",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",choices:[{text:"Take the forest path — follow the wild call of curiosity",next:"ai"},{text:"Take the mountain path — climb toward what scares you",next:"ai"},{text:"Take the town path — walk toward people who need you",next:"ai"}]}
 }},
 
@@ -1091,7 +1091,7 @@ function buildHome(){
   if(communityStories.length){
     cats['Community Adventures']=communityStories;
   }
-  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','Teen / Social','Bible','Leadership','AI Adventures','Community Adventures','Life Decisions'];
+  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','Teen / Social','Bible','Leadership','Community Adventures','Life Decisions'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
