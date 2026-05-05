@@ -68,6 +68,13 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .category-section{margin-bottom:28px}
 .category-title{color:#fff;font-size:18px;font-weight:800;margin-bottom:12px;padding:0 24px;letter-spacing:-0.2px}
 .category-title::after{content:'';display:inline-block;width:24px;height:1px;background:var(--gold);margin-left:10px;vertical-align:middle;opacity:0.5}
+.cat-grade{display:inline-block;font-size:11px;font-weight:500;color:var(--text-3);margin-left:6px;letter-spacing:0;text-transform:none;opacity:0.85}
+.level-pick-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 8px}
+.level-pick-btn{background:var(--bg-3);border:1.5px solid #2a2a2a;border-radius:12px;padding:12px 10px;text-align:left;cursor:pointer;color:#fff;display:flex;flex-direction:column;gap:4px;transition:all 0.15s}
+.level-pick-btn:hover{transform:translateY(-1px);border-color:var(--gold);background:#1c1c1c}
+.level-pick-btn.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.level-pick-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.level-pick-grade{font-size:11px;color:var(--text-3);font-weight:500}
 
 /* Netflix-style horizontal poster row */
 .story-grid{
@@ -597,6 +604,15 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
   </div>
 </div>
 
+<div class="modal" id="level-pick-modal">
+  <div class="modal-card">
+    <h2 id="level-pick-title">Pick a Reading Level</h2>
+    <p style="color:var(--text-2);font-size:14px;margin-top:-2px">Choose the right age range for this reader.</p>
+    <div class="level-pick-row" id="level-pick-buttons"></div>
+    <button class="modal-close" onclick="closeLevelPicker()">Cancel</button>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    STORIES — grouped by category
@@ -669,15 +685,47 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"🕯️",title:"Silent Palace",text:"You stayed silent. The order went out. Mordecai's words came true — deliverance came from somewhere else, slowly and painfully. Your name is not in the song the people sing about that year. You lived in the palace, safe, and you knew exactly what you had not done. Some silences last a lifetime.",lesson:"There are moments you are placed in — not for comfort, but for courage. Silence has a cost too, and sometimes you pay it forever.",reflect:["What is a position you've been placed in for a reason you haven't yet acted on?","Who is depending on a voice you haven't yet used?","What's the small first step you've been waiting for permission to take?"]}
 }},
 
-{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",seed:{tone:"biblical narrative, present-tense, sensory, ages 10+, reverent but not preachy",lesson:"real courage trusts something bigger than fear"},scenes:{
-  s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},
-  s2a:{chapter:"The Volunteer",mood:"tension",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},
-  s2b:{chapter:"Staying Back",mood:"calm",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},
-  s2c:{chapter:"The Plan",mood:"calm",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},
-  s3:{chapter:"The Valley",mood:"tension",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — let the story write itself from here ✨",next:"ai"}]},
-  end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},
-  end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. Another soldier eventually fights Goliath — and loses. You head home thinking about what might have been different.",lesson:"God gives each of us unique gifts. Trying to be someone else can hold you back.",reflect:["David's gift was his sling and his faith. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},
-  end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away. The standoff continues for forty more days. Later you hear that another boy — just like you — finally stood up and defeated the giant. You wonder what would have happened if you had been brave enough to try.",lesson:"Doing nothing is still a choice. When fear stops us from acting, we miss the chance to do great things.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if you had tried and failed?","What is one small brave thing you could do TODAY?"]}
+{id:"david-goliath",title:"Face the Giant",theme:"Courage",emoji:"⚔️",category:"Bible",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",seed:{tone:"biblical narrative, reverent but not preachy",lesson:"real courage trusts something bigger than fear"},
+levels:{
+  L1:{seed:{level:"L1",tone:"biblical story for ages 4-6, sight words and very short sentences"},scenes:{
+    s1:{chapter:"The Big Giant",mood:"tension",text:"A big giant comes. His name is Goliath. He is so loud. He yells at the king's men. They run. They are very scared. What will you do?",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step up. I will go.",next:"s2a"},{text:"Stay back. I am too small.",next:"s2b"}]},
+    s2a:{chapter:"The Boy Steps Up",mood:"tension",text:"You step up. The men gasp. The king looks at you. He says, 'You are too small.' You say, 'God will help me.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king about lions and bears.",next:"s3"},{text:"Go back home.",next:"end_poor"}]},
+    s2b:{chapter:"Many Days Go By",mood:"calm",text:"You stay back. Days go by. The big giant yells. The men run. You feel sad. You also feel brave inside.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Go tell the king now.",next:"s2a"},{text:"Do nothing.",next:"end_poor"}]},
+    s3:{chapter:"The Valley",mood:"tension",text:"You go to the giant. He laughs. He says, 'Am I a dog?' You hold five small stones. You spin your sling.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Throw the stone for God!",next:"end_best"},{text:"Wait. I am scared.",next:"end_neutral"}]},
+    end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone hits! The big giant falls. The men cheer! You ran to help. You did not run away. God was with you.",lesson:"Being brave means trusting God when you feel small.",reflect:["When did you feel scared and brave at the same time?","Who is a 'big giant' you can ask God to help you with?","What is one brave thing you can do TODAY?"]},
+    end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"You Stopped",text:"You stop. Another man tries. He loses. You go home. You think hard about being brave next time.",lesson:"It is okay to be scared. Try again next time.",reflect:["What do you do when you feel scared?","Who can help you be brave?","What helps you keep trying?"]},
+    end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"You Walked Away",text:"You walk away. The big giant yells for many days. Then a small boy like you tries. He wins. You wish you tried too.",lesson:"Doing nothing is still a choice. Brave hearts try.",reflect:["When have you wished you tried something?","What is something you can try this week?","What helps you not be scared?"]}
+  }},
+  L2:{seed:{level:"L2",tone:"biblical story for 1st-2nd grade, simple sentences, warm and clear"},scenes:{
+    s1:{chapter:"Bible · 1 Samuel 17",mood:"tension",text:"A giant named Goliath stands tall. He is nine feet high. He yells at the king's army. 'Send a man to fight me!' he shouts. All the soldiers shake. No one will go.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step up and shout, 'I will go!'",next:"s2a"},{text:"Stay back — you are just a kid",next:"s2b"},{text:"Run to the king with a plan",next:"s2c"}]},
+    s2a:{chapter:"The Volunteer",mood:"tension",text:"You step out. The big soldiers laugh. Your brother Eliab is mad. 'Go home, David!' he says. But you stand still. The king sees you and waves you over.",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how you fought a lion and a bear",next:"s3"},{text:"Say sorry, you are too small, and go home",next:"end_poor"}]},
+    s2b:{chapter:"Watching",mood:"calm",text:"Days go by. The giant yells every morning. The soldiers hide every time. You feel something hot in your chest. Maybe it is anger. Maybe it is faith. It keeps growing.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Run to the king with new courage",next:"s2a"},{text:"Stay back and do nothing",next:"end_poor"}]},
+    s2c:{chapter:"The Plan",mood:"calm",text:"You go straight to the king. 'I have a plan,' you say. He listens. You tell him about the lion and the bear. The king nods. He gives you his big armor.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try the heavy armor",next:"end_neutral"},{text:"No thanks — I'll use my sling",next:"s3"}]},
+    s3:{chapter:"The Valley",mood:"tension",text:"You walk down to the giant. He laughs at you. 'Am I a dog?' he yells. Your hand has five smooth stones. You take one. You spin your sling.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout 'I come in God's name!' and throw",next:"end_best"},{text:"Wait — pause for a breath",next:"end_neutral"}]},
+    end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone hits the giant's head. He falls hard. The army cheers your name. You did not have armor. You had something better — a small boy's faith in a big God.",lesson:"Real courage is choosing to act even when you are afraid, because you trust God is with you.",reflect:["When have you felt scared but did the right thing anyway?","What is a giant in your own life that you need courage to face?","Who do you put your trust in?"]},
+    end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Your Armor",text:"Saul's armor is so heavy you can barely walk. You take it off. Another soldier tries the fight. He loses. You think — maybe God made me different on purpose.",lesson:"God gives each of us unique gifts. We don't need to be like someone else.",reflect:["What gifts has God given you?","Have you ever tried to be like someone else?","What is something only YOU can do?"]},
+    end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"Forty More Days",text:"You stay back. The giant yells for forty more days. Then another boy tries — and wins. You hear his name in songs. You wonder what would have happened if you tried.",lesson:"Doing nothing is still a choice. Fear makes us miss good things.",reflect:["Is there something you have been too scared to try?","What is the worst thing that could happen if you tried?","What is one small brave thing for today?"]}
+  }},
+  L3:{seed:{level:"L3",tone:"biblical narrative, present-tense, sensory, ages 10+, reverent but not preachy"},scenes:{
+    s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David, a young shepherd boy. Your brothers are soldiers in King Saul's army, and you've come to bring them food. Suddenly the whole camp goes silent. A giant named Goliath — nine feet tall and covered in armor — steps forward and shouts: 'Send someone to fight me! If he wins, we'll be your servants. If I win, YOU become ours!' Everyone trembles in fear. No soldier will move.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Step forward and volunteer to fight Goliath",next:"s2a"},{text:"Stay quiet — you're just a kid, not a soldier",next:"s2b"},{text:"Go tell King Saul you have an idea",next:"s2c"}]},
+    s2a:{chapter:"The Volunteer",mood:"tension",text:"You walk forward boldly. The soldiers gasp. Your brother Eliab grabs your arm: 'Go home, David! This is too dangerous for you!' But you shake free. King Saul hears about you and calls you to his tent. He looks you up and down — you're just a boy with no armor. 'You can't fight him,' the king says. 'You have no training.'",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Tell the king how God helped you fight lions and bears as a shepherd",next:"s3"},{text:"Agree and go back home",next:"end_poor"}]},
+    s2b:{chapter:"Staying Back",mood:"calm",text:"You step back into the crowd. Days pass. Every morning and evening Goliath comes out and shouts his challenge. Every time, the Israelite soldiers run away in fear. You watch, feeling something stir in your chest — anger, sadness, and something else. Maybe courage.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Change your mind — go speak to King Saul now",next:"s2a"},{text:"Keep watching and do nothing",next:"end_poor"}]},
+    s2c:{chapter:"The Plan",mood:"calm",text:"You go straight to King Saul's tent. Guards try to stop you, but you push through. 'Your Majesty,' you say, 'I have an idea.' The king looks surprised. You explain that as a shepherd you've fought lions and bears to protect your flock — and God helped you every time. The king listens carefully. He offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Try on the armor even though it is too big",next:"end_neutral"},{text:"Thank the king but trust your sling and five smooth stones instead",next:"s3"}]},
+    s3:{chapter:"The Valley",mood:"tension",text:"You walk into the valley alone. Goliath sees you and laughs out loud. 'Am I a dog, that you come at me with sticks? I will feed your body to the birds!' he roars. The whole battlefield goes quiet. Your heart pounds. In your pouch are five smooth stones from the stream. You grip your sling. This is the moment.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Shout: 'You come with a sword, but I come in the name of the Lord!' and let the stone fly",next:"end_best"},{text:"Hesitate — let the story write itself from here ✨",next:"ai"}]},
+    end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The Giant Falls",text:"The stone flies straight and true. It strikes Goliath right in the forehead — and the great giant crashes to the ground. A shout goes up from the Israelite army. You ran toward the battle instead of away from it, trusting not in your own strength but in God's.",lesson:"Real courage is not the absence of fear — it is choosing to act despite fear, trusting that God is with you.",reflect:["When have you felt scared to do the right thing?","David trusted God more than he feared the giant. What do you put your trust in?","Who is a giant in your own life that you need courage to face?"]},
+    end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Not Ready Yet",text:"You put on Saul's armor but it is so heavy you can barely walk. Another soldier eventually fights Goliath — and loses. You head home thinking about what might have been different.",lesson:"God gives each of us unique gifts. Trying to be someone else can hold you back.",reflect:["David's gift was his sling and his faith. What gifts has God given YOU?","Have you ever tried to copy someone else instead of being yourself?","What would it look like to trust your own strengths today?"]},
+    end_poor:{ending:true,type:"Learning Ending",emoji:"🌱",title:"A Lesson Learned",text:"You walk away. The standoff continues for forty more days. Later you hear that another boy — just like you — finally stood up and defeated the giant. You wonder what would have happened if you had been brave enough to try.",lesson:"Doing nothing is still a choice. When fear stops us from acting, we miss the chance to do great things.",reflect:["Is there something you have been too afraid to try?","What is the worst that could have happened if you had tried and failed?","What is one small brave thing you could do TODAY?"]}
+  }},
+  L4:{seed:{level:"L4",tone:"biblical narrative for 5th-6th grade, atmospheric, present-tense, layered moral interiority, reverent but not preachy"},scenes:{
+    s1:{chapter:"Bible Story · 1 Samuel 17",mood:"tension",text:"You are David — teenage shepherd from Bethlehem, sent by your father to deliver bread and roasted grain to your three older brothers fighting in King Saul's army. You arrive at the front line just as a hush falls across forty thousand men. A giant strides into the valley between the camps: nine feet tall, helmet of bronze, scaled armor that ripples like water in the sun. His voice carries: 'Choose a man for yourselves and let him come down to me. If he wins, we will be your servants. If I win, you become ours.' The Israelite ranks shrink back. Your brothers' faces are stone. This has been going on, you learn, for forty days.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Volunteer in front of everyone — speak loudly enough that the king hears",next:"s2a"},{text:"Hold your tongue — you're a shepherd boy with no armor and no training",next:"s2b"},{text:"Find a way to King Saul directly, without the public spectacle",next:"s2c"}]},
+    s2a:{chapter:"The Volunteer",mood:"tension",text:"Your voice cracks the silence. Soldiers turn. Your oldest brother Eliab grabs your shoulder, furious: 'Why did you come down here? I know your pride and how wicked your heart is — you came just to watch the battle.' His words sting because some of it is true and some of it is his own fear projected onto you. The king's runner reaches you. The king will see you. You climb the slope to Saul's tent shaking, but unwilling to take it back.",image:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=800&q=80",choices:[{text:"Speak about the lion and the bear that God helped you face as a shepherd",next:"s3"},{text:"Apologize, say you spoke out of turn, and go back to your father",next:"end_poor"}]},
+    s2b:{chapter:"Among the Wagons",mood:"calm",text:"You stay among the supply lines. The giant's challenge ends each evening, and each evening men who have trained for war retreat from a question only one of them can answer. You eat with your brothers in silence. The faith that hummed in you while you watched the sheep — the steady, unspoken knowledge of who fights for Israel — feels far away here. Or maybe it's standing very close, and you're the one looking the other way.",image:"https://images.unsplash.com/photo-1474291102916-622af5ff5ce1?w=800&q=80",choices:[{text:"Walk to the king's tent with the calm of someone who has finally heard himself",next:"s2a"},{text:"Stay where you are — let history happen to someone else",next:"end_poor"}]},
+    s2c:{chapter:"Inside the Tent",mood:"calm",text:"You weave through the camp until a guard challenges you outside Saul's tent. You ask, simply, for an audience. Something in your face — composure where the king expects fear — gets you through. Inside, Saul listens. You don't perform. You explain about the bear that came for the flock and the lion that took a lamb, and how God did not abandon you in either valley. The king nods slowly and offers you his own armor and sword.",image:"https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",choices:[{text:"Accept the armor — the king has worn it; surely it must mean something",next:"end_neutral"},{text:"Refuse politely; ask for your sling and five smooth stones from the brook",next:"s3"}]},
+    s3:{chapter:"The Valley",mood:"tension",text:"You descend into the valley alone. The giant sees you and his face changes from rage to scorn. 'Am I a dog, that you come at me with sticks? Come here, and I will give your flesh to the birds.' Forty thousand men hold their breath. Your sling hangs slack in your hand. You answer in a voice that surprises even you: 'You come against me with sword and spear, but I come against you in the name of the Lord of hosts, the God of the armies of Israel, whom you have defied.' Five stones rest in your shepherd's bag. The first one is already moving up to your hand.",image:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",choices:[{text:"Run TOWARD the giant, sling whirling — don't give fear a chance to root",next:"end_best"},{text:"Stand your ground and let him close the distance",next:"end_neutral"}]},
+    end_best:{ending:true,type:"Best Ending",emoji:"🏆",title:"The First Stone",text:"The stone leaves the sling at the apex of your run, faster than thought, and finds the one strip of forehead between his helmet's plates. The giant pitches forward like a felled cedar. The valley erupts. You did not defeat him with stronger steel or longer training; you defeated him by refusing the size of his fear. Years from now, when you wear a crown you have not yet imagined, you will remember the precise weight of the first stone in your palm — and the strange peace that walked beside you down into the valley.",lesson:"Courage isn't a feeling that arrives before the fight. It's the small, deliberate trust you bring with you while the feelings are still all wrong.",reflect:["What's a 'giant' in your life — a fear so loud it has named itself?","Whose armor have you tried to wear because you didn't trust your own gifts yet?","What is one stone — one small, true thing — already in your bag?"]},
+    end_neutral:{ending:true,type:"Neutral Ending",emoji:"🛡️",title:"Borrowed Armor",text:"You take Saul's armor — but it is so heavy you can barely walk in it. You strip it off in the valley and stand exposed in just your tunic, sling, and the small stones. You stay rooted, waiting, instead of pressing in. The giant closes the distance. You miss your first throw. The men behind you gasp. You miss your second. The third — finally — finds its mark, but the fight has been longer and uglier than it needed to be. The song they sing for you is real, but quieter than the one that might have been.",lesson:"God gives each of us unique gifts. Wearing someone else's armor — even a king's — slows us down and dulls what was given.",reflect:["When have you tried to do God's work in someone else's strength?","What gifts have you been given that you sometimes apologize for?","What does it look like to walk into a hard thing as exactly who you are?"]},
+    end_poor:{ending:true,type:"Learning Ending",emoji:"🕯️",title:"The Hour That Passed",text:"You stay in the supply lines. The army stays in the valley. Forty more days the giant comes out and forty more times no one answers. Eventually he tires of the taunts; the armies disperse without resolution; the moment passes you and your generation by. Years later, in a book of chronicles, your name appears once — not for what you did, but for what you did not. Doing nothing is still a kind of decision.",lesson:"There are hours given to us that don't come back. Silence has a cost most people only learn the price of in retrospect.",reflect:["What hour are you in right now, and what's it asking?","What's the smallest first move available to you today?","Who is hoping a 'David' will step forward — and what would it mean if it were you?"]}
+  }}
 }},
 
 {id:"jonah",title:"Run from the Call",theme:"Obedience",emoji:"🐋",category:"Bible",image:"https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80",seed:{tone:"biblical narrative, present-tense, sensory, ages 10+, reverent but not preachy",lesson:"running from God's call costs more than obeying it"},scenes:{
@@ -1181,9 +1229,17 @@ function buildHome(){
       const bg=s.image?`style="background-image:url('${s.image}')"`:'';
       return `<div class="story-card" ${bg} onclick="startStory('${s.id}')">${cornerTag}<div class="card-emoji">${s.emoji}</div><div class="card-overlay"><div class="card-theme">${s.theme}</div><div class="card-title">${s.title}</div>${prog}</div></div>`;
     }).join('');
-    return `<div class="category-section"><div class="category-title">${cat}</div><div class="story-grid">${cards}</div></div>`;
+    const grade=CATEGORY_GRADES[cat];
+    const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
+    return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
   }).join('');
 }
+const CATEGORY_GRADES={
+  'Start Reading':'Pre-K – Kindergarten',
+  'Growing Reader':'1st – 2nd Grade',
+  'Brave Reader':'3rd – 4th Grade',
+  'Story Master':'5th – 6th Grade'
+};
 async function refreshCommunityStories(){
   try{
     const resp=await fetch('/api/community-stories');
@@ -1207,23 +1263,75 @@ function showScreen(id){
 
 function setReaderClass(){
   document.body.classList.remove('reader-new','reader-early');
-  // Static-story categories still use the legacy strings; daily/AI stories
-  // pick the reader's level from the active profile.
-  let cat=currentStory?(currentStory.category||''):'';
   let level=null;
-  if(cat==='Daily'||cat===''){
-    const p=getActivePlayer();
-    if(p)level=getLevel(p);
+  if(currentStory&&currentStory._chosenLevel){
+    // Multi-level story — kid (or parent) picked a level for this story.
+    level=currentStory._chosenLevel;
   }else{
+    const cat=currentStory?(currentStory.category||''):'';
     if(cat==='Start Reading'||cat==='New Readers')level='L1';
     else if(cat==='Growing Reader'||cat==='1st & 2nd Grade')level='L2';
+    else if(cat==='Daily'||cat===''){
+      const p=getActivePlayer();
+      if(p)level=getLevel(p);
+    }
   }
   if(level==='L1')document.body.classList.add('reader-new');
   else if(level==='L2')document.body.classList.add('reader-early');
 }
 function startStory(id){
-  currentStory=STORIES.find(s=>s.id===id);
-  if(!currentStory)return;
+  const story=STORIES.find(s=>s.id===id);
+  if(!story)return;
+  if(story.levels&&typeof story.levels==='object'){
+    // Auto-route to the active player's profile level. If the profile has
+    // no level, or the requested level isn't authored, fall back: prefer L3,
+    // then any other available, else show the picker as a last resort.
+    const player=getActivePlayer();
+    const playerLevel=player?getLevel(player):null;
+    if(playerLevel&&story.levels[playerLevel]){
+      pickStoryLevel(id,playerLevel);
+      return;
+    }
+    const order=['L3','L2','L4','L1'];
+    for(const l of order){
+      if(story.levels[l]){pickStoryLevel(id,l);return;}
+    }
+    showLevelPicker(story);
+    return;
+  }
+  currentStory=story;
+  setReaderClass();
+  visitedScenes=[];journey=[];currentAIScene=null;
+  showScreen('player-screen');
+  playScene('s1');
+}
+function showLevelPicker(story){
+  const player=getActivePlayer();
+  const playerLevel=player?getLevel(player):'L2';
+  const order=['L1','L2','L3','L4'];
+  const html=order.filter(l=>story.levels[l]).map(lvl=>{
+    const info=LEVELS[lvl];
+    const active=lvl===playerLevel;
+    return `<button class="level-pick-btn${active?' active':''}" onclick="pickStoryLevel('${story.id}','${lvl}')"><span class="level-pick-name">${info.emoji} ${info.name}</span><span class="level-pick-grade">${info.grade}</span></button>`;
+  }).join('');
+  document.getElementById('level-pick-title').textContent=story.title;
+  document.getElementById('level-pick-buttons').innerHTML=html;
+  document.getElementById('level-pick-modal').classList.add('active');
+}
+function closeLevelPicker(){
+  document.getElementById('level-pick-modal').classList.remove('active');
+}
+function pickStoryLevel(storyId,lvl){
+  const story=STORIES.find(s=>s.id===storyId);
+  if(!story||!story.levels||!story.levels[lvl])return;
+  closeLevelPicker();
+  const variant=story.levels[lvl];
+  currentStory={
+    ...story,
+    scenes:variant.scenes,
+    seed:Object.assign({},story.seed||{},variant.seed||{},{level:lvl}),
+    _chosenLevel:lvl
+  };
   setReaderClass();
   visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
