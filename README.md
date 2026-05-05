@@ -26,9 +26,20 @@ npx wrangler pages dev . --binding ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
 
 For everything except AI Adventures, just open `index.html` in a browser.
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Pages + Worker)
 
-Already wired up — push to the configured branch and Pages auto-deploys.
+Two GitHub Actions workflows handle deploys — both fire on push to `main`:
+
+- **`.github/workflows/deploy.yml`** — deploys the static site + Pages Functions (`functions/api/*`) to Cloudflare Pages.
+- **`.github/workflows/deploy-worker.yml`** — deploys the daily-story worker in `workers/daily-story/`, syncs `ANTHROPIC_API_KEY` and `FAL_API_KEY` from GitHub secrets to Cloudflare, and POSTs the worker's `/trigger` so today's generation starts immediately (no need to wait for the 5 AM UTC cron).
+
+Required GitHub Actions secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `ANTHROPIC_API_KEY`, `FAL_API_KEY`. The Pages-side `OPENAI_API_KEY` lives in Cloudflare Pages env vars, not GitHub.
+
+To redeploy without code changes, use the Actions tab → "Run workflow" on either workflow.
+
+## Working with Claude on this repo
+
+See [CLAUDE.md](./CLAUDE.md) for standing authorization (Claude can push, merge to main, trigger CI, etc. without re-asking) and notes on what does/doesn't work from the sandboxed Claude environment.
 
 ### Enable AI Adventures (one-time setup)
 
