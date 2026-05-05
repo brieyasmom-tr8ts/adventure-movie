@@ -1199,12 +1199,27 @@ function submitNameModal(){
     registerProfileForDaily(name,pendingAgeGroup);
   }
 }
-function registerProfileForDaily(name,ageGroup){
+async function registerProfileForDaily(name,ageGroup){
   const avatar=getAvatar(name);
+  let avatarUrl=null;
+  const profileId=name.toLowerCase().replace(/[^a-z0-9]/g,'')+'-'+Date.now().toString(36);
+  // Upload avatar to R2 so cron worker can access it
+  if(avatar&&avatar.startsWith('data:image')){
+    try{
+      const resp=await fetch('/api/upload-avatar',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({profileId,dataUrl:avatar})
+      });
+      const data=await resp.json();
+      if(data.url)avatarUrl=window.location.origin+data.url;
+    }catch(e){}
+  }
+  // Register profile for daily story generation
   fetch('/api/profiles',{
     method:'POST',
     headers:{'content-type':'application/json'},
-    body:JSON.stringify({name,ageGroup,avatarUrl:avatar||null})
+    body:JSON.stringify({id:profileId,name,ageGroup,avatarUrl})
   }).catch(()=>{});
 }
 // Backwards-compat alias kept so existing handler bindings still work
