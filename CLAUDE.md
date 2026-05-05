@@ -42,6 +42,14 @@ If I say "deploy it," "ship it," "push it," or "merge to main" — that's the gr
 - `POST https://adventure-movie-daily.<subdomain>.workers.dev/trigger` — runs today's generation immediately. Used by the deploy workflow.
 - `scheduled` cron — runs the same path daily at 5 AM UTC.
 
+## Community Adventures (auto-shared AI stories)
+
+When a kid finishes an AI Adventure, the full journey is auto-posted to `/api/community-stories` and surfaced in a "Community Adventures" row on the home screen labeled "Made by &lt;name&gt;". Replays are linear playback of the saved scenes — zero Anthropic tokens.
+
+- KV layout: full record at `community:<uuid>`, summary list at `community:_index` (newest first, capped at 200).
+- Dedupe: same `(storyId + ordered choice texts)` SHA-1 path → bumps `replayCount` instead of creating a duplicate.
+- Admin delete: `DELETE /api/community-stories?id=<id>` requires `Authorization: Bearer <ADMIN_TOKEN>`. The Cloudflare Pages env var `ADMIN_TOKEN` must be set, otherwise DELETE returns 503. Parents capture the token client-side by visiting `/?admin=<token>` once on each device — it's stripped from the URL and stored in `localStorage.am_admin_token`. The delete `×` only renders when that key is present.
+
 ## Avatar pipeline gotcha (already fixed)
 
 iPhone photo-library uploads come through as HEIC; OpenAI's images/edits API rejects HEIC. `index.html` (`normalizeAvatarImage`) decodes any browser-renderable file via `<img>` and re-encodes through a canvas as JPEG before posting to `/api/avatar`. If the upload path regresses, that function is the first place to look.

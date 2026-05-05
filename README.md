@@ -73,6 +73,21 @@ Privacy note: the original photo is sent once to OpenAI for the conversion
 and never stored server-side. Only the resulting cartoon (base64) is saved
 in the kid's localStorage on their device.
 
+### Community Adventures (optional admin delete)
+
+When a kid finishes any AI Adventure, the journey is auto-shared to a community pool so other kids can replay it without spending fresh Anthropic tokens. Each card is labeled "Made by &lt;name&gt;".
+
+To enable parent moderation (delete unwanted entries):
+
+1. Cloudflare → **Pages** → `adventure-movie` → **Settings** → **Environment variables**.
+2. Add a **Production** variable:
+   - Name: `ADMIN_TOKEN`
+   - Value: any random string you'll remember
+3. Redeploy.
+4. On any device you want to manage from, visit `https://your-site/?admin=<TOKEN>` once. The token gets stored in `localStorage` and a `×` button appears on community story cards.
+
+If `ADMIN_TOKEN` is not set, deletes return 503 and the auto-share continues without moderation.
+
 ## How it works
 
 - **Hand-crafted stories** live in the `STORIES` array in `index.html`. Each scene has `text`, `image`, optional `mood`, and `choices: [{text, next}]`.
