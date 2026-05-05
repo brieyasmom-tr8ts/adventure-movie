@@ -1091,7 +1091,7 @@ function buildHome(){
   if(communityStories.length){
     cats['Community Adventures']=communityStories;
   }
-  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','AI Adventures','Community Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
+  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','Teen / Social','Bible','Leadership','AI Adventures','Community Adventures','Life Decisions'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
@@ -1842,13 +1842,15 @@ function startCustomStory(){
   if(!theme){if(inp)inp.focus();return;}
   closeCustomCreator();
   const isBible=/bible/i.test(theme);
+  const player=getActivePlayer();
+  const playerLevel=player?getLevel(player):'L2';
   const seed={
     title:isBible?'A Bible Adventure':theme.slice(0,40),
     theme:theme,
     category:'Custom',
     tone:isBible?'biblical narrative drawn from a real Bible story (e.g. Daniel, David, Joseph, Esther, Moses), reverent but fun, present-tense, age-appropriate, the player is dropped into the action':'fun, exciting, age-appropriate, present-tense',
     lesson:isBible?'a real lesson from the Bible story unfolds through the choices the player makes':'every choice shapes the story',
-    readingLevel:'default'
+    level:playerLevel
   };
   const player=getActivePlayer();
   if(player)seed.playerName=player;
