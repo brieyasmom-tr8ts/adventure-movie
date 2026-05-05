@@ -124,7 +124,9 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   overflow-y:auto;
   display:flex;flex-direction:column;
   z-index:10;
+  -webkit-overflow-scrolling:touch;
 }
+.choices-wrap{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,8px)}
 .scene-chapter{
   display:inline-block;align-self:flex-start;
   font-size:10.5px;text-transform:uppercase;letter-spacing:3.5px;
@@ -133,7 +135,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   padding:6px 12px;border-radius:999px;margin-bottom:16px;
 }
 .scene-chapter:empty{display:none}
-.scene-text{font-size:19px;line-height:1.65;color:var(--text-1);margin-bottom:24px;flex:1;cursor:pointer;min-height:1.65em;font-weight:400;letter-spacing:0.1px}
+.scene-text{font-size:19px;line-height:1.65;color:var(--text-1);margin-bottom:16px;flex-shrink:0;cursor:pointer;min-height:1.65em;font-weight:400;letter-spacing:0.1px}
 .scene-text .caret{display:inline-block;width:2px;background:var(--gold);animation:blink 1s steps(2) infinite;margin-left:2px;vertical-align:text-bottom;height:1em;border-radius:1px}
 @keyframes blink{50%{opacity:0}}
 
@@ -468,6 +470,15 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <h2 id="name-modal-title">First name or nickname</h2>
     <p>So we can use it inside your stories.</p>
     <input class="interactive-input" id="name-input" placeholder="First name or nickname" maxlength="20" autocomplete="off">
+
+    <div style="margin:14px 0">
+      <label style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;display:block;margin-bottom:8px">Age group</label>
+      <div class="mode-pill" id="age-group-pill" role="group" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
+        <button type="button" onclick="pickAge(this,'New Readers')" style="font-size:11px;padding:8px 12px">Pre-K / K</button>
+        <button type="button" onclick="pickAge(this,'1st & 2nd Grade')" class="active" style="font-size:11px;padding:8px 12px">1st-2nd</button>
+        <button type="button" onclick="pickAge(this,'4th & 5th Grade')" style="font-size:11px;padding:8px 12px">4th-5th</button>
+      </div>
+    </div>
 
     <div class="avatar-section">
       <div class="avatar-preview" id="avatar-preview">
@@ -991,8 +1002,10 @@ function renderBranching(s){
   ).join('');
   startTypewriter(s.text,()=>{
     choicesWrap.classList.remove('hidden');
-    const body=document.querySelector('.scene-body');
-    setTimeout(()=>{const cw=document.getElementById('choices-wrap');if(cw)cw.scrollIntoView({block:'end',behavior:'smooth'});},100);
+    setTimeout(()=>{
+      const body=document.querySelector('.scene-body');
+      if(body)body.scrollTo({top:body.scrollHeight,behavior:'smooth'});
+    },150);
     startTimer(s.choices[0].next);
   });
 }
@@ -1140,12 +1153,21 @@ function refreshWelcome(){
 
 /* Modal flow — used for both first-time and "add another" */
 let pendingAvatar=null;
+let pendingAgeGroup='1st & 2nd Grade';
+function pickAge(btn,group){
+  pendingAgeGroup=group;
+  document.querySelectorAll('#age-group-pill button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 function openNameModal(opts){
   pendingAvatar=null;
+  pendingAgeGroup='1st & 2nd Grade';
   resetAvatarPreview();
   const modal=document.getElementById('name-modal');
   document.getElementById('name-input').value='';
   document.getElementById('name-modal-title').textContent=(opts&&opts.title)||"First name or nickname";
+  // Reset age group selection
+  document.querySelectorAll('#age-group-pill button').forEach((b,i)=>b.classList.toggle('active',i===1));
   // Show cancel only when user already has at least one profile (so they can back out)
   document.getElementById('name-cancel').style.display=getPlayers().length>0?'block':'none';
   modal.classList.add('active');
@@ -1163,6 +1185,8 @@ function submitNameModal(){
   if(!name){inp.focus();return;}
   if(addPlayer(name)){
     if(pendingAvatar)setAvatar(name,pendingAvatar);
+    // Save age group to localStorage
+    try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');ag[name]=pendingAgeGroup;localStorage.setItem('am_age_groups',JSON.stringify(ag));}catch(e){}
     pendingAvatar=null;
     document.getElementById('name-modal').classList.remove('active');
     inp.value='';
@@ -1171,7 +1195,17 @@ function submitNameModal(){
     refreshWelcome();
     renderSwitcherList();
     buildHome();
+    // Register with daily story API (fire and forget)
+    registerProfileForDaily(name,pendingAgeGroup);
   }
+}
+function registerProfileForDaily(name,ageGroup){
+  const avatar=getAvatar(name);
+  fetch('/api/profiles',{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({name,ageGroup,avatarUrl:avatar||null})
+  }).catch(()=>{});
 }
 // Backwards-compat alias kept so existing handler bindings still work
 function submitFirstName(){submitNameModal();}
