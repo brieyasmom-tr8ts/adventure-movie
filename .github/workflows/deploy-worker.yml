@@ -1,0 +1,50 @@
+name: Deploy daily-story worker
+
+on:
+  push:
+    branches: [main, claude/deploy-daily-story-worker-TKVUN]
+    paths:
+      - 'workers/daily-story/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+    inputs:
+      trigger_after_deploy:
+        description: 'POST /trigger after deploy'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/daily-story
+          secrets: |
+            ANTHROPIC_API_KEY
+            FAL_API_KEY
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
+
+      - name: Trigger today's run
+        if: github.event_name != 'workflow_dispatch' || inputs.trigger_after_deploy
+        env:
+          DEPLOY_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: |
+          URL=$(printf '%s' "$DEPLOY_OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | head -1)
+          if [ -z "$URL" ]; then
+            echo "Could not parse worker URL from deploy output." >&2
+            exit 1
+          fi
+          echo "Triggering $URL/trigger"
+          curl -X POST -fsS --max-time 60 "$URL/trigger"
+          echo
