@@ -111,33 +111,58 @@ function json(obj, status = 200) {
 }
 
 function buildSystemPrompt(seed) {
-  const readingLevel = seed.readingLevel || "default";
-  let writingRules;
+  // Canonical levels: L1 (Start Reading) … L4 (Story Master).
+  // Accept legacy readingLevel values for backward compat.
+  const legacyMap = {
+    "new-readers": "L1",
+    "early-elementary": "L2",
+    "default": "L3"
+  };
+  const level = (seed.level && /^L[1-4]$/.test(seed.level))
+    ? seed.level
+    : (legacyMap[seed.readingLevel] || "L3");
 
-  if (readingLevel === "new-readers") {
+  let writingRules;
+  if (level === "L1") {
     writingRules = [
-      "CRITICAL WRITING RULES (New Readers — Kindergarten level):",
-      "- Use ONLY very simple words (2-5 letters): go, run, see, big, red, dog, cat, mom, dad, fun, hop, sit, top, up, down, look, can, will, yes, no, stop, jump, play, sad, help, good, come, one, two, three.",
-      "- Very short sentences: 3-7 words MAX.",
-      "- Use repetitive, rhythmic patterns like Dr. Seuss: 'I see a dog. A big dog. A big, big dog!'",
-      "- Write 30–60 words of scene text. Simple. Rhythmic. Fun to read aloud.",
-      "- Each choice text must be under 8 words and use only simple words.",
-      "- After 5–7 scenes, steer toward an ending. After 8 scenes, end the story."
+      "WRITING RULES — Level 1 · Start Reading (Pre-K / Kindergarten):",
+      "- Use only very simple sight words (the, I, see, go, run, big, dog, cat, mom, dad, fun, up, down, look, can, will, yes, no, stop, jump, play, sad, help, good, come, one, two, three).",
+      "- Very short sentences: 3–6 words each.",
+      "- 1–2 sentences per scene. Use repetition: 'I see a dog. The dog runs.'",
+      "- Include simple emotional words (happy, sad, scared) where useful.",
+      "- Each choice text under 8 words, very simple words only.",
+      "- Exactly 2 choices per scene.",
+      "- Aim for 6–8 scenes total and 2–3 endings. After 6 scenes, steer toward an ending."
     ];
-  } else if (readingLevel === "early-elementary") {
+  } else if (level === "L2") {
     writingRules = [
-      "WRITING RULES (1st & 2nd Grade — ages 6-8):",
-      "- Use simple vocabulary. Short sentences (5-12 words).",
-      "- Short paragraphs: 2-3 sentences per scene.",
-      "- Write 40–80 words of scene text. Concrete, sensory, present tense.",
-      "- Each choice text must be under 12 words and easy to read.",
-      "- After 5–7 scenes, steer toward an ending. After 8 scenes, end the story."
+      "WRITING RULES — Level 2 · Growing Reader (1st – 2nd Grade):",
+      "- Simple sentences, 5–10 words each.",
+      "- 2–3 sentences per scene. Common vocabulary with the occasional gentle stretch word.",
+      "- Include simple dialogue occasionally; keep tone fun and slightly playful.",
+      "- Choices clear but slightly more interesting (not always obvious).",
+      "- 2–3 choices per scene.",
+      "- Aim for 8–10 scenes total and 3–4 endings. After 8 scenes, steer toward an ending."
+    ];
+  } else if (level === "L3") {
+    writingRules = [
+      "WRITING RULES — Level 3 · Brave Reader (3rd – 4th Grade):",
+      "- Clear, more developed sentences, 8–15 words each.",
+      "- 3–5 sentences per scene. Include character thoughts and feelings ('You feel nervous but curious…').",
+      "- Introduce mild tension, conflict, and realistic dialogue. Consequences should make sense.",
+      "- Choices require thinking — avoid obvious right/wrong framing.",
+      "- 2–3 choices per scene.",
+      "- Aim for 10–12 scenes total and 4–5 endings. After 10 scenes, steer toward an ending."
     ];
   } else {
     writingRules = [
-      "WRITING RULES:",
-      "- Write 70–130 words of scene text. Concrete, sensory, present tense.",
-      "- After 4–6 scenes, steer toward an ending. After 7 scenes, end the story."
+      "WRITING RULES — Level 4 · Story Master (5th – 6th Grade):",
+      "- Varied sentence structure, 12–20 words. Richer vocabulary (still age-appropriate).",
+      "- 4–6 sentences per scene. Internal conflict, layered decisions, consequences that unfold.",
+      "- Immersive, thoughtful, slightly intense tone. Real moral decisions.",
+      "- Choices complex with meaningful consequences.",
+      "- 2–3 choices per scene.",
+      "- Aim for 12–15 scenes total and 5–6 endings. After 12 scenes, steer toward an ending."
     ];
   }
 

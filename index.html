@@ -56,6 +56,14 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 
 .mode-pill{display:none}
 
+.level-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1.5px solid var(--border-2);border-radius:14px;color:#fff;font-family:inherit;cursor:pointer;text-align:left;transition:transform 0.12s,background 0.2s,border-color 0.2s,box-shadow 0.2s}
+.level-btn:hover{background:rgba(255,210,0,0.06);border-color:rgba(255,210,0,0.4)}
+.level-btn.active{background:linear-gradient(135deg,rgba(255,210,0,0.2),rgba(255,210,0,0.06));border-color:var(--gold);box-shadow:0 6px 22px rgba(255,210,0,0.18)}
+.level-btn .level-emoji{font-size:22px;flex-shrink:0;line-height:1}
+.level-btn .level-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.level-btn .level-name{font-size:14px;font-weight:800;color:#fff;letter-spacing:-0.1px}
+.level-btn .level-grade{font-size:11px;color:var(--text-3);letter-spacing:0.4px}
+
 #categories-wrap{padding:20px 0 80px}
 .category-section{margin-bottom:28px}
 .category-title{color:#fff;font-size:18px;font-weight:800;margin-bottom:12px;padding:0 24px;letter-spacing:-0.2px}
@@ -523,11 +531,12 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <input class="interactive-input" id="name-input" placeholder="First name or nickname" maxlength="20" autocomplete="off">
 
     <div style="margin:14px 0">
-      <label style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;display:block;margin-bottom:8px">Age group</label>
-      <div class="mode-pill" id="age-group-pill" role="group" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
-        <button type="button" onclick="pickAge(this,'New Readers')" style="font-size:11px;padding:8px 12px">Pre-K / K</button>
-        <button type="button" onclick="pickAge(this,'1st & 2nd Grade')" class="active" style="font-size:11px;padding:8px 12px">1st-2nd</button>
-        <button type="button" onclick="pickAge(this,'4th & 5th Grade')" style="font-size:11px;padding:8px 12px">4th-5th</button>
+      <label style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;display:block;margin-bottom:8px">Reading level</label>
+      <div class="level-pill" id="level-pill" role="group" style="display:flex;flex-direction:column;gap:6px">
+        <button type="button" onclick="pickLevel(this,'L1')" class="level-btn"><span class="level-emoji">🌱</span><span class="level-text"><span class="level-name">Start Reading</span><span class="level-grade">Pre-K · Kindergarten</span></span></button>
+        <button type="button" onclick="pickLevel(this,'L2')" class="level-btn active"><span class="level-emoji">🚶</span><span class="level-text"><span class="level-name">Growing Reader</span><span class="level-grade">1st – 2nd Grade</span></span></button>
+        <button type="button" onclick="pickLevel(this,'L3')" class="level-btn"><span class="level-emoji">🧭</span><span class="level-text"><span class="level-name">Brave Reader</span><span class="level-grade">3rd – 4th Grade</span></span></button>
+        <button type="button" onclick="pickLevel(this,'L4')" class="level-btn"><span class="level-emoji">🔥</span><span class="level-text"><span class="level-name">Story Master</span><span class="level-grade">5th – 6th Grade</span></span></button>
       </div>
     </div>
 
@@ -561,16 +570,6 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
       <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
     </div>
     <button class="modal-close" onclick="closeSwitcher()">Done</button>
-  </div>
-</div>
-
-<div class="modal" id="age-modal">
-  <div class="modal-card">
-    <h2>How old is the reader?</h2>
-    <p>So today's story matches their level.</p>
-    <input class="interactive-input" id="age-input" type="number" inputmode="numeric" min="3" max="17" placeholder="Age" autocomplete="off" onkeydown="if(event.key==='Enter'){submitAgeModal()}">
-    <button class="interactive-submit" onclick="submitAgeModal()">Continue</button>
-    <button class="modal-close" onclick="closeAgeModal()">Cancel</button>
   </div>
 </div>
 
@@ -1117,13 +1116,19 @@ function showScreen(id){
 
 function setReaderClass(){
   document.body.classList.remove('reader-new','reader-early');
+  // Static-story categories still use the legacy strings; daily/AI stories
+  // pick the reader's level from the active profile.
   let cat=currentStory?(currentStory.category||''):'';
-  // For daily/AI stories, check kid's age group
+  let level=null;
   if(cat==='Daily'||cat===''){
-    try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');const p=getActivePlayer();if(p&&ag[p])cat=ag[p];}catch(e){}
+    const p=getActivePlayer();
+    if(p)level=getLevel(p);
+  }else{
+    if(cat==='New Readers')level='L1';
+    else if(cat==='1st & 2nd Grade')level='L2';
   }
-  if(cat==='New Readers')document.body.classList.add('reader-new');
-  else if(cat==='1st & 2nd Grade')document.body.classList.add('reader-early');
+  if(level==='L1')document.body.classList.add('reader-new');
+  else if(level==='L2')document.body.classList.add('reader-early');
 }
 function startStory(id){
   currentStory=STORIES.find(s=>s.id===id);
@@ -1347,16 +1352,13 @@ async function syncAvatarToServer(name,dataUrl){
     const uploadData=await uploadResp.json();
     const avatarUrl=uploadData.url?(window.location.origin+uploadData.url):null;
     // Update/create profile with avatar URL
-    const ag=getAgeGroup(name);
+    const level=getLevel(name);
     await fetch('/api/profiles',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({id:profileId,name,ageGroup:ag||'4th & 5th Grade',avatarUrl})
+      body:JSON.stringify({id:profileId,name,level,ageGroup:LEVELS[level].ageGroup,avatarUrl})
     });
   }catch(e){console.error('Avatar sync failed:',e);}
-}
-function getAgeGroup(name){
-  try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');return ag[name]||null;}catch(e){return null;}
 }
 function clearAvatar(name){
   const map=getAvatars();delete map[name];
@@ -1387,23 +1389,71 @@ function refreshWelcome(){
   el.innerHTML=`<span>${avHtml}Hi <strong style="color:#fff">${escapeHtml(p)}</strong>!</span>${streak?`<span class="streak-chip">${streak}</span>`:''}`;
 }
 
+/* Reading levels — friendly names + grade ranges. Canonical IDs L1-L4 are
+   stored on the profile and sent to the story APIs. Legacy ageGroup strings
+   are mapped to a level on the fly so existing profiles keep working. */
+const LEVELS={
+  L1:{id:'L1',emoji:'🌱',name:'Start Reading',grade:'Pre-K · Kindergarten',ageGroup:'Start Reading'},
+  L2:{id:'L2',emoji:'🚶',name:'Growing Reader',grade:'1st – 2nd Grade',ageGroup:'Growing Reader'},
+  L3:{id:'L3',emoji:'🧭',name:'Brave Reader',grade:'3rd – 4th Grade',ageGroup:'Brave Reader'},
+  L4:{id:'L4',emoji:'🔥',name:'Story Master',grade:'5th – 6th Grade',ageGroup:'Story Master'}
+};
+function levelFromAgeGroup(ag){
+  if(!ag)return 'L2';
+  if(LEVELS[ag])return ag;
+  // New canonical names
+  if(ag==='Start Reading')return 'L1';
+  if(ag==='Growing Reader')return 'L2';
+  if(ag==='Brave Reader')return 'L3';
+  if(ag==='Story Master')return 'L4';
+  // Legacy names
+  if(ag==='New Readers')return 'L1';
+  if(ag==='1st & 2nd Grade')return 'L2';
+  if(ag==='3rd & 4th Grade')return 'L3';
+  if(ag==='4th & 5th Grade')return 'L3';
+  if(ag==='5th & 6th Grade')return 'L4';
+  return 'L2';
+}
+function getLevel(name){
+  if(!name)return 'L2';
+  try{
+    const m=JSON.parse(localStorage.getItem('am_levels')||'{}');
+    if(m[name]&&LEVELS[m[name]])return m[name];
+  }catch(e){}
+  // Fall back to legacy am_age_groups storage
+  try{
+    const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');
+    if(ag[name])return levelFromAgeGroup(ag[name]);
+  }catch(e){}
+  return 'L2';
+}
+function setLevel(name,level){
+  if(!name||!LEVELS[level])return;
+  let m={};try{m=JSON.parse(localStorage.getItem('am_levels')||'{}');}catch(e){}
+  m[name]=level;localStorage.setItem('am_levels',JSON.stringify(m));
+  // Mirror to legacy storage for any code path that still reads ageGroup
+  let ag={};try{ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');}catch(e){}
+  ag[name]=LEVELS[level].ageGroup;localStorage.setItem('am_age_groups',JSON.stringify(ag));
+}
+
 /* Modal flow — used for both first-time and "add another" */
 let pendingAvatar=null;
-let pendingAgeGroup='1st & 2nd Grade';
-function pickAge(btn,group){
-  pendingAgeGroup=group;
-  document.querySelectorAll('#age-group-pill button').forEach(b=>b.classList.remove('active'));
+let pendingLevel='L2';
+function pickLevel(btn,level){
+  if(!LEVELS[level])return;
+  pendingLevel=level;
+  document.querySelectorAll('#level-pill .level-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
 function openNameModal(opts){
   pendingAvatar=null;
-  pendingAgeGroup='1st & 2nd Grade';
+  pendingLevel='L2';
   resetAvatarPreview();
   const modal=document.getElementById('name-modal');
   document.getElementById('name-input').value='';
   document.getElementById('name-modal-title').textContent=(opts&&opts.title)||"First name or nickname";
-  // Reset age group selection
-  document.querySelectorAll('#age-group-pill button').forEach((b,i)=>b.classList.toggle('active',i===1));
+  // Reset level selection — second button (L2 Growing Reader) is the default
+  document.querySelectorAll('#level-pill .level-btn').forEach((b,i)=>b.classList.toggle('active',i===1));
   // Show cancel only when user already has at least one profile (so they can back out)
   document.getElementById('name-cancel').style.display=getPlayers().length>0?'block':'none';
   modal.classList.add('active');
@@ -1421,8 +1471,7 @@ function submitNameModal(){
   if(!name){inp.focus();return;}
   if(addPlayer(name)){
     if(pendingAvatar)setAvatar(name,pendingAvatar);
-    // Save age group to localStorage
-    try{const ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');ag[name]=pendingAgeGroup;localStorage.setItem('am_age_groups',JSON.stringify(ag));}catch(e){}
+    setLevel(name,pendingLevel);
     pendingAvatar=null;
     document.getElementById('name-modal').classList.remove('active');
     inp.value='';
@@ -1432,10 +1481,10 @@ function submitNameModal(){
     renderSwitcherList();
     buildHome();
     // Register with daily story API (fire and forget)
-    registerProfileForDaily(name,pendingAgeGroup);
+    registerProfileForDaily(name,pendingLevel);
   }
 }
-async function registerProfileForDaily(name,ageGroup){
+async function registerProfileForDaily(name,level){
   const avatar=getAvatar(name);
   let avatarUrl=null;
   const profileId=name.toLowerCase().replace(/[^a-z0-9]/g,'')+'-'+Date.now().toString(36);
@@ -1455,7 +1504,7 @@ async function registerProfileForDaily(name,ageGroup){
   fetch('/api/profiles',{
     method:'POST',
     headers:{'content-type':'application/json'},
-    body:JSON.stringify({id:profileId,name,ageGroup,avatarUrl})
+    body:JSON.stringify({id:profileId,name,level,ageGroup:LEVELS[level].ageGroup,avatarUrl})
   }).catch(()=>{});
 }
 // Backwards-compat alias kept so existing handler bindings still work
@@ -1621,21 +1670,15 @@ const FRUITS_OF_SPIRIT=[
   {fruit:'self-control', theme:'choosing self-control over impulse'}
 ];
 function dayOfYear(d){d=d||new Date();const start=Date.UTC(d.getUTCFullYear(),0,1);return Math.floor((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-start)/86400000);}
-function getAges(){try{return JSON.parse(localStorage.getItem('am_ages')||'{}');}catch(e){return {};}}
-function getAge(name){return getAges()[name]||null;}
-function setAge(name,age){const m=getAges();m[name]=age;localStorage.setItem('am_ages',JSON.stringify(m));}
-function readingLevelForAge(age){if(!age)return 'default';if(age<=6)return 'new-readers';if(age<=8)return 'early-elementary';return 'default';}
-function ageToneForAge(age){if(!age)return 'warm, present-tense, age-appropriate';if(age<=6)return 'very simple words, short rhyming sentences, joyful and easy to read aloud';if(age<=8)return 'simple sentences, warm and concrete, ages 6-8';if(age<=11)return 'present-tense, sensory, ages 9-11, thoughtful and exciting';return 'present-tense, emotionally honest, tween/teen';}
-function getDailySeed(age){
+function getDailySeed(level){
   const f=FRUITS_OF_SPIRIT[dayOfYear()%FRUITS_OF_SPIRIT.length];
-  const ageTone=ageToneForAge(age);
   return {
     title:"Today's Adventure",
     theme:f.theme,
     category:'Daily',
-    tone:`${ageTone}; quiet undertone of Christian faith and moral choice; the story should illuminate the fruit of the Spirit: ${f.fruit}, without preaching or naming the verse`,
+    tone:`quiet undertone of Christian faith and moral choice; the story should illuminate the fruit of the Spirit: ${f.fruit}, without preaching or naming the verse`,
     lesson:`the fruit of the Spirit — ${f.fruit} — shows up in real choices, not in words`,
-    readingLevel:readingLevelForAge(age),
+    level:level||'L2',
     fruit:f.fruit
   };
 }
@@ -1647,7 +1690,8 @@ async function fetchPreGeneratedStory(){
     const player=getActivePlayer();
     const match=profiles.profiles&&profiles.profiles.find(p=>p.name===player);
     if(!match)return null;
-    const resp=await fetch('/api/today?kid='+match.id);
+    const level=getLevel(player);
+    const resp=await fetch('/api/today?kid='+match.id+'&level='+level);
     if(!resp.ok)return null;
     const data=await resp.json();
     return data.story||null;
@@ -1656,32 +1700,20 @@ async function fetchPreGeneratedStory(){
 async function getOrCreateDailyStory(){
   const today=todayStr();
   const player=getActivePlayer();
-  const age=player?getAge(player):null;
+  const level=getLevel(player);
   let cached;try{cached=JSON.parse(localStorage.getItem(dailyCacheKey())||'{}');}catch(e){cached={};}
-  if(cached.date===today&&cached.scene&&cached.age===age)return cached;
-  const seed=getDailySeed(age);
+  if(cached.date===today&&cached.scene&&cached.level===level)return cached;
+  const seed=getDailySeed(level);
   if(player)seed.playerName=player;
   const resp=await fetch('/api/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({seed,history:[]})});
   const data=await resp.json().catch(()=>({}));
   if(!resp.ok||!data.scene)throw new Error(data.error||'Generation failed');
-  const result={date:today,scene:data.scene,seed,age:age};
+  const result={date:today,scene:data.scene,seed,level:level};
   localStorage.setItem(dailyCacheKey(),JSON.stringify(result));
   return result;
 }
-let pendingDailyStart=false;
-function openAgeModal(){pendingDailyStart=true;document.getElementById('age-input').value='';document.getElementById('age-modal').classList.add('active');setTimeout(()=>document.getElementById('age-input').focus(),50);}
-function closeAgeModal(){pendingDailyStart=false;document.getElementById('age-modal').classList.remove('active');}
-function submitAgeModal(){
-  const v=parseInt(document.getElementById('age-input').value,10);
-  if(!v||v<3||v>17){document.getElementById('age-input').focus();return;}
-  const player=getActivePlayer();
-  if(player)setAge(player,v);
-  document.getElementById('age-modal').classList.remove('active');
-  if(pendingDailyStart){pendingDailyStart=false;startDailyStory();}
-}
 async function startDailyStory(){
   const player=getActivePlayer();
-  if(player&&!getAge(player)){openAgeModal();return;}
   // Fallback hero image: use the kid's cartoon avatar so they see themselves
   // even when the cron Worker hasn't generated scene images for today.
   const heroFallback=(player&&getAvatar(player))||'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80';
@@ -1968,8 +2000,17 @@ let typewriterCallback=null;
 function getTypeSpeed(){
   if(!currentStory)return 18;
   const cat=currentStory.category||'';
+  // Static-story categories
   if(cat==='New Readers')return 50;
   if(cat==='1st & 2nd Grade')return 32;
+  // Daily/AI stories: pick by reader's level
+  if(cat==='Daily'||cat===''){
+    const p=getActivePlayer();
+    const lvl=p?getLevel(p):'L2';
+    if(lvl==='L1')return 50;
+    if(lvl==='L2')return 32;
+    if(lvl==='L3')return 22;
+  }
   return 18;
 }
 function startTypewriter(fullText,onDone){

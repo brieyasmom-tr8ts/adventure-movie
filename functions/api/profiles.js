@@ -24,15 +24,38 @@ export async function onRequestPost(context) {
     return json({ error: "Invalid JSON" }, 400);
   }
 
-  if (!body.name || !body.ageGroup) {
-    return json({ error: "name and ageGroup are required" }, 400);
+  if (!body.name || (!body.level && !body.ageGroup)) {
+    return json({ error: "name and level (or ageGroup) are required" }, 400);
   }
+
+  // Normalize level: prefer explicit level field, fall back to ageGroup mapping.
+  const ageGroupToLevel = {
+    "Start Reading": "L1",
+    "Growing Reader": "L2",
+    "Brave Reader": "L3",
+    "Story Master": "L4",
+    "New Readers": "L1",
+    "1st & 2nd Grade": "L2",
+    "3rd & 4th Grade": "L3",
+    "4th & 5th Grade": "L3",
+    "5th & 6th Grade": "L4"
+  };
+  const levelToAgeGroup = {
+    L1: "Start Reading",
+    L2: "Growing Reader",
+    L3: "Brave Reader",
+    L4: "Story Master"
+  };
+  let level = body.level && /^L[1-4]$/.test(body.level) ? body.level : null;
+  if (!level) level = ageGroupToLevel[body.ageGroup] || "L2";
+  const ageGroup = body.ageGroup || levelToAgeGroup[level];
 
   const id = body.id || crypto.randomUUID();
   const profile = {
     id,
     name: body.name,
-    ageGroup: body.ageGroup, // "New Readers", "1st & 2nd Grade", "4th & 5th Grade"
+    level,
+    ageGroup,
     avatarUrl: body.avatarUrl || null, // URL to their cartoon avatar in R2
     avatarStyle: body.avatarStyle || "pixar",
     createdAt: new Date().toISOString()
