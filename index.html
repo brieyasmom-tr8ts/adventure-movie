@@ -99,7 +99,10 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .card-progress{font-size:10.5px;color:var(--text-2);letter-spacing:0.3px;opacity:0.95;text-shadow:0 1px 4px rgba(0,0,0,0.7)}
 .card-progress.complete{color:#7fffa1}
 .card-badge{position:absolute;top:10px;left:10px;background:rgba(127,255,161,0.22);border:1px solid #7fffa1;color:#7fffa1;font-size:9px;padding:3px 7px;border-radius:6px;font-weight:800;backdrop-filter:blur(8px);z-index:2;letter-spacing:0.5px}
-.card-ai-tag{position:absolute;top:10px;left:10px;background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#111;font-size:10px;padding:3px 7px;border-radius:6px;font-weight:800;z-index:2;box-shadow:0 4px 14px rgba(255,210,0,0.35);letter-spacing:0.3px}
+.card-ai-tag{position:absolute;top:10px;left:10px;background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#111;font-size:10px;padding:3px 7px;border-radius:6px;font-weight:800;z-index:2;box-shadow:0 4px 14px rgba(255,210,0,0.35);letter-spacing:0.3px;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.story-card.community .card-ai-tag{background:linear-gradient(135deg,#9b7bff,#5b3df5);color:#fff;box-shadow:0 4px 14px rgba(91,61,245,0.45)}
+.card-admin-del{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:16px;line-height:22px;text-align:center;cursor:pointer;z-index:3;padding:0}
+.card-admin-del:hover{background:rgba(220,30,30,0.85)}
 
 /* ---------- Player screen ---------- */
 #player-screen{background:#000}
@@ -836,6 +839,7 @@ let typewriterFull="";
 let soundOn=localStorage.getItem('am_sound')!=='off';
 let speechOn=localStorage.getItem('am_speech')==='on';
 let progress=loadProgress();
+let communityStories=[];   // populated from /api/community-stories on home build
 
 /* =========================================================
    AUDIO — Web Audio API (no external assets)
@@ -1079,13 +1083,23 @@ function buildHome(){
   const wrap=document.getElementById('categories-wrap');
   const cats={};
   STORIES.forEach(s=>{(cats[s.category]=cats[s.category]||[]).push(s);});
-  const order=['New Readers','1st & 2nd Grade','4th & 5th Grade','AI Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
+  if(communityStories.length){
+    cats['Community Adventures']=communityStories;
+  }
+  const order=['New Readers','1st & 2nd Grade','4th & 5th Grade','AI Adventures','Community Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
   });
+  const isAdmin=!!localStorage.getItem('am_admin_token');
   wrap.innerHTML=sortedCats.map(cat=>{
+    const isCommunity=cat==='Community Adventures';
     const cards=cats[cat].map(s=>{
+      if(isCommunity){
+        const bg=s.image?`style="background-image:url('${s.image}')"`:'';
+        const adminBtn=isAdmin?`<button class="card-admin-del" onclick="event.stopPropagation();deleteCommunityStory('${s.id}')" title="Remove">×</button>`:'';
+        return `<div class="story-card community" ${bg} onclick="playCommunityStory('${s.id}')"><div class="card-ai-tag">👥 Made by ${escapeHtml(s.originName||'Anonymous')}</div>${adminBtn}<div class="card-emoji">${s.emoji||'✨'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div><div class="card-progress">${s.sceneCount||0} scenes${s.replayCount>1?` · played ${s.replayCount}×`:''}</div></div></div>`;
+      }
       const total=endingCount(s);
       const found=discoveredCount(s.id);
       const isAI=!!s.aiStory;
@@ -1103,6 +1117,17 @@ function buildHome(){
     }).join('');
     return `<div class="category-section"><div class="category-title">${cat}</div><div class="story-grid">${cards}</div></div>`;
   }).join('');
+}
+async function refreshCommunityStories(){
+  try{
+    const resp=await fetch('/api/community-stories');
+    if(!resp.ok)return;
+    const data=await resp.json();
+    if(Array.isArray(data.stories)){
+      communityStories=data.stories;
+      buildHome();
+    }
+  }catch(e){}
 }
 
 /* =========================================================
@@ -2141,6 +2166,11 @@ function showEnding(s,endingId){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   recordEnding(currentStory.id,endingId);
   bumpStreak();
+  // Auto-share AI Adventure journeys to the community pool so other kids
+  // can replay them without burning fresh Anthropic tokens.
+  if(currentStory&&currentStory.aiStory&&!currentStory._isCommunityReplay&&Array.isArray(journey)&&journey.length>0){
+    shareCommunityStory(s).catch(()=>{});
+  }
   stopSpeech();
   stopMusic();currentMood=null;
   playMusic(s.type&&s.type.toLowerCase().includes('best')?'victory':'calm');
@@ -2161,6 +2191,116 @@ function showEnding(s,endingId){
   const reflect=(s.reflect||[]).slice();
   document.getElementById('reflect-list').innerHTML=reflect.map(q=>`<li>${q}</li>`).join('');
   showScreen('ending-screen');
+}
+
+/* =========================================================
+   COMMUNITY ADVENTURES — auto-share finished AI journeys so
+   other kids can replay them with zero token cost.
+   ========================================================= */
+async function shareCommunityStory(endingScene){
+  if(!currentStory||!currentStory.aiStory)return;
+  const player=getActivePlayer()||'Anonymous';
+  const body={
+    storyId:currentStory.id,
+    title:currentStory.title,
+    theme:currentStory.theme,
+    image:currentStory.image||'',
+    emoji:currentStory.emoji||'✨',
+    level:(currentStory.seed&&currentStory.seed.level)||getLevel(player),
+    fruit:(currentStory.seed&&currentStory.seed.fruit)||'',
+    originName:player,
+    scenes:journey.map(j=>({chapter:j.chapter,text:j.text,choice:j.choice})),
+    ending:{
+      type:endingScene.type||'Ending',
+      emoji:endingScene.emoji||'🎬',
+      title:endingScene.title||'',
+      text:endingScene.text||'',
+      lesson:endingScene.lesson||'',
+      reflect:Array.isArray(endingScene.reflect)?endingScene.reflect:[]
+    }
+  };
+  const resp=await fetch('/api/community-stories',{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(resp.ok)refreshCommunityStories();
+}
+async function playCommunityStory(id){
+  let entry=communityStories.find(s=>s.id===id);
+  let resp;
+  try{resp=await fetch('/api/community-stories?id='+encodeURIComponent(id));}catch(e){return;}
+  if(!resp.ok)return;
+  const data=await resp.json();
+  const story=data.story;
+  if(!story)return;
+  // Build a fixed-branch story object the existing playScene loop can render.
+  const scenes={};
+  const total=story.scenes.length;
+  story.scenes.forEach((sc,i)=>{
+    const id='c'+(i+1);
+    const nextId=i<total-1?('c'+(i+2)):'cend';
+    scenes[id]={
+      chapter:sc.chapter||'',
+      text:sc.text||'',
+      image:story.image||'',
+      mood:'calm',
+      choices:[{text:'Continue → "'+(sc.choice||'next').slice(0,80)+'"',next:nextId}]
+    };
+  });
+  scenes['cend']={
+    ending:true,
+    type:story.ending.type,
+    emoji:story.ending.emoji,
+    title:story.ending.title,
+    text:story.ending.text,
+    lesson:story.ending.lesson,
+    reflect:story.ending.reflect||[]
+  };
+  currentStory={
+    id:'community_'+id,
+    title:story.title,
+    theme:story.theme,
+    emoji:story.emoji||'✨',
+    category:'Community Adventures',
+    image:story.image||'',
+    scenes,
+    _isCommunityReplay:true
+  };
+  setReaderClass();
+  visitedScenes=[];journey=[];currentAIScene=null;
+  showScreen('player-screen');
+  playScene('c1');
+}
+async function deleteCommunityStory(id){
+  const token=localStorage.getItem('am_admin_token');
+  if(!token){alert('Admin token not set on this device.');return;}
+  if(!confirm('Remove this community story for everyone?'))return;
+  try{
+    const resp=await fetch('/api/community-stories?id='+encodeURIComponent(id),{
+      method:'DELETE',
+      headers:{'authorization':'Bearer '+token}
+    });
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok){
+      alert("Couldn't delete: "+(data.error||resp.status));
+      return;
+    }
+    communityStories=communityStories.filter(s=>s.id!==id);
+    buildHome();
+  }catch(e){alert('Network error: '+e.message);}
+}
+function captureAdminToken(){
+  try{
+    const url=new URL(window.location.href);
+    const t=url.searchParams.get('admin');
+    if(t){
+      localStorage.setItem('am_admin_token',t);
+      url.searchParams.delete('admin');
+      history.replaceState(null,'',url.toString());
+      // Avoid leaking the token in the address bar even briefly.
+    }
+  }catch(e){}
 }
 
 /* =========================================================
@@ -2229,12 +2369,14 @@ document.addEventListener('keydown',e=>{
 /* =========================================================
    INIT
    ========================================================= */
+captureAdminToken();
 document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇';
 document.getElementById('sound-toggle').classList.toggle('on',soundOn);
 refreshProfileUI();
 refreshWelcome();
 refreshSpeechBtn();
 buildHome();
+refreshCommunityStories();
 
 // First-time visitor → prompt for name
 if(getPlayers().length===0){
