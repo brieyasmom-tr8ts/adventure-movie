@@ -917,11 +917,15 @@ function toggleSound(){
 /* =========================================================
    PROGRESS TRACKING (localStorage)
    ========================================================= */
+function playerKey(base){
+  const p=getActivePlayer();
+  return p?base+'_'+p:base;
+}
 function loadProgress(){
-  try{return JSON.parse(localStorage.getItem('am_progress')||'{}');}catch(e){return {};}
+  try{return JSON.parse(localStorage.getItem(playerKey('am_progress'))||'{}');}catch(e){return {};}
 }
 function saveProgress(){
-  localStorage.setItem('am_progress',JSON.stringify(progress));
+  localStorage.setItem(playerKey('am_progress'),JSON.stringify(progress));
 }
 function recordEnding(storyId,endingId){
   if(!progress[storyId])progress[storyId]={endings:[]};
@@ -963,9 +967,9 @@ function clearSave(storyId){
    XP + LEVEL SYSTEM
    ========================================================= */
 function getXPData(){
-  try{return JSON.parse(localStorage.getItem('am_xp')||'{"xp":0,"level":1,"history":[]}');}catch(e){return {xp:0,level:1,history:[]};}
+  try{return JSON.parse(localStorage.getItem(playerKey('am_xp'))||'{"xp":0,"level":1,"history":[]}');}catch(e){return {xp:0,level:1,history:[]};}
 }
-function saveXPData(d){localStorage.setItem('am_xp',JSON.stringify(d));}
+function saveXPData(d){localStorage.setItem(playerKey('am_xp'),JSON.stringify(d));}
 function xpForLevel(lvl){return lvl*100;} // 100 XP per level
 function addXP(amount,reason){
   const d=getXPData();
@@ -1028,10 +1032,10 @@ function bestEndingCount(){
   return count;
 }
 function getStreakCount(){
-  try{const s=JSON.parse(localStorage.getItem('am_streak')||'{}');return s.count||0;}catch(e){return 0;}
+  try{const s=JSON.parse(localStorage.getItem(playerKey('am_streak'))||'{}');return s.count||0;}catch(e){return 0;}
 }
 function getUnlockedBadges(){
-  try{return JSON.parse(localStorage.getItem('am_badges')||'[]');}catch(e){return [];}
+  try{return JSON.parse(localStorage.getItem(playerKey('am_badges'))||'[]');}catch(e){return [];}
 }
 function checkBadges(){
   const unlocked=getUnlockedBadges();
@@ -1043,7 +1047,7 @@ function checkBadges(){
       newBadge=b;
     }
   }
-  localStorage.setItem('am_badges',JSON.stringify(unlocked));
+  localStorage.setItem(playerKey('am_badges'),JSON.stringify(unlocked));
   if(newBadge)showBadgeUnlock(newBadge);
 }
 function showBadgeUnlock(badge){
@@ -1059,13 +1063,13 @@ function showBadgeUnlock(badge){
    ========================================================= */
 function recordTrait(trait){
   try{
-    const t=JSON.parse(localStorage.getItem('am_traits')||'{}');
+    const t=JSON.parse(localStorage.getItem(playerKey('am_traits'))||'{}');
     t[trait]=(t[trait]||0)+1;
-    localStorage.setItem('am_traits',JSON.stringify(t));
+    localStorage.setItem(playerKey('am_traits'),JSON.stringify(t));
   }catch(e){}
 }
 function getTraits(){
-  try{return JSON.parse(localStorage.getItem('am_traits')||'{}');}catch(e){return {};}
+  try{return JSON.parse(localStorage.getItem(playerKey('am_traits'))||'{}');}catch(e){return {};}
 }
 
 /* =========================================================
@@ -1534,8 +1538,10 @@ function renderSwitcherList(){
 }
 function pickPlayer(name){
   setActivePlayer(name);
+  progress=loadProgress();
   renderSwitcherList();
-  buildHome(); // refresh streak/welcome (per-profile)
+  renderStatsPanel();
+  buildHome();
 }
 function confirmRemovePlayer(name){
   if(confirm(`Remove ${name} from this device?\nTheir streak and avatar will be lost.`))removePlayer(name);
