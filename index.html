@@ -465,17 +465,17 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div class="modal" id="name-modal">
   <div class="modal-card">
-    <h2 id="name-modal-title">What's your name?</h2>
+    <h2 id="name-modal-title">First name or nickname</h2>
     <p>So we can use it inside your stories.</p>
-    <input class="interactive-input" id="name-input" placeholder="Type your name" maxlength="20" autocomplete="off">
+    <input class="interactive-input" id="name-input" placeholder="First name or nickname" maxlength="20" autocomplete="off">
 
     <div class="avatar-section">
       <div class="avatar-preview" id="avatar-preview">
         <span class="avatar-placeholder">📸</span>
       </div>
-      <input type="file" accept="image/*" capture="user" id="avatar-file" style="display:none" onchange="onAvatarPicked(event)">
+      <input type="file" accept="image/*" id="avatar-file" style="display:none" onchange="onAvatarPicked(event)">
       <div class="avatar-actions" id="avatar-actions">
-        <button class="avatar-btn" onclick="document.getElementById('avatar-file').click()">📷 Add a cartoon photo</button>
+        <button class="avatar-btn" onclick="document.getElementById('avatar-file').click()">📷 Take or choose a photo</button>
       </div>
       <p class="avatar-hint">Optional. Your photo is sent once to make a cartoon, then never saved. Only the cartoon stays on this device.</p>
     </div>
@@ -1145,7 +1145,7 @@ function openNameModal(opts){
   resetAvatarPreview();
   const modal=document.getElementById('name-modal');
   document.getElementById('name-input').value='';
-  document.getElementById('name-modal-title').textContent=(opts&&opts.title)||"What's your name?";
+  document.getElementById('name-modal-title').textContent=(opts&&opts.title)||"First name or nickname";
   // Show cancel only when user already has at least one profile (so they can back out)
   document.getElementById('name-cancel').style.display=getPlayers().length>0?'block':'none';
   modal.classList.add('active');

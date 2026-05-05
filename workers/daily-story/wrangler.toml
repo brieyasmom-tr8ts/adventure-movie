@@ -1,0 +1,19 @@
+name = "adventure-movie-daily"
+main = "index.js"
+compatibility_date = "2024-09-01"
+
+[triggers]
+crons = ["0 5 * * *"]  # 5:00 AM UTC daily
+
+[[kv_namespaces]]
+binding = "STORIES_KV"
+id = "93ab95b0d8504a7fbfe64236ee25a2c6"
+
+[[r2_buckets]]
+binding = "IMAGES_R2"
+bucket_name = "adventure-movie-images"
+
+[vars]
+ANTHROPIC_MODEL = "claude-sonnet-4-6"
+FAL_MODEL = "fal-ai/instant-character"
+SCENES_PER_STORY = "8"
