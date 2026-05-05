@@ -582,6 +582,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <p>What should it be about?</p>
     <input class="interactive-input" id="custom-input" placeholder="A story about..." maxlength="80" autocomplete="off">
     <div class="chip-row">
+      <button class="chip" onclick="pickCustomChip('a kid-friendly Bible story adventure')">📖 Bible</button>
       <button class="chip" onclick="pickCustomChip('a brave dragon adventure')">🐉 Dragons</button>
       <button class="chip" onclick="pickCustomChip('exploring outer space')">🚀 Space</button>
       <button class="chip" onclick="pickCustomChip('an adventure with my pet')">🐶 My Pet</button>
@@ -611,15 +612,15 @@ const STORIES=[
   s1:{chapter:"AI Adventure · A Path Begins",mood:"calm",text:"You arrive at a crossroads at golden hour. Three paths fan out from a weathered stone marker. A traveler with kind eyes nods to you and says, 'Each one leads somewhere true. Choose by what's calling you — not what's safe.' Wind moves through the grass. Somewhere far off, a bell rings once. You feel your pulse in your fingertips. The story is about to be yours.",image:"https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",choices:[{text:"Take the forest path — follow the wild call of curiosity",next:"ai"},{text:"Take the mountain path — climb toward what scares you",next:"ai"},{text:"Take the town path — walk toward people who need you",next:"ai"}]}
 }},
 
-{id:"ai-pet-day",title:"Pet Day at School",theme:"Fun & Friendship",emoji:"🐾",category:"New Readers",aiStory:true,image:"https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80",seed:{tone:"very simple words only, short sentences, rhyming and repetitive like Dr. Seuss, kindergarten reading level, fun and silly",lesson:"being kind to all animals and friends is always the right thing to do"},scenes:{
+{id:"ai-pet-day",title:"Pet Day at School",theme:"Fun & Friendship",emoji:"🐾",category:"Start Reading",aiStory:true,image:"https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80",seed:{tone:"very simple words only, short sentences, rhyming and repetitive like Dr. Seuss, kindergarten reading level, fun and silly",lesson:"being kind to all animals and friends is always the right thing to do"},scenes:{
   s1:{chapter:"Pet Day!",mood:"calm",text:"It is Pet Day at school! You can bring a pet. A big pet. A small pet. Any pet at all! You look around your house. What pet will you bring?",image:"https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80",choices:[{text:"Bring the dog!",next:"ai"},{text:"Bring the cat!",next:"ai"},{text:"Bring the fish!",next:"ai"}]}
 }},
 
-{id:"ai-magic-garden",title:"The Magic Garden",theme:"Helping & Growing",emoji:"🌻",category:"1st & 2nd Grade",aiStory:true,image:"https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",seed:{tone:"warm, friendly, simple sentences for ages 6-8, present tense, wonder and discovery",lesson:"when you take care of something with patience and kindness, amazing things can grow"},scenes:{
+{id:"ai-magic-garden",title:"The Magic Garden",theme:"Helping & Growing",emoji:"🌻",category:"Growing Reader",aiStory:true,image:"https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",seed:{tone:"warm, friendly, simple sentences for ages 6-8, present tense, wonder and discovery",lesson:"when you take care of something with patience and kindness, amazing things can grow"},scenes:{
   s1:{chapter:"A Surprise in the Yard",mood:"calm",text:"You find a tiny door hidden behind the bushes in your backyard. It's no bigger than your hand. You push it open and crawl through. On the other side is a garden — but not a regular garden. The flowers glow softly, the butterflies are as big as your hand, and a friendly frog sitting on a mushroom says, 'Welcome! This garden needs your help. It's been waiting for someone kind.'",image:"https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",choices:[{text:"Ask the frog what the garden needs",next:"ai"},{text:"Walk toward the glowing flowers to look closer",next:"ai"},{text:"Look for other animals who might need help",next:"ai"}]}
 }},
 
-{id:"ai-time-capsule",title:"The Time Capsule",theme:"Choices & Consequences",emoji:"⏳",category:"4th & 5th Grade",aiStory:true,image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",seed:{tone:"mysterious, adventurous, present-tense, ages 9-11, thoughtful and exciting",lesson:"every choice shapes who you become, and the bravest choice is being true to yourself"},scenes:{
+{id:"ai-time-capsule",title:"The Time Capsule",theme:"Choices & Consequences",emoji:"⏳",category:"Brave Reader",aiStory:true,image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",seed:{tone:"mysterious, adventurous, present-tense, ages 9-11, thoughtful and exciting",lesson:"every choice shapes who you become, and the bravest choice is being true to yourself"},scenes:{
   s1:{chapter:"Under the Old Oak",mood:"calm",text:"Your class is planting a tree behind the school when your shovel hits something metal. You dig it out — it's a rusty tin box with a note taped to the lid: 'Buried by the 5th grade class of 1995. Open with care.' Inside you find a folded letter, a strange old key, and a hand-drawn map of the school with an X marked in the basement. Your teacher hasn't noticed yet. Your best friend Zoe is staring at you with wide eyes.",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"Show the time capsule to your teacher right away",next:"ai"},{text:"Hide it in your backpack and investigate with Zoe after school",next:"ai"},{text:"Read the letter out loud to the whole class",next:"ai"}]}
 }},
 
@@ -686,7 +687,7 @@ const STORIES=[
 
 /* ---- 4th & 5th Grade ---- */
 
-{id:"science-fair",title:"The Science Fair Secret",theme:"Honesty",emoji:"🔬",category:"4th & 5th Grade",image:"https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80",scenes:{
+{id:"science-fair",title:"The Science Fair Secret",theme:"Honesty",emoji:"🔬",category:"Brave Reader",image:"https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80",scenes:{
   s1:{chapter:"Two Weeks Before the Fair",mood:"calm",text:"You've been working on your science fair project for weeks — testing whether plants grow better with music or silence. But your results are boring. The music plants grew only a tiny bit more. Your friend Kai shows you his project and it's amazing. Then he whispers: 'I made up some of my data. No one checks anyway. You should do the same — you'd definitely win.'",image:"https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80",choices:[{text:"Change your numbers to make the results look more exciting",next:"s2a"},{text:"Keep your real data and present it honestly",next:"s2b"},{text:"Talk to your teacher about what happened",next:"s2c"}]},
   s2a:{chapter:"The Night Before",mood:"tension",text:"You change a few numbers on your chart. The graph looks way more impressive now. But lying in bed that night, your stomach feels weird. You keep thinking about it. What if someone asks you a question and you can't explain the fake data? What if they find out?",image:"https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=800&q=80",choices:[{text:"Go back and fix your data to the real numbers before tomorrow",next:"s3"},{text:"Stick with the fake numbers — it's too late to change",next:"end_poor"}]},
   s2b:{chapter:"Presentation Day",mood:"calm",text:"Your board looks simple compared to some of the flashy projects. A judge stops at your table. She looks at your data carefully. 'Interesting,' she says. 'Your results are small but your method is very solid. Tell me about your process.' You explain every step — the controls, the measurements, the timing. She nods and writes a lot of notes.",image:"https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=800&q=80",choices:[{text:"Feel proud of the work you actually did",next:"end_best"},{text:"Feel jealous of the flashier projects around you",next:"end_neutral"}]},
@@ -697,7 +698,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"😰",title:"Found Out",text:"A judge notices your numbers don't match your raw notes. She asks you to explain. Your face gets hot. You can't. She quietly marks something on her clipboard. Later, Mrs. Rivera asks to talk to you after school. The conversation is uncomfortable. You wish you could go back and just be honest.",lesson:"A lie might look shiny for a moment, but the truth always comes out — and it's a lot harder to fix trust than to fix a boring graph.",reflect:["What would you do differently if you could rewind?","Is winning worth it if you know you didn't earn it?","Who do you want to be when no one is watching?"]}
 }},
 
-{id:"new-kid",title:"The New Kid",theme:"Kindness",emoji:"🎒",category:"4th & 5th Grade",image:"https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",scenes:{
+{id:"new-kid",title:"The New Kid",theme:"Kindness",emoji:"🎒",category:"Brave Reader",image:"https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",scenes:{
   s1:{chapter:"Monday Morning",mood:"calm",text:"There's a new kid in your class. Her name is Amara and she just moved here from another state. She's sitting alone at lunch, picking at her food. Your friend group is at your usual table, laughing about a video. Tyler says, 'Don't invite her over — she's weird. She didn't talk to anyone all morning.'",image:"https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",choices:[{text:"Walk over and sit with Amara",next:"s2a"},{text:"Stay with your friends — you don't want to be awkward",next:"s2b"},{text:"Invite Amara to come sit with your group",next:"s2c"}]},
   s2a:{chapter:"The Empty Table",mood:"calm",text:"You grab your tray and sit across from Amara. She looks surprised. 'I'm not that interesting,' she says quietly. You shrug: 'Me neither.' She almost smiles. You ask where she moved from. Turns out she loves the same book series you do. Behind you, Tyler is making a face at your friends.",image:"https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80",choices:[{text:"Keep talking to Amara and ignore Tyler",next:"s3a"},{text:"Feel embarrassed and go back to your table",next:"s3b"}]},
   s2b:{chapter:"Tuesday",mood:"calm",text:"The next day, Amara is alone again. And the next day too. By Thursday, you hear her tell the teacher she has a stomachache and wants to go to the nurse. She doesn't come back to class. You think about how it would feel to eat alone every day in a place where you know no one.",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",choices:[{text:"Tomorrow, you'll sit with her. No more waiting.",next:"s2a"},{text:"It's not your problem — she'll figure it out",next:"s3c"}]},
@@ -712,7 +713,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"😔",title:"The Empty Seat",text:"Amara transfers schools two weeks later. Your teacher mentions it quietly and asks the class to think about how they welcome new people. You stare at the empty desk. You didn't do anything wrong — but you also didn't do anything at all. And that feels worse than you expected.",lesson:"Silence isn't neutral. When someone is hurting and you do nothing, your nothing is loud.",reflect:["Is doing nothing really the same as doing nothing wrong?","How would YOU feel if you moved somewhere new and nobody talked to you?","What would it have cost you to just say hi?"]}
 }},
 
-{id:"team-captain",title:"Captain's Call",theme:"Fairness",emoji:"⚽",category:"4th & 5th Grade",image:"https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80",scenes:{
+{id:"team-captain",title:"Captain's Call",theme:"Fairness",emoji:"⚽",category:"Brave Reader",image:"https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80",scenes:{
   s1:{chapter:"Recess · Picking Teams",mood:"calm",text:"You're team captain for soccer at recess. Everyone lines up. Your best friend Marco is there — he's great. But so is Priya, who's actually faster. Then there's Danny. Danny isn't very athletic, and last time he played, some kids laughed at him. He's standing at the back of the line, looking at his shoes.",image:"https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80",choices:[{text:"Pick Priya first — she gives you the best chance to win",next:"s2a"},{text:"Pick Danny first — nobody ever picks him",next:"s2b"},{text:"Pick Marco first — he's your best friend",next:"s2c"}]},
   s2a:{chapter:"The Game",mood:"calm",text:"Priya scores two goals. Your team is winning. But Danny got picked last — again. He's standing in the outfield barely moving. A kid on the other team yells, 'Danny, just sit down!' Danny's face goes red. He walks off the field and sits on the bench alone.",image:"https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80",choices:[{text:"Stop the game and go check on Danny",next:"s3"},{text:"Keep playing — it's not your fault he walked off",next:"end_neutral"}]},
   s2b:{chapter:"The Surprise",mood:"calm",text:"'Danny.' The whole line goes quiet. Danny looks up like he didn't hear right. 'Me?' You nod. He jogs over, trying not to smile too big. Marco looks confused but shrugs. The game starts. Danny isn't the best player — but he tries harder than anyone on the field. He runs for every ball.",image:"https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80",choices:[{text:"Pass Danny the ball when he's open",next:"end_best"},{text:"Play to win and mostly pass to the better players",next:"end_neutral"}]},
@@ -725,7 +726,7 @@ const STORIES=[
 
 /* ---- 1st & 2nd Grade ---- */
 
-{id:"lost-puppy",title:"The Lost Puppy",theme:"Helping Others",emoji:"🐶",category:"1st & 2nd Grade",image:"https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80",scenes:{
+{id:"lost-puppy",title:"The Lost Puppy",theme:"Helping Others",emoji:"🐶",category:"Growing Reader",image:"https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80",scenes:{
   s1:{chapter:"A Puppy in the Park",mood:"calm",text:"You are playing at the park after school. You hear a little sound — whimper, whimper. Behind a bush, there is a small brown puppy. It has a collar but no leash. It looks scared and lost. The puppy looks up at you with big eyes.",image:"https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80",choices:[{text:"Sit down slowly and let the puppy come to you",next:"s2a"},{text:"Run to get a grown-up for help",next:"s2b"},{text:"Walk away — someone else will find it",next:"s2c"}]},
   s2a:{chapter:"Making a Friend",mood:"calm",text:"You sit very still on the grass. The puppy sniffs the air. Then it takes one tiny step toward you. Then another. It puts its soft nose right on your hand! You can see the tag on its collar. It says 'Biscuit' and has a phone number.",image:"https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80",choices:[{text:"Read the tag out loud and pet Biscuit gently",next:"s3a"},{text:"Pick Biscuit up and start walking home alone",next:"s3b"}]},
   s2b:{chapter:"Getting a Grown-Up",mood:"calm",text:"You run to find your dad sitting on a bench. 'There's a lost puppy!' you say, pulling his hand. He comes right away. The puppy is still there, shaking a little. Dad kneels down and reads the tag on its collar. 'Good thinking coming to get me,' he says.",image:"https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80",choices:[{text:"Stay with the puppy while Dad uses his phone",next:"s3c"},{text:"Ask if you can hold the puppy while you wait",next:"s3a"}]},
@@ -741,7 +742,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"🌧️",title:"A Heavy Feeling",text:"That night you think about the little brown puppy alone in the rain. You hope someone found Biscuit and brought him home. The feeling in your tummy doesn't go away until you talk to your mom about it. She says, 'Next time you feel that pull to help — that's your heart telling you something important.'",lesson:"When your heart tells you to help, it is worth listening to. You might not get a second chance.",reflect:["Have you ever wished you had helped someone but didn't?","What made it hard to go back and help?","What would you do the very next time you saw a lost animal?"]}
 }},
 
-{id:"show-and-tell",title:"Show and Tell",theme:"Courage",emoji:"🌟",category:"1st & 2nd Grade",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",scenes:{
+{id:"show-and-tell",title:"Show and Tell",theme:"Courage",emoji:"🌟",category:"Growing Reader",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",scenes:{
   s1:{chapter:"Morning Circle",mood:"calm",text:"Today is show and tell. You brought your favorite rock — the one you found on a hike that has sparkly bits inside. But everyone else brought cool toys. Jake brought a remote control car. Lily brought a tablet. Your rock suddenly feels small in your pocket.",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",choices:[{text:"Keep your rock — you are going to show it",next:"s2a"},{text:"Push the rock deeper in your pocket and think of a way out",next:"s2b"}]},
   s2a:{chapter:"Getting Ready",mood:"calm",text:"Your name is called. Your legs feel like jelly. You walk to the front of the room. Everyone is looking at you. You hold the rock in both hands. It feels warm and familiar. You remember the day you found it with Grandpa by the creek.",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",choices:[{text:"Start with the story of how you found it",next:"s3a"},{text:"Just hold it up and say it is a rock",next:"s3b"}]},
   s2b:{chapter:"Chickening Out",mood:"tension",text:"Your hand shoots up. 'I forgot mine,' you say. The teacher nods. You watch Jake's car do backflips. Then Emma holds up a plain seashell and tells a whole story about finding it with her dad. Everyone listens, totally quiet. You feel your rock sitting in your pocket.",image:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",choices:[{text:"Raise your hand: 'Actually — I DO have something to share!'",next:"s2a"},{text:"Stay quiet and wait for it to be over",next:"s4b"}]},
@@ -755,7 +756,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"💭",title:"Still in Your Pocket",text:"You walk home with the rock still in your pocket. Nobody got to see the sparkly mica or hear about your hike with Grandpa. The rock is just as special as it always was. But the feeling of a story left untold stays with you until dinner.",lesson:"If you never share what makes you special, nobody gets to enjoy it — including you.",reflect:["What is something you have been too shy to share?","What is the worst that could really happen if you try?","Can you practice telling your rock story to someone at home tonight?"]}
 }},
 
-{id:"broken-vase",title:"The Broken Vase",theme:"Telling the Truth",emoji:"💐",category:"1st & 2nd Grade",image:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",scenes:{
+{id:"broken-vase",title:"The Broken Vase",theme:"Telling the Truth",emoji:"💐",category:"Growing Reader",image:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",scenes:{
   s1:{chapter:"After School",mood:"calm",text:"You are running in the house even though Mom said not to. CRASH! You bump the table and Mom's favorite vase falls and breaks into pieces on the floor. Mom is in the other room. She didn't see it happen. Your little brother looks up from his toys. He didn't do it — you did.",image:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",choices:[{text:"Go tell Mom right away: 'I broke the vase. I am sorry.'",next:"s2a"},{text:"Try to clean it up fast before anyone sees",next:"s2b"},{text:"Point at your brother and say he did it",next:"s2c"}]},
   s2a:{chapter:"Walking to Mom",mood:"calm",text:"You walk to the kitchen. Your legs feel heavy. Mom is making a snack. She turns and looks at your face. She can already tell something happened. 'Mom,' you start. Your voice wobbles. 'I was running. I knocked over your vase. It broke.'",image:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",choices:[{text:"Say sorry and look at her when you say it",next:"s3a"},{text:"Look at the floor and wait for her to be mad",next:"s3b"}]},
   s2b:{chapter:"Cleaning Up",mood:"tension",text:"You pick up the biggest pieces and drop them in the trash. But there are tiny sharp bits all over. You push them under the rug. At dinner, Mom puts her foot down and makes a face. She lifts up the rug and sees glass. She looks straight at you.",image:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",choices:[{text:"Tell the truth right now: 'I broke it. I tried to hide it. I am sorry.'",next:"s3c"},{text:"Say you do not know how it got there",next:"s4c"}]},
@@ -772,7 +773,7 @@ const STORIES=[
 
 /* ---- New Readers ---- */
 
-{id:"big-slide",title:"The Big Slide",theme:"Being Brave",emoji:"🛝",category:"New Readers",image:"https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80",scenes:{
+{id:"big-slide",title:"The Big Slide",theme:"Being Brave",emoji:"🛝",category:"Start Reading",image:"https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80",scenes:{
   s1:{chapter:"The Park",mood:"calm",text:"Look! A slide. A big, big slide. It goes up, up, up! Your pal Mia goes down. 'Come on!' she says. You look up. It is SO big. Your tum feels funny.",image:"https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80",choices:[{text:"Go to the big slide",next:"s2a"},{text:"Go to the small slide",next:"s2b"}]},
   s2a:{chapter:"At the Slide",mood:"calm",text:"You walk to the big slide. You put one hand on it. It is cold! You look up. One step. Two steps. Three steps. Can you go up? Mia says, 'You can do it!'",image:"https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80",choices:[{text:"Go up the steps",next:"s3a"},{text:"Wait a bit",next:"s3b"}]},
   s2b:{chapter:"Small Slide",mood:"calm",text:"You go to the small slide. Up you go. Not too high. You sit. You slide. Whee! Fun, fun, fun! You do it one more time. Whee! Now you look at the big slide. Hmm.",image:"https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80",choices:[{text:"Now try the big one!",next:"s2a"},{text:"Do the small one again",next:"s3c"}]},
@@ -788,7 +789,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"💭",title:"What If?",text:"You went home. In bed that night, you think about the big slide. You wish you had tried it. Not today. But maybe... maybe you will try it soon. You can be brave.",lesson:"It is OK to feel scared. But do not let scared stop you from fun things!",reflect:["Did you ever miss out on fun?","What is one brave thing you can do?","Can you try the hard thing next time?"]}
 }},
 
-{id:"sharing-toys",title:"Two Toys, One Pal",theme:"Sharing",emoji:"🧸",category:"New Readers",image:"https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",scenes:{
+{id:"sharing-toys",title:"Two Toys, One Pal",theme:"Sharing",emoji:"🧸",category:"Start Reading",image:"https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",scenes:{
   s1:{chapter:"Sam Comes to Play",mood:"calm",text:"Ding dong! Sam is here! Sam is your pal. You have two toy cars. A red one. A blue one. The red one is your best one. Sam sees the red car. 'Ooh! Can I play with the red one?' Sam asks.",image:"https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",choices:[{text:"Give Sam the red car",next:"s2a"},{text:"Give Sam the blue car",next:"s2b"}]},
   s2a:{chapter:"The Red Car",mood:"calm",text:"You give Sam the red car. Sam grins! 'Yay!' Sam says. You take the blue car. Vroom! Sam goes vroom too! You race on the rug. Zoom, zoom, zoom!",image:"https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",choices:[{text:"Make a race track!",next:"s3a"},{text:"Race to the door!",next:"s3b"}]},
   s2b:{chapter:"The Blue Car",mood:"calm",text:"You keep the red car. You give Sam the blue one. Sam holds it. Sam is quiet. Sam does not say 'yay.' Sam looks at the red car in your hand. Then Sam looks down.",image:"https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",choices:[{text:"Say 'Let us trade!'",next:"s3c"},{text:"Keep the red car",next:"s3d"}]},
@@ -804,7 +805,7 @@ const STORIES=[
   end_poor:{ending:true,type:"Learning Ending",emoji:"😔",title:"Sam Went Home",text:"Sam went home. Sam did not want to play any more. You sit with your red car. It is not fun now. Not fun at all. You wish you had shared. You wish Sam was still here.",lesson:"If we do not share, our pals may go. Sharing is how we keep our pals close!",reflect:["How did Sam feel?","How did YOU feel when Sam left?","What will you do next time?"]}
 }},
 
-{id:"dark-room",title:"The Dark Room",theme:"Asking for Help",emoji:"🌙",category:"New Readers",image:"https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=800&q=80",scenes:{
+{id:"dark-room",title:"The Dark Room",theme:"Asking for Help",emoji:"🌙",category:"Start Reading",image:"https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=800&q=80",scenes:{
   s1:{chapter:"Time for Bed",mood:"calm",text:"It is time for bed. Mom says, 'Good night!' She turns off the light. Click. Now it is dark. Very, very dark. You hear a sound. Tap, tap, tap. What is that? Is it a monster?",image:"https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=800&q=80",choices:[{text:"Call for Mom",next:"s2a"},{text:"Hide in your bed",next:"s2b"}]},
   s2a:{chapter:"Mom!",mood:"calm",text:"'Mom!' you call. Mom comes in. 'What is wrong?' she asks. 'I hear a tap, tap, tap,' you say. Mom looks around. She goes to the window. 'Look!' she says. 'It is just the tree. The wind makes it tap the glass!'",image:"https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=800&q=80",choices:[{text:"Ask Mom for a night light",next:"s3a"},{text:"Ask Mom to sing a song",next:"s3b"}]},
   s2b:{chapter:"Under the Covers",mood:"calm",text:"You pull the covers up. Up, up, up! Over your head. It is dark in here too. And hot. Very hot. You peek out. One eye. Two eyes. You see your room. It looks the same. But you hear it again. Tap, tap, tap!",image:"https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=800&q=80",choices:[{text:"Call for Mom this time",next:"s2a"},{text:"Look for the sound",next:"s3c"}]},
@@ -1086,7 +1087,7 @@ function buildHome(){
   if(communityStories.length){
     cats['Community Adventures']=communityStories;
   }
-  const order=['New Readers','1st & 2nd Grade','4th & 5th Grade','AI Adventures','Community Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
+  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','AI Adventures','Community Adventures','Bible','Leadership','Life Decisions','Teen / Social'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
@@ -1149,8 +1150,8 @@ function setReaderClass(){
     const p=getActivePlayer();
     if(p)level=getLevel(p);
   }else{
-    if(cat==='New Readers')level='L1';
-    else if(cat==='1st & 2nd Grade')level='L2';
+    if(cat==='Start Reading'||cat==='New Readers')level='L1';
+    else if(cat==='Growing Reader'||cat==='1st & 2nd Grade')level='L2';
   }
   if(level==='L1')document.body.classList.add('reader-new');
   else if(level==='L2')document.body.classList.add('reader-early');
@@ -1296,7 +1297,7 @@ async function generateAIResponse(input,context){
 }
 
 function buildSeed(story){
-  const rl=(story.seed&&story.seed.readingLevel)||(story.category==='New Readers'?'new-readers':story.category==='1st & 2nd Grade'?'early-elementary':'default');
+  const rl=(story.seed&&story.seed.readingLevel)||((story.category==='Start Reading'||story.category==='New Readers')?'new-readers':(story.category==='Growing Reader'||story.category==='1st & 2nd Grade')?'early-elementary':'default');
   const seed={
     title:story.title,
     theme:story.theme,
@@ -1836,12 +1837,13 @@ function startCustomStory(){
   const theme=(inp&&inp.value||'').trim();
   if(!theme){if(inp)inp.focus();return;}
   closeCustomCreator();
+  const isBible=/bible/i.test(theme);
   const seed={
-    title:theme.slice(0,40),
+    title:isBible?'A Bible Adventure':theme.slice(0,40),
     theme:theme,
     category:'Custom',
-    tone:'fun, exciting, age-appropriate, present-tense',
-    lesson:'every choice shapes the story',
+    tone:isBible?'biblical narrative drawn from a real Bible story (e.g. Daniel, David, Joseph, Esther, Moses), reverent but fun, present-tense, age-appropriate, the player is dropped into the action':'fun, exciting, age-appropriate, present-tense',
+    lesson:isBible?'a real lesson from the Bible story unfolds through the choices the player makes':'every choice shapes the story',
     readingLevel:'default'
   };
   const player=getActivePlayer();
@@ -2054,8 +2056,8 @@ function getTypeSpeed(){
   if(!currentStory)return 18;
   const cat=currentStory.category||'';
   // Static-story categories
-  if(cat==='New Readers')return 50;
-  if(cat==='1st & 2nd Grade')return 32;
+  if(cat==='Start Reading'||cat==='New Readers')return 50;
+  if(cat==='Growing Reader'||cat==='1st & 2nd Grade')return 32;
   // Daily/AI stories: pick by reader's level
   if(cat==='Daily'||cat===''){
     const p=getActivePlayer();
