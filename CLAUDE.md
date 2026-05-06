@@ -50,6 +50,10 @@ When a kid finishes an AI Adventure, the full journey is auto-posted to `/api/co
 - Dedupe: same `(storyId + ordered choice texts)` SHA-1 path → bumps `replayCount` instead of creating a duplicate.
 - Admin delete: `DELETE /api/community-stories?id=<id>` requires `Authorization: Bearer <ADMIN_TOKEN>`. The Cloudflare Pages env var `ADMIN_TOKEN` must be set, otherwise DELETE returns 503. Parents capture the token client-side by visiting `/?admin=<token>` once on each device — it's stripped from the URL and stored in `localStorage.am_admin_token`. The delete `×` only renders when that key is present.
 
+## Fal.ai queue API gotcha (already fixed)
+
+`https://queue.fal.run/<model>` is the **async** submit endpoint — it returns `{request_id, status_url, response_url, queue_position}` only. To get the actual image you must poll `status_url` until `status === "COMPLETED"` and then GET `response_url` for the result body. The original `workers/daily-story/index.js` treated the submit response as if it were synchronous (`result.images[0].url`), so the URL was always undefined and no images ever got saved. If you swap models, keep the queue-poll pattern — sync `https://fal.run/<model>` has hard timeouts that break for slower models like `instant-character`.
+
 ## Avatar pipeline gotcha (already fixed)
 
 iPhone photo-library uploads come through as HEIC; OpenAI's images/edits API rejects HEIC. `index.html` (`normalizeAvatarImage`) decodes any browser-renderable file via `<img>` and re-encodes through a canvas as JPEG before posting to `/api/avatar`. If the upload path regresses, that function is the first place to look.

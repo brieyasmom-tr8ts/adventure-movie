@@ -266,20 +266,26 @@ async function assembleStoryForKid(env, profile, narration, today, fruit, level)
 }
 
 async function generateSceneImage(env, profile, scene, index) {
-  if (!env.FAL_API_KEY) return null;
+  if (!env.FAL_API_KEY) {
+    console.warn(`Scene ${index}: FAL_API_KEY not set, skipping image`);
+    return null;
+  }
   if (!scene.imagePrompt) return null;
   const referenceImageUrl = profile.avatarUrl;
-  if (!referenceImageUrl) return null;
+  if (!referenceImageUrl) {
+    console.warn(`Scene ${index}: profile ${profile.name} has no avatarUrl, skipping image`);
+    return null;
+  }
 
   const prompt = `Children's storybook illustration. ${scene.imagePrompt}. The main character is a child named ${profile.name}. Friendly, colorful, warm lighting, safe for children.`;
+  const model = env.FAL_MODEL || "fal-ai/instant-character";
+  const authHeaders = { "Authorization": `Key ${env.FAL_API_KEY}` };
 
   try {
-    const submitResp = await fetch(`https://queue.fal.run/${env.FAL_MODEL || "fal-ai/instant-character"}`, {
+    // 1. Submit job to fal.ai queue.
+    const submitResp = await fetch(`https://queue.fal.run/${model}`, {
       method: "POST",
-      headers: {
-        "Authorization": `Key ${env.FAL_API_KEY}`,
-        "Content-Type": "application/json"
-      },
+      headers: { ...authHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt,
         image_url: referenceImageUrl,
@@ -289,17 +295,53 @@ async function generateSceneImage(env, profile, scene, index) {
       })
     });
     if (!submitResp.ok) {
-      console.error(`fal.ai error scene ${index}: ${await submitResp.text()}`);
+      console.error(`fal submit error scene ${index}: ${submitResp.status} ${await submitResp.text()}`);
       return null;
     }
-    const result = await submitResp.json();
+    const submitData = await submitResp.json();
+    const statusUrl = submitData.status_url;
+    const responseUrl = submitData.response_url;
+    if (!statusUrl || !responseUrl) {
+      console.error(`fal queue response missing URLs scene ${index}: ${JSON.stringify(submitData).slice(0, 300)}`);
+      return null;
+    }
+
+    // 2. Poll the status URL until the job completes (or fails / times out).
+    const pollDeadline = Date.now() + 120000;
+    let done = false;
+    while (Date.now() < pollDeadline) {
+      await new Promise(r => setTimeout(r, 4000));
+      const statusResp = await fetch(statusUrl, { headers: authHeaders });
+      if (!statusResp.ok) continue;
+      const status = await statusResp.json();
+      if (status.status === "COMPLETED") { done = true; break; }
+      if (status.status === "FAILED" || status.status === "ERROR") {
+        console.error(`fal job failed scene ${index}: ${JSON.stringify(status).slice(0, 300)}`);
+        return null;
+      }
+    }
+    if (!done) {
+      console.error(`fal job timeout scene ${index}`);
+      return null;
+    }
+
+    // 3. Fetch the actual result.
+    const resultResp = await fetch(responseUrl, { headers: authHeaders });
+    if (!resultResp.ok) {
+      console.error(`fal result fetch error scene ${index}: ${resultResp.status}`);
+      return null;
+    }
+    const result = await resultResp.json();
     const imageUrl = result?.images?.[0]?.url || result?.image?.url;
-    if (!imageUrl) return null;
+    if (!imageUrl) {
+      console.error(`fal result has no image scene ${index}: ${JSON.stringify(result).slice(0, 300)}`);
+      return null;
+    }
     const imageResp = await fetch(imageUrl);
     if (!imageResp.ok) return null;
     return await imageResp.arrayBuffer();
   } catch (e) {
-    console.error(`Image gen failed scene ${index}: ${e.message}`);
+    console.error(`Image gen exception scene ${index}: ${e.message}`);
     return null;
   }
 }
