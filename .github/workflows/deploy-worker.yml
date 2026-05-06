@@ -19,8 +19,29 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
+
+      # Push each worker secret only when its GitHub-secret env value is
+      # actually present. Skipping a missing one is safer than aborting the
+      # whole deploy — the worker keeps using whatever value it already has
+      # on Cloudflare.
+      - name: Sync ANTHROPIC_API_KEY
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        working-directory: workers/daily-story
+        run: printf '%s' "$ANTHROPIC_API_KEY" | npx --yes wrangler@4 secret put ANTHROPIC_API_KEY
+
+      - name: Sync FAL_API_KEY
+        if: ${{ env.FAL_API_KEY != '' }}
+        env:
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
+        working-directory: workers/daily-story
+        run: printf '%s' "$FAL_API_KEY" | npx --yes wrangler@4 secret put FAL_API_KEY
 
       - id: deploy
         uses: cloudflare/wrangler-action@v3
@@ -28,23 +49,17 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/daily-story
-          secrets: |
-            ANTHROPIC_API_KEY
-            FAL_API_KEY
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
 
       - name: Trigger today's run
-        if: github.event_name != 'workflow_dispatch' || inputs.trigger_after_deploy
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.trigger_after_deploy) && success() }}
         env:
           DEPLOY_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: |
           URL=$(printf '%s' "$DEPLOY_OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | tail -1)
           if [ -z "$URL" ]; then
             echo "Could not parse worker URL from deploy output." >&2
-            exit 1
+            exit 0
           fi
           echo "Triggering $URL/trigger"
-          curl -X POST -fsS --max-time 60 "$URL/trigger"
+          curl -X POST -fsS --max-time 60 "$URL/trigger" || echo "Trigger failed (non-fatal)"
           echo
