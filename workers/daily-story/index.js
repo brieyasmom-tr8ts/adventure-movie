@@ -239,6 +239,11 @@ async function assembleStoryForKid(env, profile, narration, today, fruit, level)
         httpMetadata: { contentType: "image/png" }
       });
       scenes[i].image = `/api/daily-image/${key}`;
+    } else if (profile.avatarUrl) {
+      // Image generation failed for this scene — fall back to the kid's
+      // cartoon avatar so the page still shows them. Keeps the daily story
+      // usable when fal.ai is slow, rate-limited, or down.
+      scenes[i].image = profile.avatarUrl;
     }
   }
 
