@@ -129,10 +129,7 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .letterbox.top{top:0}
 .letterbox.bottom{bottom:0}
 
-.timer-track{position:absolute;top:18px;left:0;right:0;height:3px;background:rgba(255,255,255,0.08);z-index:20}
-.timer-fill{height:100%;background:linear-gradient(90deg,#7fffa1 0%,var(--gold-2) 60%,var(--gold) 100%);transition:width 0.95s linear;box-shadow:0 0 10px rgba(255,210,0,0.5)}
-.timer-fill.warn{background:linear-gradient(90deg,#ff5050,#ff7878);animation:pulseWarn 0.6s infinite;box-shadow:0 0 14px rgba(255,80,80,0.7)}
-@keyframes pulseWarn{50%{opacity:0.55}}
+/* Timer removed — readers go at their own pace. */
 
 .scene-body{
   position:absolute;left:0;right:0;bottom:18px;
@@ -288,7 +285,7 @@ body.reader-early .choice-key{width:36px;height:36px;font-size:15px}
 /* ---------- Print Book ---------- */
 @media print{
   body,html{background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important}
-  .screen,.vignette,.top-bar,.top-btn,.top-back,.profile-pill,.letterbox,.timer-track,.wwyd-overlay,.ai-loading,.modal{display:none!important}
+  .screen,.vignette,.top-bar,.top-btn,.top-back,.profile-pill,.letterbox,.wwyd-overlay,.ai-loading,.modal{display:none!important}
   #print-book{display:block!important}
 }
 #print-book{display:none;padding:0;font-family:Georgia,'Times New Roman',serif}
@@ -494,7 +491,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <video id="scene-video" muted loop playsinline style="display:none"></video>
     <div class="scene-image-overlay"></div>
   </div>
-  <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+  <div class="vignette"></div>
   <div class="scene-body scene-fade" id="scene-body">
     <button class="speech-btn" id="speech-toggle" onclick="toggleSpeech()" title="Read aloud">🔈</button>
     <div class="scene-chapter" id="scene-chapter"></div>
@@ -1073,15 +1070,12 @@ levels:{
 /* =========================================================
    STATE
    ========================================================= */
-const TIMER_SECONDS=40;
 let currentStory=null;
 let currentSceneId=null;
 let visitedScenes=[];
 let journey=[];           // [{chapter,text,choice}] — full path passed to the AI
 let currentAIScene=null;  // last scene Claude returned
 let aiBusy=false;
-let timerInterval=null;
-let timerWarned=false;
 let typewriterTimeout=null;
 let typewriterDone=true;
 let typewriterFull="";
@@ -1493,7 +1487,6 @@ function tryDifferentPath(){
   playScene('s1');
 }
 function goHome(){
-  if(timerInterval)clearInterval(timerInterval);
   stopMusic();currentMood=null;
   stopSpeech();
   hideAILoading();
@@ -1507,7 +1500,6 @@ function goHome(){
    SCENE PLAYBACK
    ========================================================= */
 function playScene(id){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   const s=currentStory.scenes[id];
   if(!s)return;
   currentSceneId=id;
@@ -1560,7 +1552,6 @@ function renderBranching(s){
       const body=document.querySelector('.scene-body');
       if(body)body.scrollTo({top:body.scrollHeight,behavior:'smooth'});
     },150);
-    startTimer(s.choices[0].next);
   });
 }
 
@@ -1574,8 +1565,6 @@ function renderInteractive(s){
     <div id="ai-response-slot"></div>
   `;
   startTypewriter(s.text||s.prompt||'What would you do?');
-  // No countdown timer for interactive scenes
-  document.getElementById('timer-fill').style.width='0%';
   setTimeout(()=>{const i=document.getElementById('ai-input');i&&i.focus();},400);
 }
 
@@ -2307,28 +2296,10 @@ function renderAIScene(scene){
       choicesWrap.classList.remove('hidden');
       const sb=document.querySelector('.scene-body');
       setTimeout(()=>{const cw=document.getElementById('choices-wrap');if(cw)cw.scrollIntoView({block:'end',behavior:'smooth'});},100);
-      aiAutoTimer();
     });
 
     body.classList.remove('fading');
   },300);
-}
-
-function aiAutoTimer(){
-  let rem=TIMER_SECONDS;
-  timerWarned=false;
-  const fill=document.getElementById('timer-fill');
-  fill.classList.remove('warn');
-  fill.style.width='100%';
-  timerInterval=setInterval(()=>{
-    rem--;
-    fill.style.width=(rem/TIMER_SECONDS*100)+'%';
-    if(rem<=5&&!timerWarned){timerWarned=true;fill.classList.add('warn');playSfx('warn');}
-    if(rem<=0){
-      clearInterval(timerInterval);timerInterval=null;
-      chooseAI(0);
-    }
-  },1000);
 }
 
 function showAILoading(){document.getElementById('ai-loading').classList.add('active');}
@@ -2419,30 +2390,9 @@ function skipTypewriter(){
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 /* =========================================================
-   TIMER
-   ========================================================= */
-function startTimer(defaultNext){
-  let rem=TIMER_SECONDS;
-  timerWarned=false;
-  const fill=document.getElementById('timer-fill');
-  fill.classList.remove('warn');
-  fill.style.width='100%';
-  timerInterval=setInterval(()=>{
-    rem--;
-    fill.style.width=(rem/TIMER_SECONDS*100)+'%';
-    if(rem<=5&&!timerWarned){timerWarned=true;fill.classList.add('warn');playSfx('warn');}
-    if(rem<=0){
-      clearInterval(timerInterval);timerInterval=null;
-      choose(defaultNext);
-    }
-  },1000);
-}
-
-/* =========================================================
    CHOICE — with optional Reflection-Mode pause overlay
    ========================================================= */
 function choose(next){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   playSfx('click');
   // Record journey step (only for branching scenes that have a choices array
   // matching this `next`; interactive scenes push their own step)
@@ -2465,7 +2415,6 @@ function choose(next){
 
 /* Choice handler for AI-generated scenes (looked up by index) */
 function chooseAI(idx){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   playSfx('click');
   if(currentAIScene&&Array.isArray(currentAIScene.choices)){
     const c=currentAIScene.choices[idx];
@@ -2482,7 +2431,6 @@ function chooseAI(idx){
    ENDING
    ========================================================= */
 function showEnding(s,endingId){
-  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   recordEnding(currentStory.id,endingId);
   bumpStreak();
   // Auto-share AI Adventure journeys to the community pool so other kids
