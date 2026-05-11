@@ -2078,29 +2078,22 @@ async function startDailyStory(){
   const heroFallback=(player&&getAvatar(player))||'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80';
   showAILoading();
   try{
-    // Try pre-generated story from cron first
+    // Try pre-generated story from cron first.
+    // The pregen has all 8 scenes + 3 endings with nextScene pointers. Walk
+    // them as a fixed branching tree so the story actually ends where the
+    // outline says it ends — instead of calling /api/generate per click,
+    // which produces a brand-new scene each time and loops forever at L4.
     const preGen=await fetchPreGeneratedStory();
-    if(preGen){
+    if(preGen&&Array.isArray(preGen.scenes)&&preGen.scenes.length){
       hideAILoading();
-      currentStory={
-        id:'daily_'+preGen.date,
-        title:preGen.title||"Today's Adventure",
-        theme:preGen.theme||'Adventure',
-        category:preGen.ageGroup||'Daily',
-        aiStory:true,
-        image:(preGen.scenes&&preGen.scenes[0]&&preGen.scenes[0].image)||heroFallback,
-        seed:{},
-        scenes:{}
-      };
+      currentStory=buildDailyStoryFromPregen(preGen,heroFallback);
       setReaderClass();
       visitedScenes=[];journey=[];currentAIScene=null;
       showScreen('player-screen');
-      // Render first scene from pre-generated story
-      const firstScene=preGen.scenes[0];
-      if(firstScene)renderAIScene(firstScene);
+      playScene('s1');
       return;
     }
-    // Fall back to live generation
+    // Fall back to live generation when the cron run hasn't landed yet.
     const daily=await getOrCreateDailyStory();
     hideAILoading();
     currentStory={
@@ -2121,6 +2114,57 @@ async function startDailyStory(){
     showAIError(e.message||'Could not load today\'s story');
     showScreen('player-screen');
   }
+}
+function buildDailyStoryFromPregen(preGen,heroFallback){
+  const list=preGen.scenes;
+  // The outline LLM may use 1-indexed or 0-indexed nextScene numbers, or
+  // a string id like "ending_best". Build lookup tables for all three.
+  const byId={};
+  const byIndex0={};
+  const byIndex1={};
+  list.forEach((s,i)=>{byId[s.id]=s;byIndex0[i]=s.id;byIndex1[i+1]=s.id;});
+  const fallbackEnding=byId.ending_neutral?'ending_neutral':(byId.ending_learn?'ending_learn':(byId.ending_best?'ending_best':list[list.length-1].id));
+  const resolveNext=(nextScene)=>{
+    if(typeof nextScene==='string'&&byId[nextScene])return nextScene;
+    if(typeof nextScene==='number'){
+      if(byIndex1[nextScene])return byIndex1[nextScene];
+      if(byIndex0[nextScene])return byIndex0[nextScene];
+    }
+    return fallbackEnding;
+  };
+  const scenes={};
+  list.forEach(s=>{
+    if(s.ending){
+      scenes[s.id]={
+        ending:true,
+        type:s.type||'Ending',
+        emoji:s.emoji||'🎬',
+        title:s.title||'The End',
+        text:s.text||'',
+        lesson:s.lesson||'',
+        reflect:Array.isArray(s.reflect)?s.reflect:[]
+      };
+    }else{
+      const choices=Array.isArray(s.choices)?s.choices:[];
+      scenes[s.id]={
+        chapter:s.chapter||'',
+        text:s.text||'',
+        image:s.image||preGen.image||heroFallback,
+        mood:s.mood||'calm',
+        choices:choices.map(c=>({text:c.text||'Continue',next:resolveNext(c.nextScene)}))
+      };
+    }
+  });
+  return {
+    id:'daily_'+(preGen.date||todayStr()),
+    title:preGen.title||"Today's Adventure",
+    theme:preGen.theme||'Adventure',
+    category:'Daily',
+    emoji:preGen.emoji||'⏰',
+    image:(list[0]&&list[0].image)||heroFallback,
+    scenes,
+    _isDailyPregen:true
+  };
 }
 
 /* =========================================================
