@@ -2214,9 +2214,11 @@ function startCustomStory(){
 }
 
 /* =========================================================
-   SPEECH — browser speechSynthesis (free, no API)
+   SPEECH — OpenAI TTS with browser speechSynthesis fallback
    ========================================================= */
 let speechVoice=null;
+let ttsAudio=null;
+let ttsAvailable=null; // null=unknown, true/false after first attempt
 function pickVoice(){
   if(!('speechSynthesis' in window))return;
   const voices=speechSynthesis.getVoices();
@@ -2231,7 +2233,6 @@ function toggleSpeech(){
   refreshSpeechBtn();
   if(!speechOn){stopSpeech();}
   else{
-    // Speak whatever is currently on-screen
     const t=typewriterFull||document.getElementById('scene-text').textContent;
     if(t)speakText(t);
   }
@@ -2243,10 +2244,43 @@ function refreshSpeechBtn(){
   btn.classList.toggle('on',speechOn);
 }
 function speakText(text){
-  if(!speechOn)return;
+  if(!speechOn||!text)return;
+  stopSpeech();
+  // Try OpenAI TTS first (skip if we already know it's unavailable)
+  if(ttsAvailable!==false){
+    speakWithTTS(text);
+    return;
+  }
+  speakWithBrowser(text);
+}
+async function speakWithTTS(text){
+  try{
+    const resp=await fetch('/api/tts',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({text})
+    });
+    if(!resp.ok){
+      if(resp.status===503)ttsAvailable=false;
+      speakWithBrowser(text);
+      return;
+    }
+    ttsAvailable=true;
+    const blob=await resp.blob();
+    const url=URL.createObjectURL(blob);
+    ttsAudio=new Audio(url);
+    ttsAudio.onended=()=>{URL.revokeObjectURL(url);ttsAudio=null;};
+    ttsAudio.onerror=()=>{URL.revokeObjectURL(url);ttsAudio=null;};
+    if(!speechOn){URL.revokeObjectURL(url);ttsAudio=null;return;}
+    ttsAudio.play().catch(()=>{});
+  }catch(e){
+    speakWithBrowser(text);
+  }
+}
+function speakWithBrowser(text){
+  if(!speechOn||!text)return;
   if(!('speechSynthesis' in window))return;
   try{speechSynthesis.cancel();}catch(e){}
-  if(!text)return;
   const u=new SpeechSynthesisUtterance(text);
   u.rate=0.95;u.pitch=1.05;
   if(!speechVoice)pickVoice();
@@ -2254,6 +2288,7 @@ function speakText(text){
   speechSynthesis.speak(u);
 }
 function stopSpeech(){
+  if(ttsAudio){try{ttsAudio.pause();ttsAudio.currentTime=0;ttsAudio=null;}catch(e){}}
   try{speechSynthesis.cancel();}catch(e){}
 }
 
