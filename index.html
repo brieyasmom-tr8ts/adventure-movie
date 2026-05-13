@@ -627,6 +627,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 <button class="top-btn top-back" onclick="goHome()" title="Back to stories" aria-label="Back to stories">←</button>
 <button class="profile-pill" id="profile-pill" onclick="openSwitcher()" title="Switch reader">👤 Add name</button>
 <div class="top-bar">
+  <button class="top-btn" onclick="openParentDash()" title="Parent Dashboard" style="font-size:14px">⚙️</button>
   <button class="top-btn on" id="sound-toggle" onclick="toggleSound()" title="Sound on/off">🔊</button>
 </div>
 
@@ -2549,6 +2550,7 @@ function submitNameModal(){
   const inp=document.getElementById('name-input');
   const name=(inp.value||'').trim();
   if(!name){inp.focus();return;}
+  const isFirstPlayer=getPlayers().length===0;
   if(addPlayer(name)){
     if(pendingAvatar)setAvatar(name,pendingAvatar);
     setLevel(name,pendingLevel);
@@ -2562,7 +2564,18 @@ function submitNameModal(){
     buildHome();
     // Register with daily story API (fire and forget)
     registerProfileForDaily(name,pendingLevel);
+    // Auto-create family on first reader so parents get a code right away
+    if(isFirstPlayer&&!getFamilyCode()){
+      familyCreate().then(()=>{
+        setTimeout(()=>showFamilyWelcome(),600);
+      }).catch(()=>{});
+    }
   }
+}
+function showFamilyWelcome(){
+  const code=getFamilyCode();
+  if(!code)return;
+  openFamilyModal();
 }
 async function registerProfileForDaily(name,level){
   const avatar=getAvatar(name);
