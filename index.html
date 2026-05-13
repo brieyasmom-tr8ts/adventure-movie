@@ -654,6 +654,10 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <span class="custom-icon">✨</span>
     <span>Make My Own Story</span>
   </button>
+  <button class="custom-button" onclick="openStoryWriter()" style="background:linear-gradient(135deg,rgba(192,132,252,0.12),rgba(96,165,250,0.12));border-color:rgba(192,132,252,0.3)">
+    <span class="custom-icon">📝</span>
+    <span>Write a Story for the Kids</span>
+  </button>
   <div id="categories-wrap"></div>
 </div>
 
@@ -849,6 +853,30 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
     <button class="interactive-submit" onclick="submitNameModal()">Let's go!</button>
     <button class="modal-close" onclick="closeNameModal()" id="name-cancel" style="display:none">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="story-writer-modal">
+  <div class="modal-card">
+    <h2>📝 Write a Story</h2>
+    <p>Describe your story idea and we'll turn it into an adventure the kids can play. Their name will be used as the hero!</p>
+    <input class="interactive-input" id="writer-title" placeholder="Story title (e.g. The Lost Kitten)" maxlength="60" autocomplete="off" style="margin-bottom:8px">
+    <textarea class="interactive-input" id="writer-plot" placeholder="What happens in the story? Just describe it simply...&#10;&#10;Example: A little girl finds a lost kitten in the rain. She has to decide whether to take it home or find its owner." rows="5" maxlength="500" style="margin-bottom:8px;resize:vertical;min-height:100px"></textarea>
+    <input class="interactive-input" id="writer-lesson" placeholder="Lesson or moral (optional)" maxlength="100" autocomplete="off" style="margin-bottom:8px">
+    <input class="interactive-input" id="writer-author" placeholder="Your name (e.g. Grandbabe)" maxlength="20" autocomplete="off" style="margin-bottom:12px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <label style="font-size:12px;color:var(--text-3);font-weight:700;width:100%">Reading level:
+        <select id="writer-level" class="interactive-input" style="margin-top:4px">
+          <option value="L1">Start Reading (Pre-K)</option>
+          <option value="L2" selected>Growing Reader (1st-2nd)</option>
+          <option value="L3">Brave Reader (3rd-4th)</option>
+          <option value="L4">Story Master (5th-6th)</option>
+        </select>
+      </label>
+    </div>
+    <button class="interactive-submit" onclick="submitStoryWriter()" id="writer-btn">Create Story ✨</button>
+    <div id="writer-status" style="font-size:13px;text-align:center;margin-top:8px;display:none"></div>
+    <button class="modal-close" onclick="closeStoryWriter()">Cancel</button>
   </div>
 </div>
 
@@ -3767,6 +3795,80 @@ function updatePinDots(){
   dots.forEach((d,i)=>d.classList.toggle('filled',i<pinBuffer.length));
 }
 
+/* --- Story Writer modal (home screen access, no PIN needed) --- */
+function openStoryWriter(){
+  document.getElementById('writer-title').value='';
+  document.getElementById('writer-plot').value='';
+  document.getElementById('writer-lesson').value='';
+  // Remember author name from last time
+  const lastAuthor=localStorage.getItem('am_writer_author')||'';
+  document.getElementById('writer-author').value=lastAuthor;
+  document.getElementById('writer-status').style.display='none';
+  document.getElementById('writer-btn').disabled=false;
+  document.getElementById('writer-btn').textContent='Create Story ✨';
+  document.getElementById('story-writer-modal').classList.add('active');
+  setTimeout(()=>document.getElementById('writer-title').focus(),150);
+}
+function closeStoryWriter(){document.getElementById('story-writer-modal').classList.remove('active');}
+
+async function submitStoryWriter(){
+  const title=document.getElementById('writer-title').value.trim();
+  const plot=document.getElementById('writer-plot').value.trim();
+  const lesson=document.getElementById('writer-lesson').value.trim();
+  const author=document.getElementById('writer-author').value.trim()||'Family';
+  const level=document.getElementById('writer-level').value;
+  if(!title){document.getElementById('writer-title').focus();return;}
+  if(!plot){document.getElementById('writer-plot').focus();return;}
+
+  localStorage.setItem('am_writer_author',author);
+  const btn=document.getElementById('writer-btn');
+  const status=document.getElementById('writer-status');
+  btn.disabled=true;btn.textContent='Creating...';
+  status.style.display='block';status.style.color='var(--text-2)';
+  status.textContent='Writing your story... this takes about 30 seconds.';
+
+  try{
+    const resp=await fetch('/api/story-editor',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({title,plot,lesson,level})
+    });
+    const data=await resp.json();
+    if(!resp.ok){
+      status.style.color='#ff7878';
+      status.textContent=data.error||'Something went wrong. Try again.';
+      btn.disabled=false;btn.textContent='Create Story ✨';
+      return;
+    }
+    const story=data.story;
+    const custom=getCustomStories();
+    custom.unshift({
+      id:'custom_'+Date.now(),
+      title:story.title||title,
+      theme:story.theme||'Adventure',
+      emoji:story.emoji||'📝',
+      level,
+      createdBy:author,
+      createdAt:todayStr(),
+      scenes:story.scenes
+    });
+    if(custom.length>20)custom.length=20;
+    saveCustomStories(custom);
+    closeStoryWriter();
+    buildHome();
+    // Show success toast
+    const el=document.createElement('div');
+    el.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#4ade80;padding:14px 22px;border-radius:14px;z-index:9999;font-size:15px;font-weight:700;border:1px solid rgba(74,222,128,0.3)';
+    el.textContent='Story created! The kids can play it now.';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3000);
+  }catch(e){
+    status.style.color='#ff7878';
+    status.textContent='Network error. Check your connection.';
+    btn.disabled=false;btn.textContent='Create Story ✨';
+  }
+}
+
 /* --- Story Editor (Grandbabe) --- */
 function getCustomStories(){
   try{return JSON.parse(localStorage.getItem('am_custom_stories')||'[]');}catch(e){return [];}
@@ -3851,21 +3953,30 @@ function deleteCustomStory(idx){
   renderDashCustomStories();
   buildHome();
 }
+function personalizeText(text){
+  // Replace generic protagonist references with the active player's name
+  const name=getActivePlayer();
+  if(!name||!text)return text;
+  return text.replace(/\b(the (?:child|kid|girl|boy|hero|protagonist))\b/gi,name)
+             .replace(/\{name\}/gi,name)
+             .replace(/\{player\}/gi,name);
+}
 function playCustomEditorStory(idx){
   const list=getCustomStories();
   const s=list[idx];
   if(!s)return;
-  // Convert scenes array to id-keyed object
+  const playerName=getActivePlayer()||'';
+  // Convert scenes array to id-keyed object, inserting kid's name
   const scenes={};
   const sceneList=Array.isArray(s.scenes)?s.scenes:[];
   sceneList.forEach(sc=>{
     if(sc.ending){
-      scenes[sc.id]={ending:true,type:sc.type||'Ending',emoji:sc.emoji||'🎬',title:sc.title||'The End',text:sc.text||'',lesson:sc.lesson||'',reflect:Array.isArray(sc.reflect)?sc.reflect:[]};
+      scenes[sc.id]={ending:true,type:sc.type||'Ending',emoji:sc.emoji||'🎬',title:sc.title||'The End',text:personalizeText(sc.text||''),lesson:personalizeText(sc.lesson||''),reflect:Array.isArray(sc.reflect)?sc.reflect.map(personalizeText):[]};
     }else{
-      scenes[sc.id]={chapter:sc.chapter||'',text:sc.text||'',mood:sc.mood||'calm',choices:(sc.choices||[]).map(c=>({text:c.text,next:c.nextScene||c.next}))};
+      scenes[sc.id]={chapter:sc.chapter||'',text:personalizeText(sc.text||''),mood:sc.mood||'calm',choices:(sc.choices||[]).map(c=>({text:personalizeText(c.text),next:c.nextScene||c.next}))};
     }
   });
-  currentStory={id:s.id,title:s.title,theme:s.theme||'Custom',emoji:s.emoji||'📝',category:'Grandbabe Stories',image:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',scenes};
+  currentStory={id:s.id,title:s.title,theme:s.theme||'Custom',emoji:s.emoji||'📝',category:'Grandbabe Stories',image:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',scenes,_isPersonalized:true};
   setReaderClass();
   visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');

@@ -35,6 +35,7 @@ export async function onRequestPost(context) {
     "You are a story generator for a children's choose-your-own-adventure reading app.",
     "A family member has written a simple story idea. Turn it into a complete branching story.",
     `Writing rules: ${writingRules}`,
+    'IMPORTANT: Use "{name}" (literally, with curly braces) as the protagonist\'s name throughout the story. The app will replace {name} with the actual child\'s name when they play it. For example: "{name} looked up at the tall tree." Do NOT use a made-up name.',
     "Make it warm, age-appropriate, and fun. No violence, profanity, or scary content.",
     lesson ? `The story should teach this lesson: ${lesson}` : "Let the story discover its own gentle lesson.",
     "Return ONLY valid JSON."
