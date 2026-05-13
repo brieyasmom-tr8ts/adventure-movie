@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffd200">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <title>Choose Your Adventure</title>
 <style>
 /* ---------- Design tokens ---------- */
@@ -3638,6 +3643,11 @@ document.getElementById('family-rename-input').addEventListener('keydown',e=>{
 document.getElementById('welcome-code-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')welcomeJoinFamily();
 });
+
+// Register service worker for PWA / offline support
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
