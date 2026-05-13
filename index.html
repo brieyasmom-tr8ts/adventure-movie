@@ -512,6 +512,18 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
 .avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
 
+/* Streak calendar */
+.streak-calendar{margin:14px 0 8px;text-align:center}
+.streak-calendar-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:800;margin-bottom:8px}
+.streak-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;max-width:240px;margin:0 auto}
+.streak-day{width:100%;aspect-ratio:1;border-radius:4px;background:rgba(255,255,255,0.06);position:relative}
+.streak-day.active{background:var(--gold);box-shadow:0 0 6px rgba(255,210,0,0.4)}
+.streak-day.today{outline:2px solid var(--gold);outline-offset:-1px}
+.streak-day.future{opacity:0.15}
+.streak-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;max-width:240px;margin:0 auto 4px}
+.streak-labels span{font-size:9px;color:var(--text-3);text-align:center;font-weight:700}
+.streak-month{font-size:11px;color:var(--text-2);font-weight:700;margin-bottom:6px}
+
 /* Family code display */
 .family-code-display{
   background:rgba(255,210,0,0.08);border:1.5px dashed var(--gold);border-radius:14px;
@@ -2513,7 +2525,36 @@ function renderStatsPanel(){
   document.getElementById('badges-grid').innerHTML=badgesHtml;
 
   // Extra stats
-  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>`;
+  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>${buildStreakCalendar()}`;
+}
+function buildStreakCalendar(){
+  let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){d={};}
+  const days=new Set(d.days||[]);
+  const today=new Date();
+  const todayS=todayStr();
+  // Build 5 weeks (35 days) ending on Saturday of this week
+  const dayOfWeek=today.getDay(); // 0=Sun
+  const endDate=new Date(today);
+  endDate.setDate(endDate.getDate()+(6-dayOfWeek)); // next Saturday
+  const startDate=new Date(endDate);
+  startDate.setDate(startDate.getDate()-34); // 35 days total
+  const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const month=monthNames[today.getMonth()];
+  let cells='';
+  const cur=new Date(startDate);
+  for(let i=0;i<35;i++){
+    const ds=cur.toISOString().slice(0,10);
+    const isActive=days.has(ds);
+    const isToday=ds===todayS;
+    const isFuture=cur>today&&!isToday;
+    let cls='streak-day';
+    if(isActive)cls+=' active';
+    if(isToday)cls+=' today';
+    if(isFuture)cls+=' future';
+    cells+=`<div class="${cls}" title="${ds}"></div>`;
+    cur.setDate(cur.getDate()+1);
+  }
+  return `<div class="streak-calendar"><div class="streak-calendar-title">Reading Calendar</div><div class="streak-month">${month} ${today.getFullYear()}</div><div class="streak-labels"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="streak-grid">${cells}</div></div>`;
 }
 function closeSwitcher(){document.getElementById('switcher-modal').classList.remove('active');}
 function renderSwitcherList(){
@@ -2555,10 +2596,14 @@ function streakKey(){return 'am_streak:'+(getActivePlayer()||'__guest__');}
 function bumpStreak(){
   const today=todayStr();
   let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){d={};}
+  if(!d.days)d.days=[];
   if(d.lastDate===today)return d.count||0;
   if(d.lastDate&&daysBetween(d.lastDate,today)===1){d.count=(d.count||0)+1;}
   else{d.count=1;}
   d.lastDate=today;
+  if(!d.days.includes(today))d.days.push(today);
+  // Keep last 90 days of history
+  if(d.days.length>90)d.days=d.days.slice(-90);
   localStorage.setItem(streakKey(),JSON.stringify(d));
   return d.count;
 }
