@@ -661,6 +661,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
       <button class="end-btn primary" onclick="restartStory()">Replay from beginning</button>
       <button class="end-btn secondary" onclick="tryDifferentPath()">Try a different path</button>
       <button class="end-btn secondary" onclick="printBook()">📖 Print My Book</button>
+      <button class="end-btn secondary" onclick="shareStory()">📤 Share</button>
       <button class="end-btn secondary" onclick="goHome()">All Stories</button>
     </div>
   </div>
@@ -3326,6 +3327,25 @@ function showEnding(s,endingId){
    COMMUNITY ADVENTURES — auto-share finished AI journeys so
    other kids can replay them with zero token cost.
    ========================================================= */
+async function shareStory(){
+  const title=currentStory?currentStory.title:'Choose Your Adventure';
+  const player=getActivePlayer()||'A reader';
+  const endingTitle=document.getElementById('ending-title')?.textContent||'';
+  const text=`${player} just finished "${title}" — ${endingTitle}! Try it yourself:`;
+  const url=window.location.origin;
+  if(navigator.share){
+    try{await navigator.share({title,text,url});}catch(e){}
+  }else{
+    try{await navigator.clipboard.writeText(text+' '+url);
+    const el=document.createElement('div');
+    el.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:12px 20px;border-radius:12px;z-index:9999;font-size:14px;font-weight:600';
+    el.textContent='Link copied!';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2000);
+    }catch(e){}
+  }
+}
+
 async function shareCommunityStory(endingScene){
   if(!currentStory||!currentStory.aiStory)return;
   const player=getActivePlayer()||'Anonymous';
