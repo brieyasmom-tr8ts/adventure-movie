@@ -1826,26 +1826,33 @@ function renderWordOrderGame(){
   const verse=currentVerse;
   const tokens=tokenizeVerse(verse.verseText);
   const diff=currentGame.difficulty;
-  // Easy: split verse into two halves and only show one at a time
-  // Medium: full shuffle, all words at once
-  // Hard: full shuffle, no answer-row hints
+  // Easy: split verse into two halves, no distractors
+  // Medium: full shuffle, no distractors
+  // Hard: full shuffle + 3 distractor words mixed into the bank
   woState={tokens,picked:[],wrongCount:0,diff};
   let pool=tokens.map((t,i)=>({t,i}));
   if(diff==='easy'){
-    // Show first half initially
     const half=Math.ceil(tokens.length/2);
     woState.poolEnd=half;
     pool=pool.slice(0,half);
   }else{
     woState.poolEnd=tokens.length;
   }
+  if(diff==='hard'){
+    const distractors=['always','never','heart','hope','peace','grace','light','strong','silent','quickly'];
+    const used=new Set(tokens.map(t=>t.toLowerCase().replace(/[^a-z]/g,'')));
+    const candDist=distractors.filter(d=>!used.has(d)).sort(()=>Math.random()-0.5).slice(0,3);
+    candDist.forEach(d=>pool.push({t:d,i:-1,distractor:true}));
+  }
   woState.bank=pool.slice().sort(()=>Math.random()-0.5);
   drawWordOrder();
-  document.getElementById('game-footer').textContent='Tap the words in the order they appear in the verse.';
+  document.getElementById('game-footer').textContent=diff==='hard'
+    ?'Tap the verse words in order. Watch out — some words are not in the verse.'
+    :'Tap the words in the order they appear in the verse.';
 }
 function drawWordOrder(){
   const area=document.getElementById('game-area');
-  const diff=woState.diff;
+  // Always show the answer row — kids need to see where they are.
   const ansHtml=woState.picked.length
     ? woState.picked.map(t=>`<span class="wo-answer-word">${escapeHtml(t)}</span>`).join('')
     : '<span class="wo-answer-placeholder">Your verse will build up here…</span>';
@@ -1853,16 +1860,21 @@ function drawWordOrder(){
     const used=b.used?' used':'';
     return `<button class="wo-bank-word${used}" id="wo-bank-${bi}" onclick="woPickWord(${bi})">${escapeHtml(b.t)}</button>`;
   }).join('');
-  area.innerHTML=`<div class="wo-answer">${diff==='hard'?'<span class="wo-answer-placeholder">Words go here (hidden on Hard).</span>':ansHtml}</div><div class="wo-bank">${bankHtml}</div>`;
+  area.innerHTML=`<div class="wo-answer">${ansHtml}</div><div class="wo-bank">${bankHtml}</div>`;
 }
 function woPickWord(bi){
   if(!woState)return;
-  beginTimingIfNeeded();
   const bankItem=woState.bank[bi];
-  if(bankItem.used)return;
+  if(!bankItem||bankItem.used)return;
+  beginTimingIfNeeded();
   const expectedIndex=woState.picked.length;
-  if(bankItem.i===expectedIndex){
-    // Correct
+  const expectedWord=woState.tokens[expectedIndex];
+  // Match by word (normalized), not by exact bank index. That way if the
+  // verse has the same word twice (e.g. "the"), tapping either bank instance
+  // counts at this position. The other instance stays available for the
+  // next time it appears.
+  const norm=s=>(s||'').toLowerCase().replace(/[^a-z'’]/g,'');
+  if(!bankItem.distractor&&norm(bankItem.t)===norm(expectedWord)){
     bankItem.used=true;
     woState.picked.push(bankItem.t);
     drawWordOrder();
