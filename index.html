@@ -671,6 +671,21 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div id="print-book"></div>
 
+<div class="modal" id="welcome-modal">
+  <div class="modal-card">
+    <h2 style="text-align:center">Welcome!</h2>
+    <p style="text-align:center">Choose Your Adventure — interactive stories for the whole family.</p>
+    <button class="interactive-submit" onclick="welcomeNewFamily()" style="margin-bottom:10px">New here? Get started</button>
+    <div class="family-or">or</div>
+    <p style="color:var(--text-2);font-size:14px;margin-bottom:8px;text-align:center">Have a family code? Sign in to load your readers.</p>
+    <div class="family-input-row">
+      <input class="interactive-input" id="welcome-code-input" placeholder="Family code" maxlength="8" autocomplete="off" style="margin-bottom:0">
+      <button class="interactive-submit" onclick="welcomeJoinFamily()" style="width:auto;padding:12px 20px">Join</button>
+    </div>
+    <div id="welcome-error" style="color:#ff7878;font-size:13px;text-align:center;margin-top:8px;display:none"></div>
+  </div>
+</div>
+
 <div class="modal" id="name-modal">
   <div class="modal-card">
     <h2 id="name-modal-title">First name or nickname</h2>
@@ -3422,6 +3437,48 @@ function autoFamilySync(){
   familySync().catch(()=>{});
 }
 
+// --- Welcome modal (first-time visitors) ---
+function showWelcomeModal(){
+  document.getElementById('welcome-modal').classList.add('active');
+  document.getElementById('welcome-error').style.display='none';
+}
+function closeWelcomeModal(){
+  document.getElementById('welcome-modal').classList.remove('active');
+}
+function welcomeNewFamily(){
+  closeWelcomeModal();
+  showFirstNamePrompt();
+}
+async function welcomeJoinFamily(){
+  const inp=document.getElementById('welcome-code-input');
+  const code=(inp.value||'').trim().toLowerCase();
+  if(!code){inp.focus();return;}
+  const err=document.getElementById('welcome-error');
+  err.style.display='none';
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'join',code})
+    });
+    const result=await resp.json();
+    if(!resp.ok){err.textContent=result.error||'Could not join';err.style.display='block';return;}
+    setFamilyCode(code);
+    applyServerData(result.data);
+    closeWelcomeModal();
+    const players=getPlayers();
+    if(players.length>0){
+      // Family has readers — go straight to home with the first player active
+      if(!getActivePlayer())setActivePlayer(players[0]);
+      progress=loadProgress();
+      refreshProfileUI();refreshWelcome();buildHome();
+    }else{
+      // Family exists but no readers yet — prompt to add one
+      showFirstNamePrompt();
+    }
+  }catch(e){err.textContent='Network error';err.style.display='block';}
+}
+
 /* =========================================================
    INIT
    ========================================================= */
@@ -3438,8 +3495,11 @@ refreshDailyVerseCard();
 // Auto-sync family data on load
 autoFamilySync();
 
-// First-time visitor → prompt for name
-if(getPlayers().length===0){
+// First-time visitor → show welcome/login screen
+if(getPlayers().length===0 && !getFamilyCode()){
+  setTimeout(showWelcomeModal,400);
+} else if(getPlayers().length===0 && getFamilyCode()){
+  // Has family code but no local players — sync should populate them
   setTimeout(showFirstNamePrompt,400);
 }
 
@@ -3470,6 +3530,9 @@ document.getElementById('family-code-input').addEventListener('keydown',e=>{
 });
 document.getElementById('family-rename-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')familyRename();
+});
+document.getElementById('welcome-code-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')welcomeJoinFamily();
 });
 </script>
 </body>
