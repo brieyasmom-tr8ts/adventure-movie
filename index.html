@@ -1730,12 +1730,11 @@ function buildHome(){
     return (ai===-1?99:ai)-(bi===-1?99:bi);
   });
   const isAdmin=!!localStorage.getItem('am_admin_token');
-  // Grandbabe / custom editor stories
-  const customStories=getCustomStories();
+  // Grandbabe stories (from server)
   let grandbabHtml='';
-  if(customStories.length){
-    const customCards=customStories.map((s,i)=>{
-      return `<div class="story-card" style="background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(96,165,250,0.2))" onclick="playCustomEditorStory(${i})"><div class="card-ai-tag">📝 By ${escapeHtml(s.createdBy||'Family')}</div><div class="card-emoji">${s.emoji||'📝'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div></div></div>`;
+  if(grandbabStories.length){
+    const customCards=grandbabStories.map((s,i)=>{
+      return `<div class="story-card" style="background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(96,165,250,0.2))" onclick="playGrandbabStory(${i})"><div class="card-ai-tag">📝 By ${escapeHtml(s.createdBy||'Grandbabe')}</div><div class="card-emoji">${s.emoji||'📝'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div></div></div>`;
     }).join('');
     grandbabHtml=`<div class="category-section"><div class="category-title">Grandbabe Stories</div><div class="story-grid">${customCards}</div></div>`;
   }
@@ -1814,6 +1813,18 @@ const CATEGORY_GRADES={
   'Brave Reader':'3rd – 4th Grade',
   'Story Master':'5th – 6th Grade'
 };
+let grandbabStories=[];
+async function refreshGrandbabStories(){
+  try{
+    const resp=await fetch('/api/grandbabe-stories');
+    if(!resp.ok)return;
+    const data=await resp.json();
+    if(Array.isArray(data.stories)){
+      grandbabStories=data.stories;
+      buildHome();
+    }
+  }catch(e){}
+}
 async function refreshCommunityStories(){
   try{
     const resp=await fetch('/api/community-stories');
@@ -3961,9 +3972,8 @@ function personalizeText(text){
              .replace(/\{name\}/gi,name)
              .replace(/\{player\}/gi,name);
 }
-function playCustomEditorStory(idx){
-  const list=getCustomStories();
-  const s=list[idx];
+function playGrandbabStory(idx){
+  const s=grandbabStories[idx];
   if(!s)return;
   const playerName=getActivePlayer()||'';
   // Convert scenes array to id-keyed object, inserting kid's name
@@ -4275,6 +4285,7 @@ refreshWelcome();
 refreshSpeechBtn();
 buildHome();
 refreshCommunityStories();
+refreshGrandbabStories();
 refreshDailyVerseCard();
 
 // Auto-sync family data on load
