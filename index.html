@@ -451,13 +451,14 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .speech-btn.on{background:rgba(255,210,0,0.22);border-color:var(--gold)}
 
 /* ---------- Modal (name prompt + switcher + custom creator) ---------- */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px;overflow-y:auto}
 .modal.active{display:flex;animation:modalFade 0.25s ease}
 @keyframes modalFade{from{opacity:0}to{opacity:1}}
 .modal-card{
   background:linear-gradient(180deg,var(--bg-3),var(--bg-2));
   border:1px solid var(--border-2);border-radius:20px;
   padding:28px 22px 22px;max-width:420px;width:100%;
+  max-height:calc(100vh - 40px);overflow-y:auto;
   box-shadow:0 24px 60px rgba(0,0,0,0.6);
   animation:modalSlide 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
