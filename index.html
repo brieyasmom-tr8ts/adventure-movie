@@ -111,6 +111,69 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .card-admin-del{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:16px;line-height:22px;text-align:center;cursor:pointer;z-index:3;padding:0}
 .card-admin-del:hover{background:rgba(220,30,30,0.85)}
 
+/* ---------- Memory Verse screens ---------- */
+#verse-screen,#game-screen{background:linear-gradient(180deg,#0a0a18 0%,#000 100%);overflow-y:auto}
+#verse-screen.active,#game-screen.active{display:flex;flex-direction:column}
+.verse-back{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:240;background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border-2);color:#fff;padding:8px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer}
+.verse-back:hover{background:rgba(255,210,0,0.2);border-color:var(--gold)}
+.verse-wrap{padding:80px 24px 80px;max-width:640px;margin:0 auto;width:100%}
+.verse-hero{height:140px;background-size:cover;background-position:center;border-radius:18px;margin-bottom:18px;position:relative;box-shadow:0 12px 36px rgba(0,0,0,0.5)}
+.verse-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,0.65) 100%);border-radius:18px}
+.verse-emoji{font-size:48px;text-align:center;margin:-50px 0 12px;position:relative;z-index:2;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.6))}
+.verse-ref{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);font-weight:800;text-align:center;margin-bottom:14px}
+.verse-text{font-size:21px;line-height:1.55;color:#fff;font-weight:500;text-align:center;margin-bottom:18px;font-style:italic;padding:0 6px}
+.verse-context{font-size:15px;line-height:1.6;color:var(--text-2);text-align:center;margin-bottom:30px;padding:0 4px}
+.verse-games-header{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-3);font-weight:700;text-align:center;margin-bottom:14px}
+.verse-games{display:flex;flex-direction:column;gap:10px}
+.verse-game-row{display:flex;flex-direction:column;gap:6px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:14px}
+.verse-game-row-label{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.verse-game-row-icon{font-size:18px}
+.verse-game-row-desc{font-size:12px;color:var(--text-3);margin-top:2px}
+.verse-game-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.verse-game-btn{background:linear-gradient(135deg,rgba(255,210,0,0.12),rgba(255,210,0,0.04));border:1.5px solid rgba(255,210,0,0.35);color:#fff;padding:10px 6px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all 0.15s}
+.verse-game-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(255,210,0,0.22),rgba(255,210,0,0.08));border-color:var(--gold)}
+.verse-game-btn:active{transform:scale(0.97)}
+.verse-game-btn-diff{font-size:12px;font-weight:800;letter-spacing:0.5px}
+.verse-game-btn-best{font-size:10px;color:#7fffa1;font-weight:600;letter-spacing:0.3px;margin-top:1px;min-height:12px}
+
+/* ---------- Game playback ---------- */
+.game-header{position:fixed;top:max(14px,env(safe-area-inset-top));left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 70px 0 90px;z-index:220;pointer-events:none}
+.game-meta{display:flex;flex-direction:column;align-items:flex-start;color:#fff;pointer-events:none}
+.game-ref{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:800}
+.game-title{font-size:13px;font-weight:700;color:var(--text-2);margin-top:1px}
+.game-timer{background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;padding:6px 12px;border-radius:10px;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;border:1px solid var(--border-2);min-width:78px;text-align:center;pointer-events:auto}
+.game-timer.warn{border-color:var(--gold);color:var(--gold)}
+.game-area{flex:1;padding:78px 18px 18px;display:flex;flex-direction:column;justify-content:flex-start;min-height:0}
+.game-footer{padding:12px 18px max(20px,env(safe-area-inset-bottom));text-align:center;color:var(--text-3);font-size:12px}
+
+/* Fill the Blanks game */
+.fb-verse{font-size:18px;line-height:2;color:#fff;text-align:center;padding:18px;background:rgba(20,20,32,0.7);border:1px solid var(--border);border-radius:16px;margin-bottom:16px;min-height:120px}
+.fb-word{display:inline}
+.fb-blank{display:inline-block;min-width:64px;padding:2px 10px;margin:0 2px;border-bottom:2px solid var(--text-3);color:var(--text-3);font-style:italic;transition:all 0.2s;border-radius:4px}
+.fb-blank.active{border-bottom-color:var(--gold);background:rgba(255,210,0,0.08);box-shadow:0 0 0 1px rgba(255,210,0,0.4)}
+.fb-blank.filled{color:#fff;border-bottom-color:#7fffa1;background:rgba(127,255,161,0.08);font-style:normal;font-weight:600}
+.fb-blank.wrong{animation:shake 0.4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px}
+.fb-bank-word{background:linear-gradient(135deg,var(--bg-3),#262638);border:1.5px solid var(--border-2);color:#fff;padding:9px 14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.fb-bank-word:hover{border-color:var(--gold);transform:translateY(-1px)}
+.fb-bank-word:active{transform:scale(0.95)}
+.fb-bank-word.used{opacity:0.25;pointer-events:none}
+
+/* Word Order game */
+.wo-answer{padding:14px;background:rgba(20,20,32,0.7);border:1px solid var(--border);border-radius:16px;margin-bottom:14px;min-height:80px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.wo-answer-word{background:rgba(127,255,161,0.18);border:1px solid #7fffa1;color:#fff;padding:5px 10px;border-radius:8px;font-size:14px;font-weight:600}
+.wo-answer-placeholder{color:var(--text-3);font-size:13px;font-style:italic;padding:8px;width:100%;text-align:center}
+.wo-bank{display:flex;flex-wrap:wrap;gap:8px;padding:6px;justify-content:center}
+.wo-bank-word{background:linear-gradient(135deg,var(--bg-3),#262638);border:1.5px solid var(--border-2);color:#fff;padding:10px 14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.wo-bank-word:hover{border-color:var(--gold);transform:translateY(-1px)}
+.wo-bank-word:active{transform:scale(0.95)}
+.wo-bank-word.used{opacity:0;pointer-events:none}
+.wo-bank-word.wrong{animation:shake 0.4s;border-color:#ff6060}
+
+.game-complete-emoji{font-size:64px;text-align:center;margin-bottom:6px}
+.game-complete-best{margin-top:14px;padding:10px;background:rgba(255,210,0,0.1);border:1px solid rgba(255,210,0,0.3);border-radius:10px;color:var(--gold);font-weight:700;text-align:center;font-size:14px}
+
 /* ---------- Player screen ---------- */
 #player-screen{background:#000}
 
@@ -523,6 +586,45 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
   </div>
 </div>
 
+<div id="verse-screen" class="screen">
+  <button class="top-back verse-back" onclick="exitVerseScreen()">← Back</button>
+  <div class="verse-wrap">
+    <div class="verse-hero" id="verse-hero"></div>
+    <div class="verse-emoji" id="verse-emoji">📖</div>
+    <div class="verse-ref" id="verse-ref"></div>
+    <div class="verse-text" id="verse-text"></div>
+    <div class="verse-context" id="verse-context"></div>
+    <div class="verse-games-header">Memorize It · Pick a Game</div>
+    <div class="verse-games" id="verse-games"></div>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <button class="top-back verse-back" onclick="exitGameScreen()">← Back</button>
+  <div class="game-header">
+    <div class="game-meta">
+      <span class="game-ref" id="game-ref"></span>
+      <span class="game-title" id="game-title"></span>
+    </div>
+    <span class="game-timer" id="game-timer">0.0s</span>
+  </div>
+  <div class="game-area" id="game-area"></div>
+  <div class="game-footer" id="game-footer"></div>
+</div>
+
+<div class="modal" id="game-complete-modal">
+  <div class="modal-card">
+    <div class="game-complete-emoji" id="game-complete-emoji">🎉</div>
+    <h2 id="game-complete-title">Nice!</h2>
+    <p id="game-complete-message" style="color:var(--text-2);font-size:15px;line-height:1.5"></p>
+    <div id="game-complete-best" class="game-complete-best"></div>
+    <div class="modal-actions" style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
+      <button class="modal-btn primary" onclick="restartGame()" style="background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#111;border:none;padding:14px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer">Try Again</button>
+      <button class="modal-btn" onclick="exitGameScreen()" style="background:var(--bg-3);color:#fff;border:1px solid var(--border-2);padding:14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer">Pick Another Game</button>
+    </div>
+  </div>
+</div>
+
 <div class="ai-loading" id="ai-loading">
   <div class="ai-loading-label">The story unfolds</div>
   <div class="ai-loading-bar"></div>
@@ -846,43 +948,19 @@ levels:{
   }}
 }},
 
-/* ---- Memory Verses ---- */
+/* ---- Memory Verses ----
+   These render on the home page like normal cards but route to the
+   verse-game screen instead of the story player. Each has a reference,
+   verse text, and one-paragraph context. The 'scenes' field is empty
+   because startStory short-circuits on verseGame:true. */
 
-{id:"verse-john-3-16",title:"John 3:16",theme:"God's Love",emoji:"❤️",category:"Memory Verses",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",scenes:{
-  s1:{chapter:"The Verse",mood:"calm",text:"This is John 3:16 — maybe the most famous verse in the whole Bible.\n\n\"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.\"\n\nIt's about how big God's love is — big enough that he gave his Son Jesus so we could be with him forever.",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",choices:[{text:"Read it again slowly",next:"s2"},{text:"I'm ready — give me a challenge",next:"s3"}]},
-  s2:{chapter:"Read It Aloud",mood:"calm",text:"Try saying the verse out loud, slowly:\n\n\"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.\"\n\nGood. Saying it out loud helps it stick in your memory.",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",choices:[{text:"Now try fill-in-the-blanks",next:"s3"},{text:"One more time out loud",next:"s2"}]},
-  s3:{chapter:"Fill the Blanks",mood:"calm",text:"Some words are missing. Fill them in out loud:\n\n\"For God so _____ the world that he _____ his one and only Son, that whoever _____ in him shall not perish but have _____ life.\"\n\n(The missing words are: loved · gave · believes · eternal)",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",choices:[{text:"Got it — first-letters challenge",next:"s4"},{text:"Show me the full verse again",next:"s1"}]},
-  s4:{chapter:"First Letters Only",mood:"tension",text:"Now just the first letters of each word. Try to say the whole verse from these:\n\nF G s l t w t h g h o a o S, t w b i h s n p b h e l.\n\n(Hint: 'For God so loved the world that he gave his one and only Son…')",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",choices:[{text:"I think I've got it — let me try from memory",next:"s5"},{text:"Back to fill-in-the-blanks",next:"s3"}]},
-  s5:{chapter:"From Memory",mood:"calm",text:"Take a breath. Now say John 3:16 out loud from memory.\n\nNo hints. Your turn.\n\n(Take your time — there's no clock.)",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",choices:[{text:"I said it! Show me the verse to check.",next:"end_done"},{text:"I forgot a word — let me peek",next:"s4"}]},
-  end_done:{ending:true,type:"Memorized!",emoji:"❤️",title:"You Know John 3:16",text:"\"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.\" — John 3:16\n\nYou just hid a famous verse in your heart. Try saying it once tomorrow and once next week to lock it in.",lesson:"God's word in your heart goes everywhere you go — at school, at night, when you're scared, when you're happy.",reflect:["When could you say this verse to encourage yourself?","Who in your life might need to hear that God loves them?","What does the word 'whoever' tell you about who God's love is for?"]}
-}},
+{id:"verse-john-3-16",title:"John 3:16",theme:"God's Love",emoji:"❤️",category:"Memory Verses",image:"https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80",verseGame:true,reference:"John 3:16",verseText:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",context:"Maybe the most famous verse in the whole Bible. It's about how big God's love is — big enough that he gave his Son Jesus so we could be with him forever.",scenes:{}},
 
-{id:"verse-psalm-23-1",title:"Psalm 23:1",theme:"The Shepherd",emoji:"🐑",category:"Memory Verses",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",scenes:{
-  s1:{chapter:"The Verse",mood:"calm",text:"This is Psalm 23:1 — one of the most loved verses in the Bible.\n\n\"The Lord is my shepherd; I shall not want.\"\n\nKing David wrote this. A shepherd is someone who watches over sheep — feeds them, protects them, knows them. David is saying: God watches over me like that, so I have everything I need.",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",choices:[{text:"Read it again",next:"s2"},{text:"I'm ready for the challenge",next:"s3"}]},
-  s2:{chapter:"Read It Aloud",mood:"calm",text:"Say it out loud, slowly. Let each word land:\n\n\"The Lord is my shepherd; I shall not want.\"\n\nNice. Eight words. Hearing your own voice say it locks it in faster than reading silently.",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",choices:[{text:"Fill-in-the-blanks next",next:"s3"},{text:"One more time aloud",next:"s2"}]},
-  s3:{chapter:"Fill the Blanks",mood:"calm",text:"Some words are missing. Fill them in out loud:\n\n\"The _____ is my _____; I shall not _____.\"\n\n(The missing words are: Lord · shepherd · want)",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",choices:[{text:"Got it — first letters",next:"s4"},{text:"Show the full verse again",next:"s1"}]},
-  s4:{chapter:"First Letters",mood:"tension",text:"Now just first letters. Try to say it from these:\n\nT L i m s; I s n w.\n\n(Hint: starts with 'The Lord…')",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",choices:[{text:"I think I've got it",next:"s5"},{text:"Back to fill-in-the-blanks",next:"s3"}]},
-  s5:{chapter:"From Memory",mood:"calm",text:"Eyes closed. Say Psalm 23:1 from memory, out loud.\n\nNo rush.",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",choices:[{text:"I said it!",next:"end_done"},{text:"I need to peek",next:"s4"}]},
-  end_done:{ending:true,type:"Memorized!",emoji:"🐑",title:"You Know Psalm 23:1",text:"\"The Lord is my shepherd; I shall not want.\" — Psalm 23:1\n\nEight words, hidden in your heart. The next time you feel afraid or you don't have what you wish you did, this verse is yours to remember.",lesson:"A shepherd doesn't lose his sheep. God knows where you are, even when you feel lost.",reflect:["When have you felt afraid?","What does it mean to have everything you NEED (not everything you want)?","What's something a good shepherd does that reminds you of God?"]}
-}},
+{id:"verse-psalm-23-1",title:"Psalm 23:1",theme:"The Shepherd",emoji:"🐑",category:"Memory Verses",image:"https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80",verseGame:true,reference:"Psalm 23:1",verseText:"The Lord is my shepherd; I shall not want.",context:"King David wrote this. A shepherd feeds his sheep, protects them, knows them. David is saying: God watches over me like that, so I have everything I need.",scenes:{}},
 
-{id:"verse-phil-4-13",title:"Philippians 4:13",theme:"Strength",emoji:"💪",category:"Memory Verses",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",scenes:{
-  s1:{chapter:"The Verse",mood:"calm",text:"This is Philippians 4:13.\n\n\"I can do all things through Christ who strengthens me.\"\n\nA man named Paul wrote it from a prison cell. He's saying: even when things are hard — really hard — I'm not alone, and I have strength I didn't start with on my own.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Read it again",next:"s2"},{text:"I'm ready for the challenge",next:"s3"}]},
-  s2:{chapter:"Read It Aloud",mood:"calm",text:"Say it slowly, out loud:\n\n\"I can do all things through Christ who strengthens me.\"\n\nGood. Now try saying it like you mean it — like Paul writing it from inside a jail.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"Fill-in-the-blanks next",next:"s3"},{text:"One more time aloud",next:"s2"}]},
-  s3:{chapter:"Fill the Blanks",mood:"calm",text:"Fill in the missing words:\n\n\"I can do _____ things through _____ who _____ me.\"\n\n(The missing words are: all · Christ · strengthens)",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"First letters now",next:"s4"},{text:"Show the full verse again",next:"s1"}]},
-  s4:{chapter:"First Letters",mood:"tension",text:"Only first letters. Try the whole verse from these:\n\nI c d a t t C w s m.\n\n(Hint: 'I can do all things…')",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"I've got it — let me try",next:"s5"},{text:"Back to fill-in-the-blanks",next:"s3"}]},
-  s5:{chapter:"From Memory",mood:"calm",text:"Say Philippians 4:13 from memory, out loud.\n\nNo hints. Take your time.",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",choices:[{text:"I said it!",next:"end_done"},{text:"I need to peek",next:"s4"}]},
-  end_done:{ending:true,type:"Memorized!",emoji:"💪",title:"You Know Philippians 4:13",text:"\"I can do all things through Christ who strengthens me.\" — Philippians 4:13\n\nThis is a verse you can pray when something feels too big for you. The strength is borrowed, and it doesn't run out.",lesson:"You don't have to be strong on your own. The verse says 'through Christ' — the strength is from somewhere outside you.",reflect:["What's something that feels too hard for you right now?","What's the difference between 'I can do it alone' and 'I can do it through Christ'?","When could you whisper this verse to yourself?"]}
-}},
+{id:"verse-phil-4-13",title:"Philippians 4:13",theme:"Strength",emoji:"💪",category:"Memory Verses",image:"https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=800&q=80",verseGame:true,reference:"Philippians 4:13",verseText:"I can do all things through Christ who strengthens me.",context:"A man named Paul wrote this from a prison cell. Even in the hardest place of his life, he had borrowed strength — and so do you.",scenes:{}},
 
-{id:"verse-prov-3-5-6",title:"Proverbs 3:5-6",theme:"Trust",emoji:"🧭",category:"Memory Verses",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",scenes:{
-  s1:{chapter:"The Verse",mood:"calm",text:"Proverbs 3:5-6. This one is two verses together, and they go everywhere.\n\n\"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.\"\n\nIt's a verse about trusting God when you don't see the whole picture yet.",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"Read it again, more slowly",next:"s2"},{text:"I'm ready for the challenge",next:"s3"}]},
-  s2:{chapter:"Read It Aloud",mood:"calm",text:"Say it out loud in two parts. First half:\n\n\"Trust in the Lord with all your heart and lean not on your own understanding;\"\n\nNow the second half:\n\n\"in all your ways submit to him, and he will make your paths straight.\"\n\nReading it in chunks makes a long verse easier to learn.",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"Try fill-in-the-blanks",next:"s3"},{text:"One more time aloud",next:"s2"}]},
-  s3:{chapter:"Fill the Blanks",mood:"calm",text:"Fill in the missing words:\n\n\"_____ in the Lord with all your _____ and lean not on your own _____; in all your ways _____ to him, and he will make your _____ straight.\"\n\n(Missing: Trust · heart · understanding · submit · paths)",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"First letters next",next:"s4"},{text:"Show the full verse again",next:"s1"}]},
-  s4:{chapter:"First Letters",mood:"tension",text:"Just first letters. Try the whole verse:\n\nT i t L w a y h a l n o y o u; i a y w s t h, a h w m y p s.\n\n(Hint: starts with 'Trust in the Lord…')",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"I've got it — let me try",next:"s5"},{text:"Back to fill-in-the-blanks",next:"s3"}]},
-  s5:{chapter:"From Memory",mood:"calm",text:"Say Proverbs 3:5-6 from memory, out loud. The whole thing.\n\nThis one's longer — that's okay. Take it in two breaths.",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",choices:[{text:"I said it!",next:"end_done"},{text:"I need to peek",next:"s4"}]},
-  end_done:{ending:true,type:"Memorized!",emoji:"🧭",title:"You Know Proverbs 3:5-6",text:"\"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.\" — Proverbs 3:5-6\n\nThis is a long one. Saying it once doesn't lock it in — try it again tomorrow before school.",lesson:"You don't have to see the whole road ahead. You just have to trust who you're walking with.",reflect:["When have you wanted to figure something out on your own that you didn't really know how to figure out?","What does it mean to 'lean not on your own understanding'?","Where's a path in your life you'd like God to make straight?"]}
-}},
+{id:"verse-prov-3-5-6",title:"Proverbs 3:5-6",theme:"Trust",emoji:"🧭",category:"Memory Verses",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",verseGame:true,reference:"Proverbs 3:5-6",verseText:"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",context:"You don't have to see the whole road ahead. You just have to trust who you're walking with.",scenes:{}},
 
 {id:"first-hire",title:"The First Hire",theme:"Leadership",emoji:"💼",category:"Leadership",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",scenes:{
   s1:{chapter:"Day One Of Your Startup",mood:"calm",text:"Your young company has finally raised enough to make its first hire. You've narrowed it down to two candidates. Maya is brilliant, fast, and ambitious — but she's burned bridges at every job. Jordan is solid, kind, and a true team player — but average in skill. Your co-founder is pushing for Maya. Your gut is unsure.",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",choices:[{text:"Hire Maya — bet on raw talent",next:"s2a"},{text:"Hire Jordan — bet on character",next:"s2b"},{text:"Talk to one more reference before deciding",next:"s2c"}]},
@@ -1454,9 +1532,294 @@ function setReaderClass(){
   if(level==='L1')document.body.classList.add('reader-new');
   else if(level==='L2')document.body.classList.add('reader-early');
 }
+/* =========================================================
+   MEMORY-VERSE GAMES
+   ========================================================= */
+let currentVerse=null;     // The verse story object currently open
+let currentGame=null;      // {verseId, gameType:'blanks'|'order', difficulty:'easy'|'medium'|'hard'}
+let gameTimerStart=0;      // ms timestamp when the kid made their first correct interaction
+let gameTimerInterval=null;
+let gameStartedTiming=false;
+
+const GAME_DEFS=[
+  {id:'blanks',label:'Fill the Blanks',icon:'✏️',desc:'Tap the missing words back into the verse.'},
+  {id:'order',label:'Word Order',icon:'🔀',desc:'Tap the scrambled words in the right order.'}
+];
+const DIFF_DEFS=[
+  {id:'easy',label:'Easy'},
+  {id:'medium',label:'Medium'},
+  {id:'hard',label:'Hard'}
+];
+
+function bestKey(verseId,gameType,diff){return 'am_verse_best:'+verseId+':'+gameType+':'+diff;}
+function getBest(verseId,gameType,diff){
+  const v=localStorage.getItem(bestKey(verseId,gameType,diff));
+  return v?parseFloat(v):null;
+}
+function setBest(verseId,gameType,diff,seconds){
+  const prev=getBest(verseId,gameType,diff);
+  if(prev==null||seconds<prev){
+    localStorage.setItem(bestKey(verseId,gameType,diff),String(seconds));
+    return {newBest:true,prev};
+  }
+  return {newBest:false,prev};
+}
+function formatTime(s){return s.toFixed(1)+'s';}
+
+function openVerseScreen(verse){
+  currentVerse=verse;
+  document.getElementById('verse-hero').style.backgroundImage=verse.image?`url('${verse.image}')`:'';
+  document.getElementById('verse-emoji').textContent=verse.emoji||'📖';
+  document.getElementById('verse-ref').textContent=verse.reference||verse.title||'';
+  document.getElementById('verse-text').textContent='"'+verse.verseText+'"';
+  document.getElementById('verse-context').textContent=verse.context||'';
+  renderVerseGameMenu();
+  showScreen('verse-screen');
+}
+function exitVerseScreen(){
+  currentVerse=null;
+  goHome();
+}
+function renderVerseGameMenu(){
+  const wrap=document.getElementById('verse-games');
+  if(!wrap||!currentVerse)return;
+  const verseId=currentVerse.id;
+  wrap.innerHTML=GAME_DEFS.map(g=>{
+    const buttons=DIFF_DEFS.map(d=>{
+      const best=getBest(verseId,g.id,d.id);
+      const bestLabel=best!=null?'Best · '+formatTime(best):'—';
+      return `<button class="verse-game-btn" onclick="startVerseGame('${g.id}','${d.id}')"><span class="verse-game-btn-diff">${d.label}</span><span class="verse-game-btn-best">${bestLabel}</span></button>`;
+    }).join('');
+    return `<div class="verse-game-row"><div class="verse-game-row-label"><span class="verse-game-row-icon">${g.icon}</span> ${g.label}</div><div class="verse-game-row-desc">${g.desc}</div><div class="verse-game-buttons">${buttons}</div></div>`;
+  }).join('');
+}
+
+function tokenizeVerse(text){
+  return text.split(/\s+/).filter(Boolean);
+}
+
+function startVerseGame(gameType,difficulty){
+  if(!currentVerse)return;
+  currentGame={verseId:currentVerse.id,gameType,difficulty};
+  gameStartedTiming=false;
+  gameTimerStart=0;
+  if(gameTimerInterval){clearInterval(gameTimerInterval);gameTimerInterval=null;}
+  const gameDef=GAME_DEFS.find(g=>g.id===gameType);
+  const diffDef=DIFF_DEFS.find(d=>d.id===difficulty);
+  document.getElementById('game-ref').textContent=currentVerse.reference||currentVerse.title;
+  document.getElementById('game-title').textContent=(gameDef?gameDef.label:'')+' · '+(diffDef?diffDef.label:'');
+  document.getElementById('game-timer').textContent='0.0s';
+  document.getElementById('game-timer').classList.remove('warn');
+  document.getElementById('game-footer').textContent='';
+  showScreen('game-screen');
+  if(gameType==='blanks')renderFillBlanksGame();
+  else if(gameType==='order')renderWordOrderGame();
+}
+function exitGameScreen(){
+  if(gameTimerInterval){clearInterval(gameTimerInterval);gameTimerInterval=null;}
+  document.getElementById('game-complete-modal').classList.remove('active');
+  currentGame=null;
+  if(currentVerse){renderVerseGameMenu();showScreen('verse-screen');}
+  else goHome();
+}
+function restartGame(){
+  document.getElementById('game-complete-modal').classList.remove('active');
+  if(!currentGame)return;
+  startVerseGame(currentGame.gameType,currentGame.difficulty);
+}
+function beginTimingIfNeeded(){
+  if(gameStartedTiming)return;
+  gameStartedTiming=true;
+  gameTimerStart=Date.now();
+  const el=document.getElementById('game-timer');
+  gameTimerInterval=setInterval(()=>{
+    const s=(Date.now()-gameTimerStart)/1000;
+    el.textContent=s.toFixed(1)+'s';
+  },100);
+}
+function finishGame(){
+  if(gameTimerInterval){clearInterval(gameTimerInterval);gameTimerInterval=null;}
+  const elapsed=gameStartedTiming?(Date.now()-gameTimerStart)/1000:0;
+  const {verseId,gameType,difficulty}=currentGame;
+  const result=setBest(verseId,gameType,difficulty,elapsed);
+  const gameDef=GAME_DEFS.find(g=>g.id===gameType);
+  document.getElementById('game-complete-emoji').textContent=result.newBest?'🏆':'🎉';
+  document.getElementById('game-complete-title').textContent=result.newBest?'New best!':'Memorized!';
+  document.getElementById('game-complete-message').innerHTML=
+    'You finished <strong>'+(gameDef?gameDef.label:gameType)+'</strong> in <strong>'+formatTime(elapsed)+'</strong>.';
+  const bestEl=document.getElementById('game-complete-best');
+  if(result.newBest&&result.prev!=null){
+    bestEl.textContent='Previous best · '+formatTime(result.prev)+'  →  '+formatTime(elapsed);
+  }else if(result.newBest){
+    bestEl.textContent='First time finishing this one!';
+  }else{
+    bestEl.textContent='Your best · '+formatTime(getBest(verseId,gameType,difficulty));
+  }
+  setTimeout(()=>document.getElementById('game-complete-modal').classList.add('active'),350);
+}
+
+/* Fill the Blanks ------------------------------------------------- */
+let fbState=null;   // {tokens, blankIndexes, filledOrder, activeBlank}
+function renderFillBlanksGame(){
+  const verse=currentVerse;
+  const tokens=tokenizeVerse(verse.verseText);
+  // Decide which positions are blanked.
+  const diff=currentGame.difficulty;
+  const ratio=diff==='easy'?0.30:diff==='medium'?0.55:0.80;
+  // Always skip very short tokens (1-2 chars) like "I", "a", "to" — they're
+  // too easy and clutter the bank. Unless hard.
+  const candidates=tokens
+    .map((t,i)=>({t,i}))
+    .filter(({t})=>diff==='hard'?true:t.replace(/[^A-Za-z]/g,'').length>=3);
+  // Shuffle candidates and pick N.
+  const shuffled=candidates.slice().sort(()=>Math.random()-0.5);
+  const blankCount=Math.max(2,Math.min(candidates.length,Math.round(tokens.length*ratio)));
+  const blankSet=new Set(shuffled.slice(0,blankCount).map(c=>c.i));
+  const blankIndexes=tokens.map((_,i)=>i).filter(i=>blankSet.has(i));
+  // Build bank: correct words + (for hard) 2 distractor words.
+  const bankWords=blankIndexes.map(i=>({word:tokens[i],originIndex:i}));
+  if(diff==='hard'){
+    const distractors=['always','never','heart','hope','peace','grace','light','strong'];
+    const used=new Set(tokens.map(t=>t.toLowerCase().replace(/[^a-z]/g,'')));
+    const candDist=distractors.filter(d=>!used.has(d));
+    candDist.sort(()=>Math.random()-0.5).slice(0,2).forEach(w=>bankWords.push({word:w,originIndex:-1}));
+  }
+  bankWords.sort(()=>Math.random()-0.5);
+  fbState={tokens,blankIndexes,filled:{},bank:bankWords,activeBlank:blankIndexes[0]};
+  drawFillBlanks();
+  document.getElementById('game-footer').textContent='Tap a word to fill the highlighted blank.';
+}
+function drawFillBlanks(){
+  if(!fbState)return;
+  const area=document.getElementById('game-area');
+  // Verse with blanks
+  const verseHtml=fbState.tokens.map((tok,i)=>{
+    if(fbState.blankIndexes.indexOf(i)===-1)return `<span class="fb-word">${escapeHtml(tok)}</span>`;
+    const filled=fbState.filled[i];
+    const classes=['fb-blank'];
+    if(i===fbState.activeBlank&&!filled)classes.push('active');
+    if(filled)classes.push('filled');
+    // Preserve trailing punctuation visible even when blank.
+    const m=tok.match(/^([A-Za-z'’]+)(.*)$/);
+    const wordPart=m?m[1]:tok;
+    const trailing=m?m[2]:'';
+    const display=filled?filled:'____';
+    return `<span class="${classes.join(' ')}" id="fb-blank-${i}" onclick="fbSetActive(${i})">${escapeHtml(display)}</span>${escapeHtml(trailing)}`;
+  }).join(' ');
+  const bankHtml=fbState.bank.map((b,bi)=>{
+    const cls='fb-bank-word'+(b.used?' used':'');
+    return `<button class="${cls}" id="fb-bank-${bi}" onclick="fbPickWord(${bi})">${escapeHtml(b.word)}</button>`;
+  }).join('');
+  area.innerHTML=`<div class="fb-verse">${verseHtml}</div><div class="fb-bank">${bankHtml}</div>`;
+}
+function fbSetActive(idx){
+  if(!fbState)return;
+  if(fbState.filled[idx])return;
+  fbState.activeBlank=idx;
+  drawFillBlanks();
+}
+function fbPickWord(bi){
+  if(!fbState)return;
+  const pick=fbState.bank[bi];
+  if(!pick||pick.used)return;
+  beginTimingIfNeeded();
+  const target=fbState.activeBlank;
+  if(target==null)return;
+  const expected=fbState.tokens[target];
+  // Strip trailing punctuation when comparing.
+  const norm=s=>(s||'').toLowerCase().replace(/[^a-z'’]/g,'');
+  if(norm(pick.word)===norm(expected)){
+    fbState.filled[target]=expected;
+    pick.used=true;
+    // Move active to next unfilled blank
+    const next=fbState.blankIndexes.find(i=>!fbState.filled[i]);
+    fbState.activeBlank=next||null;
+    drawFillBlanks();
+    // Done?
+    if(fbState.blankIndexes.every(i=>fbState.filled[i])){
+      setTimeout(finishGame,400);
+    }
+  }else{
+    // Wrong — shake the bank word and the active blank.
+    const blankEl=document.getElementById('fb-blank-'+target);
+    const wordEl=document.getElementById('fb-bank-'+bi);
+    if(blankEl){blankEl.classList.add('wrong');setTimeout(()=>blankEl.classList.remove('wrong'),400);}
+    if(wordEl){wordEl.classList.add('wrong');setTimeout(()=>wordEl.classList.remove('wrong'),400);}
+  }
+}
+
+/* Word Order ------------------------------------------------------ */
+let woState=null;   // {tokens, picked:[], remaining}
+function renderWordOrderGame(){
+  const verse=currentVerse;
+  const tokens=tokenizeVerse(verse.verseText);
+  const diff=currentGame.difficulty;
+  // Easy: split verse into two halves and only show one at a time
+  // Medium: full shuffle, all words at once
+  // Hard: full shuffle, no answer-row hints
+  woState={tokens,picked:[],wrongCount:0,diff};
+  let pool=tokens.map((t,i)=>({t,i}));
+  if(diff==='easy'){
+    // Show first half initially
+    const half=Math.ceil(tokens.length/2);
+    woState.poolEnd=half;
+    pool=pool.slice(0,half);
+  }else{
+    woState.poolEnd=tokens.length;
+  }
+  woState.bank=pool.slice().sort(()=>Math.random()-0.5);
+  drawWordOrder();
+  document.getElementById('game-footer').textContent='Tap the words in the order they appear in the verse.';
+}
+function drawWordOrder(){
+  const area=document.getElementById('game-area');
+  const diff=woState.diff;
+  const ansHtml=woState.picked.length
+    ? woState.picked.map(t=>`<span class="wo-answer-word">${escapeHtml(t)}</span>`).join('')
+    : '<span class="wo-answer-placeholder">Your verse will build up here…</span>';
+  const bankHtml=woState.bank.map((b,bi)=>{
+    const used=b.used?' used':'';
+    return `<button class="wo-bank-word${used}" id="wo-bank-${bi}" onclick="woPickWord(${bi})">${escapeHtml(b.t)}</button>`;
+  }).join('');
+  area.innerHTML=`<div class="wo-answer">${diff==='hard'?'<span class="wo-answer-placeholder">Words go here (hidden on Hard).</span>':ansHtml}</div><div class="wo-bank">${bankHtml}</div>`;
+}
+function woPickWord(bi){
+  if(!woState)return;
+  beginTimingIfNeeded();
+  const bankItem=woState.bank[bi];
+  if(bankItem.used)return;
+  const expectedIndex=woState.picked.length;
+  if(bankItem.i===expectedIndex){
+    // Correct
+    bankItem.used=true;
+    woState.picked.push(bankItem.t);
+    drawWordOrder();
+    if(woState.picked.length===woState.poolEnd){
+      // Easy mode: reveal second half once first half is done
+      if(woState.diff==='easy'&&woState.poolEnd<woState.tokens.length){
+        const rest=woState.tokens.map((t,i)=>({t,i})).slice(woState.poolEnd);
+        woState.bank=rest.slice().sort(()=>Math.random()-0.5);
+        woState.poolEnd=woState.tokens.length;
+        setTimeout(drawWordOrder,300);
+        return;
+      }
+      setTimeout(finishGame,400);
+    }
+  }else{
+    // Wrong — shake and count
+    woState.wrongCount++;
+    const wordEl=document.getElementById('wo-bank-'+bi);
+    if(wordEl){wordEl.classList.add('wrong');setTimeout(()=>wordEl.classList.remove('wrong'),400);}
+  }
+}
+
 function startStory(id){
   const story=STORIES.find(s=>s.id===id);
   if(!story)return;
+  if(story.verseGame){
+    openVerseScreen(story);
+    return;
+  }
   if(story.levels&&typeof story.levels==='object'){
     // Auto-route to the active player's profile level. If the profile has
     // no level, or the requested level isn't authored, fall back: prefer L3,
