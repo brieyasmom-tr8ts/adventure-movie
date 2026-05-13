@@ -743,6 +743,28 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <h1>Parent Dashboard</h1>
     <div class="dash-sub">Reading activity for your family</div>
     <div id="dash-kids"></div>
+
+    <div style="margin-top:28px;border-top:1px solid var(--border-2);padding-top:20px">
+      <h2 style="font-size:18px;color:#fff;margin-bottom:4px">📝 Write a Story</h2>
+      <p style="font-size:13px;color:var(--text-3);margin-bottom:14px">Write a simple idea and we'll turn it into an adventure the kids can play.</p>
+      <input class="interactive-input" id="story-editor-title" placeholder="Story title (e.g. The Lost Kitten)" maxlength="60" autocomplete="off" style="margin-bottom:8px">
+      <textarea class="interactive-input" id="story-editor-plot" placeholder="What happens in the story? Just describe it in your own words...&#10;&#10;Example: A little girl finds a lost kitten in the rain. She has to decide whether to take it home or find its owner. Along the way she learns about kindness and doing the right thing even when it's hard." rows="5" maxlength="500" style="margin-bottom:8px;resize:vertical;min-height:100px"></textarea>
+      <input class="interactive-input" id="story-editor-lesson" placeholder="Lesson or moral (optional)" maxlength="100" autocomplete="off" style="margin-bottom:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text-3);font-weight:700;width:100%">Reading level:</label>
+        <select id="story-editor-level" class="interactive-input" style="margin-bottom:0">
+          <option value="L1">Start Reading (Pre-K)</option>
+          <option value="L2" selected>Growing Reader (1st-2nd)</option>
+          <option value="L3">Brave Reader (3rd-4th)</option>
+          <option value="L4">Story Master (5th-6th)</option>
+        </select>
+      </div>
+      <button class="interactive-submit" onclick="submitStoryEditor()" id="story-editor-btn">Create Story ✨</button>
+      <div id="story-editor-status" style="font-size:13px;text-align:center;margin-top:8px;display:none"></div>
+    </div>
+
+    <div id="dash-custom-stories" style="margin-top:20px"></div>
+
     <div style="margin-top:20px;text-align:center">
       <button class="modal-secondary" onclick="goHome()">Back to Stories</button>
     </div>
@@ -1680,6 +1702,16 @@ function buildHome(){
     return (ai===-1?99:ai)-(bi===-1?99:bi);
   });
   const isAdmin=!!localStorage.getItem('am_admin_token');
+  // Grandbabe / custom editor stories
+  const customStories=getCustomStories();
+  let grandbabHtml='';
+  if(customStories.length){
+    const customCards=customStories.map((s,i)=>{
+      return `<div class="story-card" style="background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(96,165,250,0.2))" onclick="playCustomEditorStory(${i})"><div class="card-ai-tag">📝 By ${escapeHtml(s.createdBy||'Family')}</div><div class="card-emoji">${s.emoji||'📝'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div></div></div>`;
+    }).join('');
+    grandbabHtml=`<div class="category-section"><div class="category-title">Grandbabe Stories</div><div class="story-grid">${customCards}</div></div>`;
+  }
+
   // Past Adventures row
   const hist=getStoryHistory();
   const histHtml=hist.length?`<div class="category-section"><div class="category-title">Past Adventures</div><div class="story-grid">${hist.map((h,i)=>{
@@ -1712,7 +1744,7 @@ function buildHome(){
     const grade=CATEGORY_GRADES[cat];
     const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
     return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
-  }).join('')+histHtml;
+  }).join('')+grandbabHtml+histHtml;
   renderSiblingChallenge();
 }
 function renderSiblingChallenge(){
@@ -3735,6 +3767,111 @@ function updatePinDots(){
   dots.forEach((d,i)=>d.classList.toggle('filled',i<pinBuffer.length));
 }
 
+/* --- Story Editor (Grandbabe) --- */
+function getCustomStories(){
+  try{return JSON.parse(localStorage.getItem('am_custom_stories')||'[]');}catch(e){return [];}
+}
+function saveCustomStories(list){localStorage.setItem('am_custom_stories',JSON.stringify(list));}
+
+async function submitStoryEditor(){
+  const title=document.getElementById('story-editor-title').value.trim();
+  const plot=document.getElementById('story-editor-plot').value.trim();
+  const lesson=document.getElementById('story-editor-lesson').value.trim();
+  const level=document.getElementById('story-editor-level').value;
+  if(!title){document.getElementById('story-editor-title').focus();return;}
+  if(!plot){document.getElementById('story-editor-plot').focus();return;}
+
+  const btn=document.getElementById('story-editor-btn');
+  const status=document.getElementById('story-editor-status');
+  btn.disabled=true;btn.textContent='Creating...';
+  status.style.display='block';status.style.color='var(--text-2)';
+  status.textContent='Writing your story... this takes about 30 seconds.';
+
+  try{
+    const resp=await fetch('/api/story-editor',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({title,plot,lesson,level})
+    });
+    const data=await resp.json();
+    if(!resp.ok){
+      status.style.color='#ff7878';
+      status.textContent=data.error||'Something went wrong. Try again.';
+      btn.disabled=false;btn.textContent='Create Story ✨';
+      return;
+    }
+
+    // Save the generated story
+    const story=data.story;
+    const custom=getCustomStories();
+    custom.unshift({
+      id:'custom_'+Date.now(),
+      title:story.title||title,
+      theme:story.theme||'Adventure',
+      emoji:story.emoji||'📝',
+      level,
+      createdBy:'Grandbabe',
+      createdAt:todayStr(),
+      scenes:story.scenes
+    });
+    if(custom.length>20)custom.length=20;
+    saveCustomStories(custom);
+
+    // Clear form
+    document.getElementById('story-editor-title').value='';
+    document.getElementById('story-editor-plot').value='';
+    document.getElementById('story-editor-lesson').value='';
+    status.style.color='#4ade80';
+    status.textContent='Story created! The kids can play it now.';
+    btn.disabled=false;btn.textContent='Create Story ✨';
+    renderDashCustomStories();
+    buildHome();
+  }catch(e){
+    status.style.color='#ff7878';
+    status.textContent='Network error. Check your connection.';
+    btn.disabled=false;btn.textContent='Create Story ✨';
+  }
+}
+
+function renderDashCustomStories(){
+  const list=getCustomStories();
+  const wrap=document.getElementById('dash-custom-stories');
+  if(!wrap)return;
+  if(!list.length){wrap.innerHTML='';return;}
+  wrap.innerHTML=`<h2 style="font-size:16px;color:#fff;margin-bottom:10px">Your Custom Stories</h2>`+
+    list.map((s,i)=>`<div class="dash-kid" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div><span style="font-size:20px;margin-right:8px">${s.emoji||'📝'}</span><strong style="color:#fff">${escapeHtml(s.title)}</strong> <span style="color:var(--text-3);font-size:12px">· ${s.createdAt||''}</span></div>
+      <button class="switcher-remove" onclick="deleteCustomStory(${i})" title="Delete">×</button>
+    </div>`).join('');
+}
+function deleteCustomStory(idx){
+  const list=getCustomStories();
+  list.splice(idx,1);
+  saveCustomStories(list);
+  renderDashCustomStories();
+  buildHome();
+}
+function playCustomEditorStory(idx){
+  const list=getCustomStories();
+  const s=list[idx];
+  if(!s)return;
+  // Convert scenes array to id-keyed object
+  const scenes={};
+  const sceneList=Array.isArray(s.scenes)?s.scenes:[];
+  sceneList.forEach(sc=>{
+    if(sc.ending){
+      scenes[sc.id]={ending:true,type:sc.type||'Ending',emoji:sc.emoji||'🎬',title:sc.title||'The End',text:sc.text||'',lesson:sc.lesson||'',reflect:Array.isArray(sc.reflect)?sc.reflect:[]};
+    }else{
+      scenes[sc.id]={chapter:sc.chapter||'',text:sc.text||'',mood:sc.mood||'calm',choices:(sc.choices||[]).map(c=>({text:c.text,next:c.nextScene||c.next}))};
+    }
+  });
+  currentStory={id:s.id,title:s.title,theme:s.theme||'Custom',emoji:s.emoji||'📝',category:'Grandbabe Stories',image:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',scenes};
+  setReaderClass();
+  visitedScenes=[];journey=[];currentAIScene=null;
+  showScreen('player-screen');
+  playScene('s1');
+}
+
 function showParentDashboard(){
   const players=getPlayers();
   const wrap=document.getElementById('dash-kids');
@@ -3776,6 +3913,7 @@ function showParentDashboard(){
     </div>`;
   }).join('');
 
+  renderDashCustomStories();
   showScreen('parent-screen');
 }
 
