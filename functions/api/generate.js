@@ -209,7 +209,14 @@ function buildUserPrompt(history) {
     const chap = h.chapter ? ` (${h.chapter})` : "";
     return `Scene ${i + 1}${chap}:\n${h.text}\n→ Player chose: "${h.choice}"`;
   }).join("\n\n");
-  return `Player's journey so far:\n\n${lines}\n\nGenerate the NEXT scene. The player is now living the consequence of their last choice.`;
+  const sceneNum = history.length + 1;
+  let endingInstruction = "";
+  if (sceneNum >= 8) {
+    endingInstruction = "\n\nIMPORTANT: This is scene " + sceneNum + ". The story has gone on long enough. You MUST generate an ENDING scene now (set ending:true). Wrap up the story based on the player's choices. Do NOT generate more choices.";
+  } else if (sceneNum >= 5) {
+    endingInstruction = "\n\nNote: This is scene " + sceneNum + ". Start steering toward a conclusion. The next 1-2 scenes should lead to an ending.";
+  }
+  return `Player's journey so far:\n\n${lines}\n\nGenerate the NEXT scene (scene ${sceneNum}). The player is now living the consequence of their last choice.${endingInstruction}`;
 }
 
 function extractJson(text) {

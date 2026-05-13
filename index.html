@@ -62,13 +62,6 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   padding:0;overflow-y:auto;align-items:stretch;
   position:relative;
 }
-#home-screen::after{
-  content:'';position:absolute;top:0;left:0;right:0;height:100vh;pointer-events:none;z-index:0;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='20' cy='30' r='2' fill='%23ffd200' opacity='0.15'/%3E%3Ccircle cx='80' cy='60' r='1.5' fill='%234fc3f7' opacity='0.12'/%3E%3Ccircle cx='150' cy='25' r='2.5' fill='%23b47fff' opacity='0.1'/%3E%3Ccircle cx='180' cy='80' r='1.5' fill='%23ff6b9d' opacity='0.12'/%3E%3Ccircle cx='40' cy='140' r='2' fill='%2369f0ae' opacity='0.1'/%3E%3Ccircle cx='120' cy='170' r='1.8' fill='%23ffd200' opacity='0.12'/%3E%3Ccircle cx='170' cy='150' r='2' fill='%234fc3f7' opacity='0.08'/%3E%3C/svg%3E") repeat;
-  background-size:200px 200px;
-  animation:floatParticles 30s linear infinite;
-}
-@keyframes floatParticles{from{background-position:0 0}to{background-position:200px -200px}}
 .home-hero{padding:68px 24px 16px;text-align:center}
 .home-title{font-size:42px;font-weight:700;color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:10px;margin-top:8px}
 .home-title span{background:linear-gradient(135deg,var(--gold),var(--fun-blue),var(--fun-purple));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 4s ease infinite}
