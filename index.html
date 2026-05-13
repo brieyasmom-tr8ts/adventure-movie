@@ -25,6 +25,8 @@
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
+body[data-screen="home-screen"]{overflow:auto}
+body[data-screen="parent-screen"]{overflow:auto}
 body{
   font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   background:var(--bg-1);color:var(--text-2);font-size:18px;
@@ -74,9 +76,11 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
     radial-gradient(ellipse 80% 60% at 80% 20%,rgba(180,127,255,0.08),transparent 50%),
     radial-gradient(ellipse 80% 60% at 20% 80%,rgba(255,107,157,0.06),transparent 50%),
     linear-gradient(180deg,var(--bg-3) 0%,var(--bg-1) 60%);
-  padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:stretch;
+  padding:0;align-items:stretch;
   position:relative;
 }
+#home-screen.active{position:relative;overflow:visible;min-height:100vh}
+#parent-screen.active{position:relative;overflow:visible;min-height:100vh}
 .home-hero{padding:68px 24px 16px;text-align:center}
 .home-title{font-size:42px;font-weight:700;color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:10px;margin-top:8px}
 .home-title span{background:linear-gradient(135deg,var(--gold),var(--fun-blue),var(--fun-purple));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 4s ease infinite}
