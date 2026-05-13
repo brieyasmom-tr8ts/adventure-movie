@@ -19,6 +19,7 @@ export async function onRequestPost(context) {
   const plot = (body.plot || "").trim();
   const level = body.level || "L2";
   const lesson = (body.lesson || "").trim();
+  const author = (body.author || "").trim();
 
   if (!title || !plot) {
     return json({ error: "Title and plot are required" }, 400);
@@ -35,7 +36,8 @@ export async function onRequestPost(context) {
     "You are a story generator for a children's choose-your-own-adventure reading app.",
     "A family member has written a simple story idea. Turn it into a complete branching story.",
     `Writing rules: ${writingRules}`,
-    'IMPORTANT: Use "{name}" (literally, with curly braces) as the protagonist\'s name throughout the story. The app will replace {name} with the actual child\'s name when they play it. For example: "{name} looked up at the tall tree." Do NOT use a made-up name.',
+    'IMPORTANT: Use "{name}" (literally, with curly braces) as the child protagonist\'s name throughout the story. The app will replace {name} with the actual child\'s name when they play it. For example: "{name} looked up at the tall tree." Do NOT use a made-up name for the child.',
+    author ? `The story also features a character named "${author}" — this is the child's grandmother/family member who wrote the story. Include ${author} as a warm, loving character in the story alongside {name}. ${author} and {name} should interact naturally.` : '',
     "Make it warm, age-appropriate, and fun. No violence, profanity, or scary content.",
     lesson ? `The story should teach this lesson: ${lesson}` : "Let the story discover its own gentle lesson.",
     "Return ONLY valid JSON."

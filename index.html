@@ -3831,7 +3831,7 @@ async function submitStoryWriter(){
     const resp=await fetch('/api/story-editor',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({title,plot,lesson,level})
+      body:JSON.stringify({title,plot,lesson,level,author})
     });
     const data=await resp.json();
     if(!resp.ok){
@@ -3893,7 +3893,7 @@ async function submitStoryEditor(){
     const resp=await fetch('/api/story-editor',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({title,plot,lesson,level})
+      body:JSON.stringify({title,plot,lesson,level,author:'Grandbabe'})
     });
     const data=await resp.json();
     if(!resp.ok){

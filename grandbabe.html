@@ -110,6 +110,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
     </div>
 
     <div class="field">
+      <label>Your Name (you'll be a character in the story!)</label>
+      <input id="ed-author" placeholder="e.g. Grandbabe" maxlength="20">
+    </div>
+
+    <div class="field">
       <label>Reading Level</label>
       <select id="ed-level">
         <option value="L1">Start Reading (Pre-K)</option>
@@ -162,6 +167,8 @@ async function doLogin(){
 function showEditor(){
   document.getElementById('login-view').style.display='none';
   document.getElementById('editor-view').style.display='block';
+  // Remember author name
+  document.getElementById('ed-author').value=localStorage.getItem('gb_author')||'';
   renderStories();
 }
 
@@ -169,10 +176,12 @@ async function createStory(){
   const title=document.getElementById('ed-title').value.trim();
   const plot=document.getElementById('ed-plot').value.trim();
   const lesson=document.getElementById('ed-lesson').value.trim();
+  const author=document.getElementById('ed-author').value.trim()||'Grandbabe';
   const level=document.getElementById('ed-level').value;
   if(!title){document.getElementById('ed-title').focus();return;}
   if(!plot){document.getElementById('ed-plot').focus();return;}
 
+  localStorage.setItem('gb_author',author);
   const btn=document.getElementById('ed-btn');
   const status=document.getElementById('ed-status');
   btn.disabled=true;btn.textContent='Creating...';
@@ -183,7 +192,7 @@ async function createStory(){
     const resp=await fetch(API+'/story-editor',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({title,plot,lesson,level})
+      body:JSON.stringify({title,plot,lesson,level,author})
     });
     const data=await resp.json();
     if(!resp.ok){
@@ -201,7 +210,7 @@ async function createStory(){
       theme:story.theme||'Adventure',
       emoji:story.emoji||'📝',
       level,
-      createdBy:'Grandbabe',
+      createdBy:author,
       createdAt:new Date().toISOString().slice(0,10),
       scenes:story.scenes
     };
