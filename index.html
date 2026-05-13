@@ -125,11 +125,18 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 .verse-context{font-size:15px;line-height:1.6;color:var(--text-2);text-align:center;margin-bottom:30px;padding:0 4px}
 .verse-games-header{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-3);font-weight:700;text-align:center;margin-bottom:14px}
 .verse-games{display:flex;flex-direction:column;gap:10px}
-.verse-game-row{display:flex;flex-direction:column;gap:6px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:14px}
-.verse-game-row-label{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.verse-game-row{display:flex;flex-direction:column;gap:6px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:all 0.18s}
+.verse-game-row:hover{border-color:rgba(255,210,0,0.45);transform:translateY(-1px)}
+.verse-game-row.selected{border-color:var(--gold);background:linear-gradient(135deg,#1f1d2c,#16151f);box-shadow:0 8px 24px rgba(0,0,0,0.45),0 0 0 1px var(--gold-soft)}
+.verse-game-row-top{display:flex;align-items:center;justify-content:space-between}
+.verse-game-row-label{font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
 .verse-game-row-icon{font-size:18px}
-.verse-game-row-desc{font-size:12px;color:var(--text-3);margin-top:2px}
-.verse-game-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.verse-game-row-desc{font-size:12px;color:var(--text-3);margin-top:2px;line-height:1.4}
+.verse-game-row-summary{font-size:11px;color:#7fffa1;font-weight:700;letter-spacing:0.5px;margin-top:4px}
+.verse-game-chev{color:var(--gold);font-size:22px;line-height:1;opacity:0.6}
+.verse-game-collapse{color:var(--text-3);font-size:18px;line-height:1;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.06)}
+.verse-game-prompt{margin-top:10px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:800;text-align:center}
+.verse-game-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
 .verse-game-btn{background:linear-gradient(135deg,rgba(255,210,0,0.12),rgba(255,210,0,0.04));border:1.5px solid rgba(255,210,0,0.35);color:#fff;padding:10px 6px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all 0.15s}
 .verse-game-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(255,210,0,0.22),rgba(255,210,0,0.08));border-color:var(--gold)}
 .verse-game-btn:active{transform:scale(0.97)}
@@ -402,6 +409,15 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .daily-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:-0.3px}
 .daily-text{font-size:13px;color:var(--text-2);line-height:1.4}
 .daily-card .arrow{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:24px;opacity:0.7}
+.daily-verse-card{
+  background:linear-gradient(135deg,rgba(155,123,255,0.18),rgba(91,61,245,0.08)),
+    radial-gradient(ellipse at top right,rgba(155,123,255,0.12),transparent 60%),var(--bg-2);
+  border-color:rgba(155,123,255,0.45);
+  box-shadow:0 12px 36px rgba(91,61,245,0.18);
+}
+.daily-verse-card:hover{box-shadow:0 18px 48px rgba(91,61,245,0.3)}
+.daily-verse-card .daily-tag{color:#b9a3ff}
+.daily-verse-card .arrow{color:#b9a3ff}
 
 /* ---------- Custom story button ---------- */
 .custom-button{
@@ -538,6 +554,12 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <div class="daily-tag">⏰ Today's Adventure</div>
     <div class="daily-title" id="daily-title">A new story every day</div>
     <div class="daily-text">Tap to dive into today's tale, generated just for you.</div>
+    <div class="arrow">›</div>
+  </div>
+  <div class="daily-card daily-verse-card" id="daily-verse-card" onclick="openDailyVerse()">
+    <div class="daily-tag">📖 Today's Bible Verse</div>
+    <div class="daily-title" id="daily-verse-title">Memorize a verse</div>
+    <div class="daily-text" id="daily-verse-text">Tap to play today's verse-memory games.</div>
     <div class="arrow">›</div>
   </div>
   <button class="custom-button" onclick="openCustomCreator()">
@@ -1566,8 +1588,32 @@ function setBest(verseId,gameType,diff,seconds){
 }
 function formatTime(s){return s.toFixed(1)+'s';}
 
+let verseSelectedGameType=null;   // which game card has been tapped on the verse menu
+
+function getTodaysVerse(){
+  const verses=STORIES.filter(s=>s.verseGame);
+  if(!verses.length)return null;
+  return verses[dayOfYear()%verses.length];
+}
+function refreshDailyVerseCard(){
+  const card=document.getElementById('daily-verse-card');
+  if(!card)return;
+  const v=getTodaysVerse();
+  if(!v){card.style.display='none';return;}
+  card.style.display='';
+  document.getElementById('daily-verse-title').textContent=v.reference||v.title||'Today\'s Verse';
+  const t=(v.verseText||'').replace(/"/g,'').trim();
+  // Show a short preview of the verse below the title.
+  const preview=t.length>110?(t.slice(0,107).trim()+'…'):t;
+  document.getElementById('daily-verse-text').textContent='"'+preview+'"';
+}
+function openDailyVerse(){
+  const v=getTodaysVerse();
+  if(v)openVerseScreen(v);
+}
 function openVerseScreen(verse){
   currentVerse=verse;
+  verseSelectedGameType=null;
   document.getElementById('verse-hero').style.backgroundImage=verse.image?`url('${verse.image}')`:'';
   document.getElementById('verse-emoji').textContent=verse.emoji||'📖';
   document.getElementById('verse-ref').textContent=verse.reference||verse.title||'';
@@ -1578,19 +1624,35 @@ function openVerseScreen(verse){
 }
 function exitVerseScreen(){
   currentVerse=null;
+  verseSelectedGameType=null;
   goHome();
+}
+function selectVerseGame(gameType){
+  verseSelectedGameType=verseSelectedGameType===gameType?null:gameType;
+  renderVerseGameMenu();
 }
 function renderVerseGameMenu(){
   const wrap=document.getElementById('verse-games');
   if(!wrap||!currentVerse)return;
   const verseId=currentVerse.id;
   wrap.innerHTML=GAME_DEFS.map(g=>{
-    const buttons=DIFF_DEFS.map(d=>{
-      const best=getBest(verseId,g.id,d.id);
-      const bestLabel=best!=null?'Best · '+formatTime(best):'—';
-      return `<button class="verse-game-btn" onclick="startVerseGame('${g.id}','${d.id}')"><span class="verse-game-btn-diff">${d.label}</span><span class="verse-game-btn-best">${bestLabel}</span></button>`;
-    }).join('');
-    return `<div class="verse-game-row"><div class="verse-game-row-label"><span class="verse-game-row-icon">${g.icon}</span> ${g.label}</div><div class="verse-game-row-desc">${g.desc}</div><div class="verse-game-buttons">${buttons}</div></div>`;
+    const selected=verseSelectedGameType===g.id;
+    // Show the best across any difficulty as the headline on the unselected card.
+    const anyBest=DIFF_DEFS.map(d=>getBest(verseId,g.id,d.id)).filter(v=>v!=null).sort((a,b)=>a-b)[0];
+    const summary=anyBest!=null?'Best · '+formatTime(anyBest):'Not played yet';
+    let body;
+    if(selected){
+      const buttons=DIFF_DEFS.map(d=>{
+        const best=getBest(verseId,g.id,d.id);
+        const bestLabel=best!=null?'Best · '+formatTime(best):'New';
+        return `<button class="verse-game-btn" onclick="event.stopPropagation();startVerseGame('${g.id}','${d.id}')"><span class="verse-game-btn-diff">${d.label}</span><span class="verse-game-btn-best">${bestLabel}</span></button>`;
+      }).join('');
+      body=`<div class="verse-game-prompt">Easy, Medium, or Hard?</div><div class="verse-game-buttons">${buttons}</div>`;
+    }else{
+      body=`<div class="verse-game-row-summary">${summary}</div>`;
+    }
+    const cls='verse-game-row'+(selected?' selected':'');
+    return `<div class="${cls}" onclick="selectVerseGame('${g.id}')"><div class="verse-game-row-top"><div class="verse-game-row-label"><span class="verse-game-row-icon">${g.icon}</span> ${g.label}</div>${selected?'<span class="verse-game-collapse">×</span>':'<span class="verse-game-chev">›</span>'}</div><div class="verse-game-row-desc">${g.desc}</div>${body}</div>`;
   }).join('');
 }
 
@@ -1894,6 +1956,7 @@ function goHome(){
   document.body.classList.remove('reader-new','reader-early');
   buildHome();
   refreshWelcome();
+  refreshDailyVerseCard();
   showScreen('home-screen');
 }
 
@@ -3124,6 +3187,7 @@ refreshWelcome();
 refreshSpeechBtn();
 buildHome();
 refreshCommunityStories();
+refreshDailyVerseCard();
 
 // First-time visitor → prompt for name
 if(getPlayers().length===0){
