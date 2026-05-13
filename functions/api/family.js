@@ -177,12 +177,9 @@ async function handleRename(env, body) {
   return json({ code: newCode });
 }
 
-// --- Code generation: random 6-digit number ---
+// --- Code generation: random 4-digit number ---
 function generateCode() {
-  const len = 6;
-  let code = "";
-  for (let i = 0; i < len; i++) code += Math.floor(Math.random() * 10);
-  return code;
+  return String(Math.floor(1000 + Math.random() * 9000));
 }
 
 function isValidCode(code) {
