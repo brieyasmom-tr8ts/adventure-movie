@@ -40,7 +40,7 @@ body{
 .top-btn:active{transform:scale(0.92)}
 .top-btn.on{background:rgba(255,210,0,0.18);border-color:var(--gold)}
 .top-back{display:none;position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:230}
-body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .top-back{display:flex}
+body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .top-back,body[data-screen="verse-screen"] .top-back,body[data-screen="game-screen"] .top-back{display:flex}
 
 /* ---------- Home screen ---------- */
 #home-screen{
@@ -114,8 +114,9 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 /* ---------- Memory Verse screens ---------- */
 #verse-screen,#game-screen{background:linear-gradient(180deg,#0a0a18 0%,#000 100%);overflow-y:auto}
 #verse-screen.active,#game-screen.active{display:flex;flex-direction:column}
-.verse-back{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:240;background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border-2);color:#fff;padding:8px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer}
+.verse-back{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:240;background:rgba(0,0,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border-2);color:#fff;padding:8px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;align-items:center;gap:4px}
 .verse-back:hover{background:rgba(255,210,0,0.2);border-color:var(--gold)}
+.game-home-btn{left:92px;padding:8px 12px;font-size:16px}
 .verse-wrap{padding:80px 24px 80px;max-width:640px;margin:0 auto;width:100%}
 .verse-hero{height:140px;background-size:cover;background-position:center;border-radius:18px;margin-bottom:18px;position:relative;box-shadow:0 12px 36px rgba(0,0,0,0.5)}
 .verse-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,0.65) 100%);border-radius:18px}
@@ -609,7 +610,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 </div>
 
 <div id="verse-screen" class="screen">
-  <button class="top-back verse-back" onclick="exitVerseScreen()">← Back</button>
+  <button class="top-back verse-back" onclick="exitVerseScreen()">← Home</button>
   <div class="verse-wrap">
     <div class="verse-hero" id="verse-hero"></div>
     <div class="verse-emoji" id="verse-emoji">📖</div>
@@ -623,6 +624,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div id="game-screen" class="screen">
   <button class="top-back verse-back" onclick="exitGameScreen()">← Back</button>
+  <button class="top-back verse-back game-home-btn" onclick="exitGameToHome()" title="Home">🏠</button>
   <div class="game-header">
     <div class="game-meta">
       <span class="game-ref" id="game-ref"></span>
@@ -1683,6 +1685,14 @@ function exitGameScreen(){
   currentGame=null;
   if(currentVerse){renderVerseGameMenu();showScreen('verse-screen');}
   else goHome();
+}
+function exitGameToHome(){
+  if(gameTimerInterval){clearInterval(gameTimerInterval);gameTimerInterval=null;}
+  document.getElementById('game-complete-modal').classList.remove('active');
+  currentGame=null;
+  currentVerse=null;
+  verseSelectedGameType=null;
+  goHome();
 }
 function restartGame(){
   document.getElementById('game-complete-modal').classList.remove('active');
