@@ -1566,6 +1566,12 @@ function buildHome(){
     return (ai===-1?99:ai)-(bi===-1?99:bi);
   });
   const isAdmin=!!localStorage.getItem('am_admin_token');
+  // Past Adventures row
+  const hist=getStoryHistory();
+  const histHtml=hist.length?`<div class="category-section"><div class="category-title">Past Adventures</div><div class="story-grid">${hist.map((h,i)=>{
+    const bg=h.image?`style="background-image:url('${h.image}')"`:'';
+    return `<div class="story-card" ${bg} onclick="replayHistoryStory(${i})"><div class="card-ai-tag">📅 ${h.date||''}</div><div class="card-emoji">${h.emoji||'📖'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(h.theme||'')}</div><div class="card-title">${escapeHtml(h.title)}</div></div></div>`;
+  }).join('')}</div></div>`:'';
   wrap.innerHTML=sortedCats.map(cat=>{
     const isCommunity=cat==='Community Adventures';
     const cards=cats[cat].map(s=>{
@@ -1592,7 +1598,7 @@ function buildHome(){
     const grade=CATEGORY_GRADES[cat];
     const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
     return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
-  }).join('');
+  }).join('')+histHtml;
 }
 const CATEGORY_GRADES={
   'Start Reading':'Pre-K – Kindergarten',
@@ -2770,6 +2776,55 @@ function buildDailyStoryFromPregen(preGen,heroFallback){
 }
 
 /* =========================================================
+   STORY HISTORY — save and replay past daily stories
+   ========================================================= */
+function storyHistoryKey(){return 'am_story_history:'+(getActivePlayer()||'__guest__');}
+function getStoryHistory(){
+  try{return JSON.parse(localStorage.getItem(storyHistoryKey())||'[]');}catch(e){return [];}
+}
+function saveDailyHistory(story,ending){
+  const hist=getStoryHistory();
+  // Don't duplicate same story
+  if(hist.some(h=>h.id===story.id))return;
+  hist.unshift({
+    id:story.id,
+    title:story.title||"Today's Adventure",
+    theme:story.theme||'',
+    emoji:story.emoji||'📖',
+    image:story.image||'',
+    date:todayStr(),
+    scenes:story.scenes,
+    endingTitle:ending.title||'The End'
+  });
+  // Keep last 30 stories
+  if(hist.length>30)hist.length=30;
+  try{localStorage.setItem(storyHistoryKey(),JSON.stringify(hist));}catch(e){
+    // If storage is full, trim more aggressively
+    hist.length=10;
+    try{localStorage.setItem(storyHistoryKey(),JSON.stringify(hist));}catch(e2){}
+  }
+}
+function replayHistoryStory(idx){
+  const hist=getStoryHistory();
+  const h=hist[idx];
+  if(!h)return;
+  currentStory={
+    id:h.id+'_replay',
+    title:h.title,
+    theme:h.theme,
+    category:'Daily',
+    emoji:h.emoji,
+    image:h.image,
+    scenes:h.scenes,
+    _isDailyPregen:true
+  };
+  setReaderClass();
+  visitedScenes=[];journey=[];currentAIScene=null;
+  showScreen('player-screen');
+  playScene('s1');
+}
+
+/* =========================================================
    CUSTOM STORY — kid types a topic, AI runs with it
    ========================================================= */
 function openCustomCreator(){
@@ -3114,6 +3169,10 @@ function chooseAI(idx){
 function showEnding(s,endingId){
   recordEnding(currentStory.id,endingId);
   bumpStreak();
+  // Save daily stories to history for replay
+  if(currentStory&&currentStory._isDailyPregen){
+    saveDailyHistory(currentStory,s);
+  }
   // Auto-share AI Adventure journeys to the community pool so other kids
   // can replay them without burning fresh Anthropic tokens.
   if(currentStory&&currentStory.aiStory&&!currentStory._isCommunityReplay&&Array.isArray(journey)&&journey.length>0){
