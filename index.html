@@ -3148,18 +3148,34 @@ async function startDailyStory(){
 }
 function buildDailyStoryFromPregen(preGen,heroFallback){
   const list=preGen.scenes;
-  // The outline LLM may use 1-indexed or 0-indexed nextScene numbers, or
-  // a string id like "ending_best". Build lookup tables for all three.
+  // The outline LLM may emit nextScene as a string id ("ending_best") or as
+  // a number index. Build both 0-indexed and 1-indexed lookup tables and then
+  // pick whichever interpretation produces fewer self-loops across the whole
+  // outline (a self-loop almost always means the indexing was misread).
+  // The worker's prompt example teaches 0-indexed (s1's choices go to
+  // nextScene:1 / nextScene:2 = scenes[1]/scenes[2] = s2/s3), so 0-indexed
+  // is the expected default — but the detection makes us robust to both.
   const byId={};
   const byIndex0={};
   const byIndex1={};
   list.forEach((s,i)=>{byId[s.id]=s;byIndex0[i]=s.id;byIndex1[i+1]=s.id;});
+  let loops0=0,loops1=0;
+  list.forEach(s=>{
+    if(s.ending||!Array.isArray(s.choices))return;
+    s.choices.forEach(c=>{
+      if(typeof c.nextScene!=='number')return;
+      if(byIndex0[c.nextScene]===s.id)loops0++;
+      if(byIndex1[c.nextScene]===s.id)loops1++;
+    });
+  });
+  const preferred=loops0<=loops1?byIndex0:byIndex1;
+  const secondary=preferred===byIndex0?byIndex1:byIndex0;
   const fallbackEnding=byId.ending_neutral?'ending_neutral':(byId.ending_learn?'ending_learn':(byId.ending_best?'ending_best':list[list.length-1].id));
   const resolveNext=(nextScene)=>{
     if(typeof nextScene==='string'&&byId[nextScene])return nextScene;
     if(typeof nextScene==='number'){
-      if(byIndex1[nextScene])return byIndex1[nextScene];
-      if(byIndex0[nextScene])return byIndex0[nextScene];
+      if(preferred[nextScene])return preferred[nextScene];
+      if(secondary[nextScene])return secondary[nextScene];
     }
     return fallbackEnding;
   };
@@ -3177,12 +3193,23 @@ function buildDailyStoryFromPregen(preGen,heroFallback){
       };
     }else{
       const choices=Array.isArray(s.choices)?s.choices:[];
+      let resolved=choices.map(c=>({text:c.text||'Continue',next:resolveNext(c.nextScene)}));
+      // If every choice on this scene resolves to the same target, the kid
+      // experiences "different choice, same scene" — usually because the LLM
+      // emitted duplicate nextScene values. As a last-ditch repair, route
+      // the second choice onward by one slot so they at least progress
+      // through the outline instead of looping.
+      if(resolved.length>=2&&resolved.every(r=>r.next===resolved[0].next)){
+        const myIndex=list.indexOf(s);
+        const fallbackNext=preferred[myIndex+1]||secondary[myIndex+1]||fallbackEnding;
+        resolved[1]={...resolved[1],next:fallbackNext};
+      }
       scenes[s.id]={
         chapter:s.chapter||'',
         text:s.text||'',
         image:s.image||preGen.image||heroFallback,
         mood:s.mood||'calm',
-        choices:choices.map(c=>({text:c.text||'Continue',next:resolveNext(c.nextScene)}))
+        choices:resolved
       };
     }
   });
