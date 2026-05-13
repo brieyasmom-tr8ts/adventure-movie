@@ -532,6 +532,23 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .vocab-chip{padding:5px 10px;background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.2);border-radius:8px;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer}
 .vocab-chip:hover{background:rgba(255,80,80,0.15);border-color:#ff7878;color:#ff7878}
 
+/* Family leaderboard */
+.leaderboard-card{
+  margin:12px 20px;padding:16px;
+  background:linear-gradient(135deg,rgba(255,210,0,0.08),rgba(247,151,30,0.08));
+  border:1px solid rgba(255,210,0,0.2);border-radius:16px;
+}
+.leaderboard-title{font-size:14px;font-weight:800;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:20px;width:30px;text-align:center;font-weight:900}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{flex:1;font-size:14px;font-weight:700;color:#fff}
+.lb-pts{font-size:14px;font-weight:800;color:var(--gold)}
+.lb-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gold-soft)}
+
 /* Sibling challenge */
 .sibling-card{
   margin:12px 20px;padding:16px;
@@ -649,6 +666,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <div class="daily-text" id="daily-verse-text">Tap to play today's verse-memory games.</div>
     <div class="arrow">›</div>
   </div>
+  <div id="family-leaderboard" style="display:none"></div>
   <div id="sibling-challenge" style="display:none"></div>
   <button class="custom-button" onclick="openCustomCreator()">
     <span class="custom-icon">✨</span>
@@ -1630,8 +1648,39 @@ const BADGE_DEFS=[
   {id:'streak_3',name:'On a Roll',emoji:'🔥',desc:'3-day reading streak',check:()=>getStreakCount()>=3},
   {id:'streak_7',name:'Dedicated',emoji:'💪',desc:'7-day reading streak',check:()=>getStreakCount()>=7},
   {id:'level_5',name:'Rising Star',emoji:'⭐',desc:'Reach Level 5',check:()=>getXPData().level>=5},
-  {id:'level_10',name:'Master Reader',emoji:'🏆',desc:'Reach Level 10',check:()=>getXPData().level>=10}
+  {id:'level_10',name:'Master Reader',emoji:'🏆',desc:'Reach Level 10',check:()=>getXPData().level>=10},
+  {id:'twenty_stories',name:'Bookworm',emoji:'🐛',desc:'Complete 20 stories',check:()=>totalEndings()>=20},
+  {id:'fifty_stories',name:'Story Legend',emoji:'📖',desc:'Complete 50 stories',check:()=>totalEndings()>=50},
+  {id:'streak_14',name:'Two Weeks Strong',emoji:'💎',desc:'14-day reading streak',check:()=>getStreakCount()>=14},
+  {id:'streak_30',name:'Month of Reading',emoji:'🌟',desc:'30-day reading streak',check:()=>getStreakCount()>=30},
+  {id:'level_20',name:'Grand Champion',emoji:'👸',desc:'Reach Level 20',check:()=>getXPData().level>=20}
 ];
+
+// Monthly badges — fresh challenge each month
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_EMOJIS=['❄️','💕','🌱','🌸','🌻','☀️','🎆','🏖️','🍂','🎃','🍁','🎄'];
+const MONTH_THEMES=['Winter Reader','Heart of Gold','Spring Sprout','Blossom Reader','Sunshine Reader','Summer Star','Firework Reader','Beach Reader','Autumn Explorer','Spooky Reader','Harvest Reader','Holiday Reader'];
+
+function getMonthlyBadges(){
+  const now=new Date();
+  const m=now.getMonth();
+  const year=now.getFullYear();
+  const monthKey=`${year}-${String(m+1).padStart(2,'0')}`;
+  return [
+    {id:`monthly_read_${monthKey}`,name:MONTH_THEMES[m],emoji:MONTH_EMOJIS[m],desc:`Complete 3 stories in ${MONTH_NAMES[m]}`,monthly:true,
+     check:()=>{const h=getXPData().history||[];return h.filter(x=>x.reason&&x.reason.includes('Ending')&&new Date(x.ts).getMonth()===m&&new Date(x.ts).getFullYear()===year).length>=3;}},
+    {id:`monthly_streak_${monthKey}`,name:`${MONTH_NAMES[m]} Streak`,emoji:'🔥',desc:`Read 5 days in ${MONTH_NAMES[m]}`,monthly:true,
+     check:()=>{try{const d=JSON.parse(localStorage.getItem(streakKey())||'{}');return(d.days||[]).filter(day=>day.startsWith(monthKey)).length>=5;}catch(e){return false;}}},
+    {id:`monthly_xp_${monthKey}`,name:`${MONTH_NAMES[m]} Champion`,emoji:'🥇',desc:`Earn 200 XP in ${MONTH_NAMES[m]}`,monthly:true,
+     check:()=>{const h=getXPData().history||[];return h.filter(x=>new Date(x.ts).getMonth()===m&&new Date(x.ts).getFullYear()===year).reduce((s,x)=>s+x.amount,0)>=200;}}
+  ];
+}
+
+function getAllBadgeDefs(){return [...BADGE_DEFS,...getMonthlyBadges()];}
+
+function getEarnedMonthlyBadges(){
+  try{return JSON.parse(localStorage.getItem(playerKey('am_monthly_badges'))||'[]');}catch(e){return [];}
+}
 function totalEndings(){
   return Object.values(progress).reduce((sum,p)=>sum+(p.endings?p.endings.length:0),0);
 }
@@ -1655,15 +1704,21 @@ function getUnlockedBadges(){
 }
 function checkBadges(){
   const unlocked=getUnlockedBadges();
+  const monthly=getEarnedMonthlyBadges();
+  const allIds=[...unlocked,...monthly];
   let newBadge=false;
+  // Check permanent badges
   for(const b of BADGE_DEFS){
     if(unlocked.includes(b.id))continue;
-    if(b.check()){
-      unlocked.push(b.id);
-      newBadge=b;
-    }
+    if(b.check()){unlocked.push(b.id);newBadge=b;}
+  }
+  // Check monthly badges
+  for(const b of getMonthlyBadges()){
+    if(monthly.includes(b.id))continue;
+    if(b.check()){monthly.push(b.id);newBadge=b;}
   }
   localStorage.setItem(playerKey('am_badges'),JSON.stringify(unlocked));
+  localStorage.setItem(playerKey('am_monthly_badges'),JSON.stringify(monthly));
   debouncedSync();
   if(newBadge)showBadgeUnlock(newBadge);
 }
@@ -1772,7 +1827,34 @@ function buildHome(){
   }).join('')+histHtml;
   // Grandbabe stories go first, before all categories
   wrap.innerHTML=grandbabHtml+wrap.innerHTML;
+  renderLeaderboard();
   renderSiblingChallenge();
+}
+function getWeeklyXP(name){
+  const saved=getActivePlayer();
+  setActivePlayer(name);
+  const d=getXPData();
+  setActivePlayer(saved);
+  const weekAgo=Date.now()-7*24*60*60*1000;
+  return (d.history||[]).filter(h=>h.ts&&h.ts>weekAgo).reduce((s,h)=>s+(h.amount||0),0);
+}
+function renderLeaderboard(){
+  const el=document.getElementById('family-leaderboard');
+  if(!el)return;
+  const players=getPlayers();
+  if(players.length<2){el.style.display='none';return;}
+  const ranked=players.map(name=>({name,xp:getWeeklyXP(name),avatar:getAvatar(name)}))
+    .sort((a,b)=>b.xp-a.xp);
+  if(ranked.every(r=>r.xp===0)){el.style.display='none';return;}
+  const medals=['🥇','🥈','🥉'];
+  const rankClass=['gold','silver','bronze'];
+  const rows=ranked.map((r,i)=>{
+    const avHtml=r.avatar?`<img src="${r.avatar}" class="lb-avatar">`:`<span style="font-size:18px">👤</span>`;
+    const medal=i<3?`<span class="lb-rank ${rankClass[i]}">${medals[i]}</span>`:`<span class="lb-rank">${i+1}</span>`;
+    return `<div class="lb-row">${medal}${avHtml}<span class="lb-name">${escapeHtml(r.name)}</span><span class="lb-pts">${r.xp} XP</span></div>`;
+  }).join('');
+  el.innerHTML=`<div class="leaderboard-card"><div class="leaderboard-title">🏆 This Week's Leaderboard</div>${rows}</div>`;
+  el.style.display='block';
 }
 function renderSiblingChallenge(){
   const el=document.getElementById('sibling-challenge');
@@ -2772,15 +2854,25 @@ function renderStatsPanel(){
   // XP bar
   document.getElementById('xp-display').innerHTML=`<span class="xp-level">Lv ${d.level}</span><span class="xp-bar"><span class="xp-fill" style="width:${pct}%"></span></span><span class="xp-pts">${d.xp}/${xpForLevel(d.level)} XP</span>`;
 
-  // Badges grid
+  // Badges grid — permanent
   const badgesHtml=BADGE_DEFS.map(b=>{
     const got=unlocked.includes(b.id);
     return `<div class="badge-item ${got?'unlocked':'locked'}" title="${b.desc}"><span class="badge-emoji">${b.emoji}</span><span class="badge-name">${b.name}</span></div>`;
   }).join('');
-  document.getElementById('badges-grid').innerHTML=badgesHtml;
+
+  // Monthly badges
+  const monthlyBadges=getMonthlyBadges();
+  const earnedMonthly=getEarnedMonthlyBadges();
+  const monthlyHtml=monthlyBadges.map(b=>{
+    const got=earnedMonthly.includes(b.id);
+    return `<div class="badge-item ${got?'unlocked':'locked'}" title="${b.desc}"><span class="badge-emoji">${b.emoji}</span><span class="badge-name">${b.name}</span></div>`;
+  }).join('');
+  const monthLabel=MONTH_NAMES[new Date().getMonth()];
+  document.getElementById('badges-grid').innerHTML=badgesHtml+`<div style="grid-column:1/-1;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:2px;font-weight:800;margin-top:8px">${monthLabel} Challenges</div>`+monthlyHtml;
 
   // Extra stats
-  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>${buildStreakCalendar()}${renderVocabInStats()}`;
+  const totalBadges=unlocked.length+earnedMonthly.length;
+  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${totalBadges}</div><div class="stat-label">Badges</div></div></div>${buildStreakCalendar()}${renderVocabInStats()}`;
 }
 function buildStreakCalendar(){
   let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){d={};}
