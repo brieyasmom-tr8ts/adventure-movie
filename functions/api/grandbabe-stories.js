@@ -28,8 +28,13 @@ export async function onRequestPost(context) {
 
   const list = (await env.STORIES_KV.get(KV_KEY, "json")) || [];
 
-  // Don't duplicate
-  if (!list.some(s => s.id === story.id)) {
+  // Upsert: if a story with this id already exists, replace it. Otherwise
+  // prepend the new one. This lets Grandbabe edit a story and have the
+  // changes propagate to the kids' tray under the same id.
+  const existingIndex = list.findIndex(s => s.id === story.id);
+  if (existingIndex >= 0) {
+    list[existingIndex] = story;
+  } else {
     list.unshift(story);
     if (list.length > 20) list.length = 20;
   }

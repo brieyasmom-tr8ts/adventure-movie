@@ -119,6 +119,22 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
   scrollbar-width:none;
 }
 .story-grid::-webkit-scrollbar{display:none}
+.story-grid-5{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
+  overflow:visible;scroll-snap-type:none;padding:6px 24px 16px;
+}
+.story-grid-5 .story-card{flex:initial;width:auto;height:auto;aspect-ratio:3/4;font-size:11px}
+.story-grid-5 .story-card .card-title{font-size:12px}
+.story-grid-5 .story-card .card-theme{font-size:9px}
+.story-grid-5 .story-card .card-emoji{font-size:24px}
+.story-grid-5 .story-card .card-ai-tag{font-size:8px;padding:2px 4px;letter-spacing:0.2px}
+@media (max-width:560px){
+  .story-grid-5{grid-template-columns:repeat(5,1fr);gap:6px;padding:6px 12px 16px}
+  .story-grid-5 .story-card .card-emoji{font-size:18px}
+  .story-grid-5 .story-card .card-title{font-size:10px;line-height:1.1}
+  .story-grid-5 .story-card .card-theme{font-size:8px}
+  .story-grid-5 .story-card .card-ai-tag{font-size:7px;padding:2px 3px}
+}
 
 .story-card{
   position:relative;flex:0 0 172px;height:240px;
@@ -1258,23 +1274,6 @@ levels:{
 
 {id:"verse-prov-3-5-6",title:"Proverbs 3:5-6",theme:"Trust",emoji:"🧭",category:"Memory Verses",image:"https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",verseGame:true,reference:"Proverbs 3:5-6",verseText:"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",context:"You don't have to see the whole road ahead. You just have to trust who you're walking with.",scenes:{}},
 
-{id:"first-hire",title:"The First Hire",theme:"Leadership",emoji:"💼",category:"Leadership",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",scenes:{
-  s1:{chapter:"Day One Of Your Startup",mood:"calm",text:"Your young company has finally raised enough to make its first hire. You've narrowed it down to two candidates. Maya is brilliant, fast, and ambitious — but she's burned bridges at every job. Jordan is solid, kind, and a true team player — but average in skill. Your co-founder is pushing for Maya. Your gut is unsure.",image:"https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",choices:[{text:"Hire Maya — bet on raw talent",next:"s2a"},{text:"Hire Jordan — bet on character",next:"s2b"},{text:"Talk to one more reference before deciding",next:"s2c"}]},
-  s2a:{chapter:"Week One with Maya",mood:"calm",text:"Maya hits the ground running. Her first pull request is flawless. She redesigns the entire onboarding flow in three days. Your co-founder high-fives you. But during standup, Maya interrupts a junior developer mid-sentence: 'That approach is wrong. Let me just do it.' The room goes quiet.",image:"https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",choices:[{text:"Pull Maya aside and mention the interruption privately",next:"s3a"},{text:"Let it go — she was technically right",next:"s3b"}]},
-  s2b:{chapter:"Week One with Jordan",mood:"calm",text:"Jordan's first week is quiet. They spend most of it reading documentation, asking questions, and having coffee with every team member. Their first code contribution is solid but unremarkable. Your co-founder sighs: 'We needed a star, not a student.' But you notice something: the team seems lighter.",image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",choices:[{text:"Give Jordan time — trust the long game",next:"s3c"},{text:"Start looking for a second hire to add firepower",next:"s3d"}]},
-  s2c:{chapter:"The Reference Call",interactive:true,prompt:"Imagine you're on the phone with Maya's last manager. What's the ONE question you'd ask?",image:"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",next:"s2a"},
-  s3a:{chapter:"The Quick Chat",mood:"calm",text:"You catch Maya after standup. 'Hey — your work is incredible. One thing: when you cut Sam off in the meeting, it landed hard. Can you loop him in next time?' Maya blinks. 'I was just trying to be efficient.' You nod: 'I know. But how we work matters as much as what we ship.' She's quiet for a moment.",image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",choices:[{text:"Schedule weekly 1-on-1s to keep the feedback loop open",next:"s4a"},{text:"Assume the message landed and move on",next:"s4b"}]},
-  s3b:{chapter:"Six Weeks In",mood:"tension",text:"Maya's output is staggering. But the pattern repeats. She takes over meetings. She rewrites other people's code without asking. She sends a Slack message calling the product roadmap 'amateur.' Two engineers tell you privately they're thinking of leaving. Your co-founder shrugs: 'Stars are difficult. That's normal.'",image:"https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",choices:[{text:"Have the hard conversation now — before it's too late",next:"s4a"},{text:"Stay silent — the work is too good to lose",next:"end_poor"}]},
-  s3c:{chapter:"Month Two — Something Shifts",mood:"calm",text:"Jordan starts mentoring the junior developers without being asked. Code review quality goes up across the board. They build a testing framework that saves everyone an hour a day. Nothing flashy. Just useful. At the all-hands, a teammate says: 'Jordan made me better at my job.' Your co-founder looks at you differently.",image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",choices:[{text:"Give Jordan more responsibility and a leadership title",next:"s4c"},{text:"Pair Jordan with a more senior mentor to accelerate their growth",next:"s4c"}]},
-  s3d:{chapter:"The Second Hire",mood:"tension",text:"You bring in a hotshot developer on top of Jordan. The new hire is fast but clashes with Jordan's collaborative style. Meetings become tense. Jordan pulls you aside: 'I don't mind working hard, but I won't work in a place where kindness is treated as weakness.' You realize you've created a culture problem.",image:"https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",choices:[{text:"Side with Jordan's values and talk to the new hire",next:"s4c"},{text:"Tell Jordan to toughen up — this is a startup",next:"end_poor"}]},
-  s4a:{chapter:"The Hard Talk",mood:"tension",text:"You sit Maya down for a real conversation. You name the pattern — the interruptions, the public criticism, the rewriting of others' code. You do it directly, without anger. She's defensive at first. Then quiet. Then she says something that surprises you: 'No one's ever actually told me this before. They just... stopped inviting me to things.' A long pause. 'I'll work on it.'",image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",choices:[{text:"Set up regular check-ins and hold her accountable",next:"end_best"},{text:"Feel relieved and assume it's handled",next:"end_neutral"}]},
-  s4b:{chapter:"The Exodus",mood:"tension",text:"Two more weeks pass. Maya publicly disagrees with your technical decision in the team Slack. The message gets 😬 reactions from three people. Your best engineer submits their resignation that evening. The email is one line: 'I can't work like this anymore.' Your co-founder finally looks worried.",image:"https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",choices:[{text:"Have the overdue conversation with Maya right now",next:"s4a"},{text:"Let the engineer go and hope things stabilize",next:"end_poor"}]},
-  s4c:{chapter:"The Culture",mood:"calm",text:"Something special is forming. Jordan's approach — ask questions, share credit, support everyone — becomes how the whole team operates. New hires comment on how different this company feels. A big client tells you: 'We chose you because your team actually seems to like each other.' Your co-founder finally admits: 'You were right.'",image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",choices:[{text:"Thank Jordan publicly at the next all-hands",next:"end_best"},{text:"Keep building quietly — the work speaks for itself",next:"end_best"}]},
-  end_best:{ending:true,type:"Best Ending",emoji:"🚀",title:"Built To Last",text:"A year later, the team is humming. People stay because they want to, not because they have to. You learned that leadership isn't choosing the brightest star — it's building the soil that lets everyone grow. The hardest conversations and the quietest investments paid off the most.",lesson:"Character compounds. Skill can be coached. Culture is built one hard conversation at a time.",reflect:["When did you last give someone honest feedback?","Are you choosing people for what they ARE or what they could BECOME?","What does your team's culture say about you?"]},
-  end_neutral:{ending:true,type:"Neutral Ending",emoji:"⚖️",title:"Holding Steady",text:"The company survives. Maya improved some. But the early damage to trust never fully healed. Two good people left who didn't need to. You wonder sometimes what would've been different if you'd acted sooner — or chosen differently from the start.",lesson:"Avoiding hard choices is itself a choice — and it usually means you stay average.",reflect:["Where are you avoiding a leadership decision right now?","What's the cost of staying in the middle?","What would 'going all in' look like?"]},
-  end_poor:{ending:true,type:"Learning Ending",emoji:"💔",title:"The Slow Bleed",text:"The team fractures. Your best people leave one by one — quietly, professionally, and permanently. Maya stays because no one else will hire her after she burns this bridge too. By month nine, your co-founder leaves. You stare at a Slack channel full of ghosts. The product was brilliant. The culture was poison.",lesson:"Tolerating toxic talent is the most expensive thing a leader can do.",reflect:["Whose behavior are you tolerating because they're 'productive'?","What did you wish someone had done sooner in your past?","Who do you owe a hard conversation to this week?"]}
-}},
-
 {id:"the-party",title:"The Invite",theme:"Pressure",emoji:"📱",category:"Teen / Social",image:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",scenes:{
   s1:{chapter:"Friday, 7:42 PM",mood:"calm",text:"Your phone lights up. It's Sam, your best friend since fifth grade. 'Big party at Alex's house. Parents are out of town. Everyone's going. Pick you up in 20?' You hear voices and laughter in the background. You know there will be drinking. You also know your parents trust you to be home by eleven.",image:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",choices:[{text:"Go — just be careful and stay sober",next:"s2a"},{text:"Decline politely — you've got plans",next:"s2b"},{text:"Reply: 'What's actually going to be there?'",next:"s2c"}]},
   s2a:{chapter:"Pulling Up",mood:"tension",text:"Sam's car pulls into the driveway. The bass from the speakers hits your chest before you even open the door. Inside, it's packed. People from school, people you've never seen. The kitchen counter is covered in bottles. A group is playing a drinking game in the corner. Sam disappears into the crowd. You're standing alone in the doorway.",image:"https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",choices:[{text:"Find Sam and stick together",next:"s3a"},{text:"Find a quieter room with people you know",next:"s3b"},{text:"Turn around and leave right now",next:"s4c"}]},
@@ -1842,9 +1841,16 @@ function buildHome(){
   const cats={};
   STORIES.forEach(s=>{(cats[s.category]=cats[s.category]||[]).push(s);});
   if(communityStories.length){
-    cats['Community Adventures']=communityStories;
+    // Cap Community Adventures to the 10 most recent so the row stays
+    // manageable (2 rows of 5). Newest first.
+    const recent=communityStories.slice().sort((a,b)=>{
+      const ta=Date.parse(a.createdAt||a.created_at||0)||0;
+      const tb=Date.parse(b.createdAt||b.created_at||0)||0;
+      return tb-ta;
+    }).slice(0,10);
+    cats['Community Adventures']=recent;
   }
-  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','Teen / Social','Bible','Memory Verses','Leadership','Community Adventures','Life Decisions'];
+  const order=['Start Reading','Growing Reader','Brave Reader','Story Master','Teen / Social','Bible','Memory Verses','Community Adventures','Life Decisions'];
   const sortedCats=Object.keys(cats).sort((a,b)=>{
     const ai=order.indexOf(a),bi=order.indexOf(b);
     return (ai===-1?99:ai)-(bi===-1?99:bi);
@@ -1854,7 +1860,8 @@ function buildHome(){
   let grandbabHtml='';
   if(grandbabStories.length){
     const customCards=grandbabStories.map((s,i)=>{
-      return `<div class="story-card" style="background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(96,165,250,0.2))" onclick="playGrandbabStory(${i})"><div class="card-ai-tag">📝 By ${escapeHtml(s.createdBy||'Grandbabe')}</div><div class="card-emoji">${s.emoji||'📝'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div></div></div>`;
+      const bg=s.image?`background-image:url('${s.image}')`:'background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(96,165,250,0.2))';
+      return `<div class="story-card" style="${bg}" onclick="playGrandbabStory(${i})"><div class="card-ai-tag">📝 By ${escapeHtml(s.createdBy||'Grandbabe')}</div><div class="card-emoji">${s.emoji||'📝'}</div><div class="card-overlay"><div class="card-theme">${escapeHtml(s.theme||'')}</div><div class="card-title">${escapeHtml(s.title)}</div></div></div>`;
     }).join('');
     grandbabHtml=`<div class="category-section"><div class="category-title">Grandbabe Stories</div><div class="story-grid">${customCards}</div></div>`;
   }
@@ -1890,7 +1897,8 @@ function buildHome(){
     }).join('');
     const grade=CATEGORY_GRADES[cat];
     const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
-    return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
+    const gridClass=isCommunity?'story-grid story-grid-5':'story-grid';
+    return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="${gridClass}">${cards}</div></div>`;
   }).join('')+histHtml;
   // Grandbabe stories go first, before all categories
   wrap.innerHTML=grandbabHtml+wrap.innerHTML;
@@ -4180,7 +4188,7 @@ function playGrandbabStory(idx){
       scenes[sc.id]={chapter:sc.chapter||'',text:personalizeText(sc.text||''),mood:sc.mood||'calm',choices:(sc.choices||[]).map(c=>({text:personalizeText(c.text),next:c.nextScene||c.next}))};
     }
   });
-  currentStory={id:s.id,title:s.title,theme:s.theme||'Custom',emoji:s.emoji||'📝',category:'Grandbabe Stories',image:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',scenes,_isPersonalized:true};
+  currentStory={id:s.id,title:s.title,theme:s.theme||'Custom',emoji:s.emoji||'📝',category:'Grandbabe Stories',image:s.image||'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',scenes,_isPersonalized:true};
   setReaderClass();
   visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
