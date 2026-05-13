@@ -824,17 +824,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <h2>✨ Make Your Own Story</h2>
     <p>What should it be about?</p>
     <input class="interactive-input" id="custom-input" placeholder="A story about..." maxlength="80" autocomplete="off">
-    <div class="chip-row">
-      <button class="chip" onclick="pickCustomChip('a kid-friendly Bible story adventure')">📖 Bible</button>
-      <button class="chip" onclick="pickCustomChip('a brave dragon adventure')">🐉 Dragons</button>
-      <button class="chip" onclick="pickCustomChip('exploring outer space')">🚀 Space</button>
-      <button class="chip" onclick="pickCustomChip('an adventure with my pet')">🐶 My Pet</button>
-      <button class="chip" onclick="pickCustomChip('a sneaky ninja mission')">🥷 Ninjas</button>
-      <button class="chip" onclick="pickCustomChip('solving a tricky mystery')">🔍 Mystery</button>
-      <button class="chip" onclick="pickCustomChip('a journey to the dinosaur world')">🦕 Dinos</button>
-      <button class="chip" onclick="pickCustomChip('an underwater treasure hunt')">🐠 Ocean</button>
-      <button class="chip" onclick="pickCustomChip('a magical forest journey')">🌲 Magic</button>
-    </div>
+    <div class="chip-row" id="custom-chips"></div>
     <button class="interactive-submit" onclick="startCustomStory()">Start adventure ✨</button>
     <button class="modal-close" onclick="closeCustomCreator()">Cancel</button>
   </div>
@@ -2948,7 +2938,36 @@ function replayHistoryStory(idx){
 /* =========================================================
    CUSTOM STORY — kid types a topic, AI runs with it
    ========================================================= */
+const STORY_THEMES=[
+  {emoji:'📖',label:'Bible',prompt:'a kid-friendly Bible story adventure',level:0},
+  {emoji:'🐉',label:'Dragons',prompt:'a brave dragon adventure',level:0},
+  {emoji:'🚀',label:'Space',prompt:'exploring outer space',level:0},
+  {emoji:'🐶',label:'My Pet',prompt:'an adventure with my pet',level:0},
+  {emoji:'🥷',label:'Ninjas',prompt:'a sneaky ninja mission',level:2},
+  {emoji:'🔍',label:'Mystery',prompt:'solving a tricky mystery',level:2},
+  {emoji:'🦕',label:'Dinos',prompt:'a journey to the dinosaur world',level:3},
+  {emoji:'🐠',label:'Ocean',prompt:'an underwater treasure hunt',level:3},
+  {emoji:'🌲',label:'Magic',prompt:'a magical forest journey',level:4},
+  {emoji:'🏴‍☠️',label:'Pirates',prompt:'a pirate treasure island adventure',level:5},
+  {emoji:'🦸',label:'Superheroes',prompt:'becoming a superhero and saving the city',level:6},
+  {emoji:'🤖',label:'Robots',prompt:'a robot friend who needs help',level:7},
+  {emoji:'🧙',label:'Wizards',prompt:'learning magic at a wizard school',level:8},
+  {emoji:'👽',label:'Aliens',prompt:'meeting friendly aliens from another planet',level:10},
+];
+function renderCustomChips(){
+  const d=getXPData();
+  const wrap=document.getElementById('custom-chips');
+  if(!wrap)return;
+  wrap.innerHTML=STORY_THEMES.map(t=>{
+    const locked=d.level<t.level;
+    if(locked){
+      return `<button class="chip" style="opacity:0.4;cursor:default" title="Unlock at Level ${t.level}" disabled>${t.emoji} ${t.label} 🔒 Lv${t.level}</button>`;
+    }
+    return `<button class="chip" onclick="pickCustomChip('${t.prompt.replace(/'/g,"\\'")}')">${t.emoji} ${t.label}</button>`;
+  }).join('');
+}
 function openCustomCreator(){
+  renderCustomChips();
   document.getElementById('custom-modal').classList.add('active');
   setTimeout(()=>{const i=document.getElementById('custom-input');i&&i.focus();},150);
 }
