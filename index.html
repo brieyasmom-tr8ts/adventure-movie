@@ -517,6 +517,12 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
 .avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
 
+/* Confetti */
+@keyframes confettiFall{
+  0%{transform:translateY(0) translateX(0) rotate(0);opacity:1}
+  100%{transform:translateY(100vh) translateX(var(--drift,0px)) rotate(var(--rot,360deg));opacity:0}
+}
+
 /* Streak calendar */
 .streak-calendar{margin:14px 0 8px;text-align:center}
 .streak-calendar-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:800;margin-bottom:8px}
@@ -1593,11 +1599,34 @@ function checkBadges(){
   if(newBadge)showBadgeUnlock(newBadge);
 }
 function showBadgeUnlock(badge){
+  fireConfetti();
+  playSfx('reveal');
   const el=document.createElement('div');
   el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border:2px solid var(--gold);color:#fff;padding:16px 24px;border-radius:16px;z-index:9999;text-align:center;animation:fadeUp 0.5s both;backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,0.6)';
   el.innerHTML=`<div style="font-size:36px;margin-bottom:4px">${badge.emoji}</div><div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:2px;font-weight:800">Badge Unlocked!</div><div style="font-size:16px;font-weight:700;margin-top:4px">${badge.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">${badge.desc}</div>`;
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),3500);
+}
+function fireConfetti(){
+  const colors=['#ffd200','#f7971e','#ff6b6b','#4ade80','#60a5fa','#c084fc','#fb7185','#34d399'];
+  const container=document.createElement('div');
+  container.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:10000;overflow:hidden';
+  document.body.appendChild(container);
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const size=Math.random()*8+4;
+    const left=Math.random()*100;
+    const delay=Math.random()*0.4;
+    const dur=Math.random()*1.5+1.5;
+    const rot=Math.random()*720-360;
+    const drift=Math.random()*40-20;
+    p.style.cssText=`position:absolute;top:-10px;left:${left}%;width:${size}px;height:${size*0.6}px;background:${color};border-radius:2px;animation:confettiFall ${dur}s ${delay}s ease-in forwards`;
+    p.style.setProperty('--drift',drift+'px');
+    p.style.setProperty('--rot',rot+'deg');
+    container.appendChild(p);
+  }
+  setTimeout(()=>container.remove(),3500);
 }
 
 /* =========================================================
@@ -3271,8 +3300,10 @@ function showEnding(s,endingId){
   }
   stopSpeech();
   stopMusic();currentMood=null;
-  playMusic(s.type&&s.type.toLowerCase().includes('best')?'victory':'calm');
+  const isBest=s.type&&s.type.toLowerCase().includes('best');
+  playMusic(isBest?'victory':'calm');
   playSfx('reveal');
+  if(isBest)fireConfetti();
   document.getElementById('ending-emoji').textContent=s.emoji||'🎬';
   document.getElementById('ending-type').textContent=s.type||'Ending';
   document.getElementById('ending-title').textContent=s.title||'';
