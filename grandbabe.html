@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Grandbabe's Story Workshop</title>
+<style>
+:root{--bg:#08080f;--card:#12121e;--border:rgba(255,255,255,0.12);--gold:#ffd200;--text:#cdd1e0;--text2:#7a7f90}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+.page{max-width:500px;margin:0 auto;padding:24px 20px 60px}
+.header{text-align:center;margin-bottom:28px}
+.header h1{font-size:28px;font-weight:900;color:#fff;margin-bottom:4px}
+.header .sub{color:var(--text2);font-size:14px;line-height:1.5}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+input,textarea,select{
+  width:100%;padding:14px 16px;background:var(--card);color:#fff;
+  border:1.5px solid var(--border);border-radius:12px;
+  font-family:inherit;font-size:16px;outline:none;
+  transition:border-color 0.2s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{resize:vertical;min-height:120px;line-height:1.5}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7f90' fill='none' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+::placeholder{color:var(--text2)}
+.btn{
+  width:100%;padding:16px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,var(--gold),#f7971e);
+  color:#111;font-family:inherit;font-size:17px;font-weight:800;
+  cursor:pointer;transition:transform 0.15s,box-shadow 0.2s;
+  margin-top:8px;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,210,0,0.3)}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:0.5;cursor:default;transform:none;box-shadow:none}
+.status{text-align:center;margin-top:12px;font-size:14px;font-weight:600;min-height:20px}
+.stories{margin-top:32px}
+.stories h2{font-size:16px;color:#fff;font-weight:800;margin-bottom:12px}
+.story-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:8px;
+}
+.story-info{display:flex;align-items:center;gap:10px}
+.story-emoji{font-size:24px}
+.story-title{font-size:15px;font-weight:700;color:#fff}
+.story-date{font-size:11px;color:var(--text2)}
+.story-del{
+  background:transparent;border:none;color:#666;font-size:20px;
+  cursor:pointer;padding:4px 8px;border-radius:8px;transition:background 0.2s,color 0.2s
+}
+.story-del:hover{background:rgba(255,80,80,0.2);color:#ff7878}
+.login-card{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:32px 24px;text-align:center;margin-top:40px;
+}
+.login-card h2{color:#fff;font-size:22px;font-weight:900;margin-bottom:8px}
+.login-card p{color:var(--text2);font-size:14px;margin-bottom:18px;line-height:1.5}
+.login-card input{text-align:center;font-size:28px;letter-spacing:8px;font-weight:800;max-width:200px;margin:0 auto 14px}
+.login-error{color:#ff7878;font-size:13px;margin-top:8px;min-height:18px}
+.tip{
+  background:rgba(255,210,0,0.06);border:1px solid rgba(255,210,0,0.15);
+  border-radius:12px;padding:14px;margin-bottom:20px;
+  font-size:13px;color:var(--text);line-height:1.5;
+}
+.tip strong{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="header">
+    <h1>Grandbabe's Story Workshop</h1>
+    <div class="sub">Write a story idea and we'll turn it into an adventure your grandkids can play!</div>
+  </div>
+
+  <!-- Login (first time only) -->
+  <div id="login-view">
+    <div class="login-card">
+      <h2>Family Code</h2>
+      <p>Enter your family's code to connect.<br>Ask the parents if you don't have it!</p>
+      <input id="login-code" placeholder="0000" maxlength="8" autocomplete="off">
+      <br>
+      <button class="btn" onclick="doLogin()">Connect</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- Story editor (after login) -->
+  <div id="editor-view" style="display:none">
+    <div class="tip">
+      <strong>How it works:</strong> Just describe your story idea below. The app will turn it into a choose-your-own-adventure that the grandkids can play. Their name will automatically appear as the hero!
+    </div>
+
+    <div class="field">
+      <label>Story Title</label>
+      <input id="ed-title" placeholder="e.g. The Magic Garden" maxlength="60">
+    </div>
+
+    <div class="field">
+      <label>What happens in the story?</label>
+      <textarea id="ed-plot" placeholder="Describe your story idea in your own words...&#10;&#10;Example: A child discovers a tiny door in their grandmother's garden that leads to a magical world. They have to help a lost fairy find her way home, learning about kindness along the way." rows="6" maxlength="500"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Lesson or Moral (optional)</label>
+      <input id="ed-lesson" placeholder="e.g. Kindness always comes back to you" maxlength="100">
+    </div>
+
+    <div class="field">
+      <label>Reading Level</label>
+      <select id="ed-level">
+        <option value="L1">Start Reading (Pre-K)</option>
+        <option value="L2" selected>Growing Reader (1st-2nd Grade)</option>
+        <option value="L3">Brave Reader (3rd-4th Grade)</option>
+        <option value="L4">Story Master (5th-6th Grade)</option>
+      </select>
+    </div>
+
+    <button class="btn" id="ed-btn" onclick="createStory()">Create Story</button>
+    <div class="status" id="ed-status"></div>
+
+    <div class="stories" id="stories-list"></div>
+  </div>
+</div>
+
+<script>
+const API='/api';
+let familyCode=localStorage.getItem('gb_family_code')||'';
+
+function init(){
+  if(familyCode){
+    showEditor();
+  }else{
+    document.getElementById('login-view').style.display='block';
+    document.getElementById('editor-view').style.display='none';
+  }
+}
+
+async function doLogin(){
+  const inp=document.getElementById('login-code');
+  const code=inp.value.trim().toLowerCase();
+  if(!code){inp.focus();return;}
+  const err=document.getElementById('login-error');
+  err.textContent='';
+  try{
+    const resp=await fetch(API+'/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'join',code})
+    });
+    const data=await resp.json();
+    if(!resp.ok){err.textContent=data.error||'Invalid code';return;}
+    familyCode=code;
+    localStorage.setItem('gb_family_code',code);
+    showEditor();
+  }catch(e){err.textContent='Could not connect. Try again.';}
+}
+
+function showEditor(){
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('editor-view').style.display='block';
+  renderStories();
+}
+
+async function createStory(){
+  const title=document.getElementById('ed-title').value.trim();
+  const plot=document.getElementById('ed-plot').value.trim();
+  const lesson=document.getElementById('ed-lesson').value.trim();
+  const level=document.getElementById('ed-level').value;
+  if(!title){document.getElementById('ed-title').focus();return;}
+  if(!plot){document.getElementById('ed-plot').focus();return;}
+
+  const btn=document.getElementById('ed-btn');
+  const status=document.getElementById('ed-status');
+  btn.disabled=true;btn.textContent='Creating...';
+  status.style.color='var(--text)';
+  status.textContent='Writing your story... this takes about 30 seconds.';
+
+  try{
+    const resp=await fetch(API+'/story-editor',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({title,plot,lesson,level})
+    });
+    const data=await resp.json();
+    if(!resp.ok){
+      status.style.color='#ff7878';
+      status.textContent=data.error||'Something went wrong. Try again.';
+      btn.disabled=false;btn.textContent='Create Story';
+      return;
+    }
+
+    // Save to family storage via sync
+    const story=data.story;
+    const entry={
+      id:'custom_'+Date.now(),
+      title:story.title||title,
+      theme:story.theme||'Adventure',
+      emoji:story.emoji||'📝',
+      level,
+      createdBy:'Grandbabe',
+      createdAt:new Date().toISOString().slice(0,10),
+      scenes:story.scenes
+    };
+
+    // Save locally
+    const list=getStories();
+    list.unshift(entry);
+    if(list.length>20)list.length=20;
+    saveStories(list);
+
+    // Also sync to family so the kids' devices pick it up
+    syncStoriesToFamily(list);
+
+    // Clear form
+    document.getElementById('ed-title').value='';
+    document.getElementById('ed-plot').value='';
+    document.getElementById('ed-lesson').value='';
+    status.style.color='#4ade80';
+    status.textContent='Story created! The kids will see it next time they open the app.';
+    btn.disabled=false;btn.textContent='Create Story';
+    renderStories();
+  }catch(e){
+    status.style.color='#ff7878';
+    status.textContent='Network error. Check your connection.';
+    btn.disabled=false;btn.textContent='Create Story';
+  }
+}
+
+function getStories(){
+  try{return JSON.parse(localStorage.getItem('gb_stories')||'[]');}catch(e){return [];}
+}
+function saveStories(list){localStorage.setItem('gb_stories',JSON.stringify(list));}
+
+async function syncStoriesToFamily(list){
+  if(!familyCode)return;
+  try{
+    await fetch(API+'/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        action:'sync',
+        code:familyCode,
+        data:{grandbabe_stories:list}
+      })
+    });
+  }catch(e){}
+}
+
+function deleteStory(idx){
+  const list=getStories();
+  list.splice(idx,1);
+  saveStories(list);
+  syncStoriesToFamily(list);
+  renderStories();
+}
+
+function renderStories(){
+  const list=getStories();
+  const wrap=document.getElementById('stories-list');
+  if(!list.length){wrap.innerHTML='';return;}
+  wrap.innerHTML='<h2>Your Stories</h2>'+list.map((s,i)=>
+    `<div class="story-item">
+      <div class="story-info">
+        <span class="story-emoji">${s.emoji||'📝'}</span>
+        <div>
+          <div class="story-title">${esc(s.title)}</div>
+          <div class="story-date">${s.createdAt||''}</div>
+        </div>
+      </div>
+      <button class="story-del" onclick="deleteStory(${i})" title="Delete">×</button>
+    </div>`
+  ).join('');
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Enter key on login
+document.getElementById('login-code').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+init();
+</script>
+</body>
+</html>

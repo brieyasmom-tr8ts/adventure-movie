@@ -149,6 +149,13 @@ function mergeData(server, local) {
     merged[`traits_${name}`] = mt;
   }
 
+  // Grandbabe stories — local (most recent from Grandbabe's page) wins
+  if (local.grandbabe_stories) {
+    merged.grandbabe_stories = local.grandbabe_stories;
+  } else if (server.grandbabe_stories) {
+    merged.grandbabe_stories = server.grandbabe_stories;
+  }
+
   return merged;
 }
 

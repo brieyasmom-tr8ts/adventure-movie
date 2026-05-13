@@ -4113,6 +4113,14 @@ function applyServerData(data){
     if(data['streak_'+name])try{localStorage.setItem('am_streak_'+name,JSON.stringify(data['streak_'+name]));}catch(e){}
     if(data['traits_'+name])try{localStorage.setItem('am_traits_'+name,JSON.stringify(data['traits_'+name]));}catch(e){}
   }
+  // Grandbabe stories from server
+  if(Array.isArray(data.grandbabe_stories)&&data.grandbabe_stories.length){
+    // Merge with local custom stories — Grandbabe's override, but keep local-only ones
+    const existing=getCustomStories();
+    const gbIds=new Set(data.grandbabe_stories.map(s=>s.id));
+    const localOnly=existing.filter(s=>!gbIds.has(s.id)&&!s.createdBy);
+    saveCustomStories([...data.grandbabe_stories,...localOnly]);
+  }
   // Refresh UI
   progress=loadProgress();
   refreshProfileUI();refreshWelcome();buildHome();
