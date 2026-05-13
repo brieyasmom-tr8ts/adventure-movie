@@ -553,6 +553,26 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .chip:hover{background:rgba(180,127,255,0.18);border-color:#b47fff;color:#fff}
 .chip:active{transform:scale(0.95)}
 
+/* Parent dashboard */
+.parent-dash{padding:20px;max-width:600px;margin:0 auto}
+.parent-dash h1{font-size:24px;font-weight:900;color:#fff;margin-bottom:4px}
+.parent-dash .dash-sub{font-size:13px;color:var(--text-3);margin-bottom:20px}
+.dash-kid{background:var(--bg-3);border:1px solid var(--border-2);border-radius:16px;padding:18px;margin-bottom:14px}
+.dash-kid-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dash-kid-name{font-size:18px;font-weight:800;color:#fff}
+.dash-kid-level{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px}
+.dash-stat{text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px}
+.dash-stat-num{font-size:20px;font-weight:900;color:var(--gold)}
+.dash-stat-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin:20px 0}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-2);background:transparent;transition:background 0.15s}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto}
+.pin-key{padding:16px;background:rgba(255,255,255,0.06);border:1px solid var(--border-2);border-radius:12px;color:#fff;font-size:22px;font-weight:700;cursor:pointer;text-align:center;font-family:inherit;transition:background 0.15s}
+.pin-key:hover{background:rgba(255,210,0,0.15)}
+.pin-key:active{background:rgba(255,210,0,0.25)}
+
 /* Mobile */
 @media(max-width:400px){
   .home-title{font-size:38px}
@@ -680,6 +700,44 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
   </div>
 </div>
 
+<div id="parent-screen" class="screen">
+  <button class="top-back" onclick="goHome()" style="display:flex">← Home</button>
+  <div class="parent-dash">
+    <h1>Parent Dashboard</h1>
+    <div class="dash-sub">Reading activity for your family</div>
+    <div id="dash-kids"></div>
+    <div style="margin-top:20px;text-align:center">
+      <button class="modal-secondary" onclick="goHome()">Back to Stories</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="pin-modal">
+  <div class="modal-card" style="text-align:center">
+    <h2>Parent PIN</h2>
+    <p id="pin-prompt">Enter your 4-digit PIN</p>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinClear()" style="font-size:14px">Clear</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()" style="font-size:14px">⌫</button>
+    </div>
+    <div id="pin-error" style="color:#ff7878;font-size:13px;margin-top:12px;display:none"></div>
+    <button class="modal-close" onclick="closePinModal()">Cancel</button>
+  </div>
+</div>
+
 <div class="ai-loading" id="ai-loading">
   <div class="ai-loading-label">The story unfolds</div>
   <div class="ai-loading-bar"></div>
@@ -748,6 +806,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
       <div class="switcher-list" id="switcher-list"></div>
       <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
       <button class="modal-secondary" onclick="closeSwitcher();openFamilyModal()" style="margin-top:4px">🔗 Family Sync</button>
+      <button class="modal-secondary" onclick="closeSwitcher();openParentDash()" style="margin-top:4px">👨‍👩‍👧 Parent Dashboard</button>
     </div>
     <button class="modal-close" onclick="closeSwitcher()">Done</button>
   </div>
@@ -3377,6 +3436,116 @@ document.addEventListener('keydown',e=>{
   const i=map[e.key.toLowerCase()];
   if(i!==undefined&&btns[i])btns[i].click();
 });
+
+/* =========================================================
+   PARENT DASHBOARD (PIN-protected)
+   ========================================================= */
+let pinBuffer='';
+let pinMode=''; // 'set' or 'check'
+function getParentPin(){return localStorage.getItem('am_parent_pin')||null;}
+function setParentPin(pin){localStorage.setItem('am_parent_pin',pin);}
+
+function openParentDash(){
+  const pin=getParentPin();
+  if(!pin){
+    // First time: set a PIN
+    pinMode='set';
+    document.getElementById('pin-prompt').textContent='Create a 4-digit PIN';
+  }else{
+    pinMode='check';
+    document.getElementById('pin-prompt').textContent='Enter your 4-digit PIN';
+  }
+  pinBuffer='';
+  updatePinDots();
+  document.getElementById('pin-error').style.display='none';
+  document.getElementById('pin-modal').classList.add('active');
+}
+function closePinModal(){document.getElementById('pin-modal').classList.remove('active');pinBuffer='';}
+function pinPress(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;
+  updatePinDots();
+  if(pinBuffer.length===4){
+    setTimeout(()=>{
+      if(pinMode==='set'){
+        setParentPin(pinBuffer);
+        closePinModal();
+        showParentDashboard();
+      }else{
+        if(pinBuffer===getParentPin()){
+          closePinModal();
+          showParentDashboard();
+        }else{
+          document.getElementById('pin-error').textContent='Wrong PIN';
+          document.getElementById('pin-error').style.display='block';
+          pinBuffer='';
+          updatePinDots();
+        }
+      }
+    },200);
+  }
+}
+function pinBackspace(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').style.display='none';
+}
+function pinClear(){
+  pinBuffer='';
+  updatePinDots();
+  document.getElementById('pin-error').style.display='none';
+}
+function updatePinDots(){
+  const dots=document.querySelectorAll('#pin-dots .pin-dot');
+  dots.forEach((d,i)=>d.classList.toggle('filled',i<pinBuffer.length));
+}
+
+function showParentDashboard(){
+  const players=getPlayers();
+  const wrap=document.getElementById('dash-kids');
+
+  if(!players.length){
+    wrap.innerHTML='<p style="color:var(--text-3);text-align:center">No readers yet.</p>';
+    showScreen('parent-screen');
+    return;
+  }
+
+  wrap.innerHTML=players.map(name=>{
+    const avatar=getAvatar(name);
+    const avImg=avatar?`<img src="${avatar}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">`:'<div style="width:42px;height:42px;border-radius:50%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>';
+    const level=getLevel(name);
+    const levelName={'L1':'Start Reading','L2':'Growing Reader','L3':'Brave Reader','L4':'Story Master'}[level]||level;
+
+    // Get per-player stats
+    const saved=getActivePlayer();
+    setActivePlayer(name);
+    const xd=getXPData();
+    const streak=getStreakCount();
+    const badges=getUnlockedBadges();
+    const endings=totalEndings();
+    const readMins=getReadingMinutes(name);
+    setActivePlayer(saved);
+
+    return `<div class="dash-kid">
+      <div class="dash-kid-header">${avImg}<div><div class="dash-kid-name">${escapeHtml(name)}</div><div class="dash-kid-level">${levelName}</div></div></div>
+      <div class="dash-stats">
+        <div class="dash-stat"><div class="dash-stat-num">${xd.level}</div><div class="dash-stat-label">Level</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${xd.xp}</div><div class="dash-stat-label">XP</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${streak}</div><div class="dash-stat-label">Streak</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${endings}</div><div class="dash-stat-label">Stories</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${badges.length}</div><div class="dash-stat-label">Badges</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${readMins}</div><div class="dash-stat-label">Minutes</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  showScreen('parent-screen');
+}
+
+// Reading minutes placeholder — will be populated by reading time tracking
+function getReadingMinutes(name){
+  try{const d=JSON.parse(localStorage.getItem('am_reading_time_'+name)||'{}');return Math.round((d.totalMs||0)/60000);}catch(e){return 0;}
+}
 
 /* =========================================================
    FAMILY SYNC
