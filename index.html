@@ -1685,7 +1685,34 @@ async function refreshCommunityStories(){
 /* =========================================================
    SCREEN MGMT
    ========================================================= */
+let readingStartTime=null;
+function startReadingTimer(){readingStartTime=Date.now();}
+function stopReadingTimer(){
+  if(!readingStartTime)return;
+  const elapsed=Date.now()-readingStartTime;
+  readingStartTime=null;
+  if(elapsed<2000)return; // ignore tiny blips
+  const player=getActivePlayer();
+  if(!player)return;
+  const key='am_reading_time_'+player;
+  let d;try{d=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){d={};}
+  d.totalMs=(d.totalMs||0)+elapsed;
+  const today=todayStr();
+  if(!d.weekly)d.weekly={};
+  d.weekly[today]=(d.weekly[today]||0)+elapsed;
+  // Keep last 14 days of weekly data
+  const keys=Object.keys(d.weekly).sort();
+  if(keys.length>14){for(const k of keys.slice(0,-14))delete d.weekly[k];}
+  localStorage.setItem(key,JSON.stringify(d));
+}
+
 function showScreen(id){
+  // Stop reading timer when leaving story screens
+  const prev=document.body.dataset.screen;
+  if(prev==='player-screen'||prev==='ending-screen')stopReadingTimer();
+  // Start reading timer when entering story screens
+  if(id==='player-screen')startReadingTimer();
+
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.body.dataset.screen=id;
@@ -3524,6 +3551,7 @@ function showParentDashboard(){
     const badges=getUnlockedBadges();
     const endings=totalEndings();
     const readMins=getReadingMinutes(name);
+    const weekMins=getWeeklyMinutes(name);
     setActivePlayer(saved);
 
     return `<div class="dash-kid">
@@ -3534,7 +3562,8 @@ function showParentDashboard(){
         <div class="dash-stat"><div class="dash-stat-num">${streak}</div><div class="dash-stat-label">Streak</div></div>
         <div class="dash-stat"><div class="dash-stat-num">${endings}</div><div class="dash-stat-label">Stories</div></div>
         <div class="dash-stat"><div class="dash-stat-num">${badges.length}</div><div class="dash-stat-label">Badges</div></div>
-        <div class="dash-stat"><div class="dash-stat-num">${readMins}</div><div class="dash-stat-label">Minutes</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${weekMins}</div><div class="dash-stat-label">This Week</div></div>
+        <div class="dash-stat"><div class="dash-stat-num">${readMins}</div><div class="dash-stat-label">All Time</div></div>
       </div>
     </div>`;
   }).join('');
@@ -3542,9 +3571,22 @@ function showParentDashboard(){
   showScreen('parent-screen');
 }
 
-// Reading minutes placeholder — will be populated by reading time tracking
 function getReadingMinutes(name){
   try{const d=JSON.parse(localStorage.getItem('am_reading_time_'+name)||'{}');return Math.round((d.totalMs||0)/60000);}catch(e){return 0;}
+}
+function getWeeklyMinutes(name){
+  try{
+    const d=JSON.parse(localStorage.getItem('am_reading_time_'+name)||'{}');
+    if(!d.weekly)return 0;
+    const now=new Date();
+    let total=0;
+    for(let i=0;i<7;i++){
+      const dt=new Date(now);dt.setDate(dt.getDate()-i);
+      const key=dt.toISOString().slice(0,10);
+      total+=(d.weekly[key]||0);
+    }
+    return Math.round(total/60000);
+  }catch(e){return 0;}
 }
 
 /* =========================================================
@@ -3812,6 +3854,9 @@ document.getElementById('family-rename-input').addEventListener('keydown',e=>{
 document.getElementById('welcome-code-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')welcomeJoinFamily();
 });
+
+// Save reading time when page is hidden/closed
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopReadingTimer();else if(document.body.dataset.screen==='player-screen')startReadingTimer();});
 
 // Register service worker for PWA / offline support
 if('serviceWorker' in navigator){
