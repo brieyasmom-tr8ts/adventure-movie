@@ -654,10 +654,6 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <span class="custom-icon">✨</span>
     <span>Make My Own Story</span>
   </button>
-  <button class="custom-button" onclick="openStoryWriter()" style="background:linear-gradient(135deg,rgba(192,132,252,0.12),rgba(96,165,250,0.12));border-color:rgba(192,132,252,0.3)">
-    <span class="custom-icon">📝</span>
-    <span>Write a Story for the Kids</span>
-  </button>
   <div id="categories-wrap"></div>
 </div>
 
@@ -813,9 +809,9 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
   <div class="modal-card">
     <h2 style="text-align:center">Welcome!</h2>
     <p style="text-align:center">Choose Your Adventure — interactive stories for the whole family.</p>
-    <button class="interactive-submit" onclick="welcomeNewFamily()" style="margin-bottom:10px">New here? Get started</button>
+    <button class="interactive-submit" onclick="welcomeCreateFamily()" style="margin-bottom:10px">Create a New Family</button>
     <div class="family-or">or</div>
-    <p style="color:var(--text-2);font-size:14px;margin-bottom:8px;text-align:center">Have a family code? Sign in to load your readers.</p>
+    <p style="color:var(--text-2);font-size:14px;margin-bottom:8px;text-align:center">Have a family code? Enter it to sign in.</p>
     <div class="family-input-row">
       <input class="interactive-input" id="welcome-code-input" placeholder="Family code" maxlength="8" autocomplete="off" style="margin-bottom:0">
       <button class="interactive-submit" onclick="welcomeJoinFamily()" style="width:auto;padding:12px 20px">Join</button>
@@ -933,7 +929,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
           </div>
         </div>
         <button class="interactive-submit" onclick="familySync()" style="margin-top:14px">Sync Now</button>
-        <button class="modal-secondary" onclick="familyDisconnect()">Disconnect</button>
+        <button class="modal-secondary" onclick="switchFamily()">Switch Family</button>
       </div>
       <div id="family-setup">
         <button class="interactive-submit" onclick="familyCreate()">Create Family</button>
@@ -1537,6 +1533,7 @@ function loadProgress(){
 }
 function saveProgress(){
   localStorage.setItem(playerKey('am_progress'),JSON.stringify(progress));
+  debouncedSync();
 }
 function recordEnding(storyId,endingId){
   if(!progress[storyId])progress[storyId]={endings:[]};
@@ -1588,7 +1585,7 @@ function clearSave(storyId){
 function getXPData(){
   try{return JSON.parse(localStorage.getItem(playerKey('am_xp'))||'{"xp":0,"level":1,"history":[]}');}catch(e){return {xp:0,level:1,history:[]};}
 }
-function saveXPData(d){localStorage.setItem(playerKey('am_xp'),JSON.stringify(d));}
+function saveXPData(d){localStorage.setItem(playerKey('am_xp'),JSON.stringify(d));debouncedSync();}
 function xpForLevel(lvl){return lvl*100;} // 100 XP per level
 function addXP(amount,reason){
   const d=getXPData();
@@ -1667,6 +1664,7 @@ function checkBadges(){
     }
   }
   localStorage.setItem(playerKey('am_badges'),JSON.stringify(unlocked));
+  debouncedSync();
   if(newBadge)showBadgeUnlock(newBadge);
 }
 function showBadgeUnlock(badge){
@@ -1707,7 +1705,7 @@ function recordTrait(trait){
   try{
     const t=JSON.parse(localStorage.getItem(playerKey('am_traits'))||'{}');
     t[trait]=(t[trait]||0)+1;
-    localStorage.setItem(playerKey('am_traits'),JSON.stringify(t));
+    localStorage.setItem(playerKey('am_traits'),JSON.stringify(t));debouncedSync();
   }catch(e){}
 }
 function getTraits(){
@@ -1771,7 +1769,9 @@ function buildHome(){
     const grade=CATEGORY_GRADES[cat];
     const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
     return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
-  }).join('')+grandbabHtml+histHtml;
+  }).join('')+histHtml;
+  // Grandbabe stories go first, before all categories
+  wrap.innerHTML=grandbabHtml+wrap.innerHTML;
   renderSiblingChallenge();
 }
 function renderSiblingChallenge(){
@@ -2462,6 +2462,7 @@ function addPlayer(name){
   if(!list.includes(name))list.push(name);
   setPlayers(list);
   setActivePlayer(name);
+  debouncedSync();
   return true;
 }
 function removePlayer(name){
@@ -2586,6 +2587,7 @@ function setLevel(name,level){
   // Mirror to legacy storage for any code path that still reads ageGroup
   let ag={};try{ag=JSON.parse(localStorage.getItem('am_age_groups')||'{}');}catch(e){}
   ag[name]=LEVELS[level].ageGroup;localStorage.setItem('am_age_groups',JSON.stringify(ag));
+  debouncedSync();
 }
 
 /* Modal flow — used for both first-time and "add another" */
@@ -2635,18 +2637,7 @@ function submitNameModal(){
     buildHome();
     // Register with daily story API (fire and forget)
     registerProfileForDaily(name,pendingLevel);
-    // Auto-create family on first reader so parents get a code right away
-    if(isFirstPlayer&&!getFamilyCode()){
-      familyCreate().then(()=>{
-        setTimeout(()=>showFamilyWelcome(),600);
-      }).catch(()=>{});
-    }
   }
-}
-function showFamilyWelcome(){
-  const code=getFamilyCode();
-  if(!code)return;
-  openFamilyModal();
 }
 async function registerProfileForDaily(name,level){
   const avatar=getAvatar(name);
@@ -2866,9 +2857,9 @@ function bumpStreak(){
   else{d.count=1;}
   d.lastDate=today;
   if(!d.days.includes(today))d.days.push(today);
-  // Keep last 90 days of history
   if(d.days.length>90)d.days=d.days.slice(-90);
   localStorage.setItem(streakKey(),JSON.stringify(d));
+  debouncedSync();
   return d.count;
 }
 function getStreakDisplay(){
@@ -4057,38 +4048,17 @@ function getWeeklyMinutes(name){
 }
 
 /* =========================================================
-   FAMILY SYNC
+   FAMILY SYNC — server-first, localStorage is cache
    ========================================================= */
 function getFamilyCode(){return localStorage.getItem('am_family_code')||null;}
 function setFamilyCode(code){localStorage.setItem('am_family_code',code);}
 function clearFamilyCode(){localStorage.removeItem('am_family_code');}
 
-function openFamilyModal(){
-  const code=getFamilyCode();
-  const connected=document.getElementById('family-connected');
-  const setup=document.getElementById('family-setup');
-  const err=document.getElementById('family-error');
-  const suc=document.getElementById('family-success');
-  err.style.display='none';suc.style.display='none';
-  if(code){
-    document.getElementById('family-code-show').textContent=code;
-    connected.style.display='block';setup.style.display='none';
-  }else{
-    connected.style.display='none';setup.style.display='block';
-  }
-  document.getElementById('family-modal').classList.add('active');
-}
-function closeFamilyModal(){document.getElementById('family-modal').classList.remove('active');}
-
-function showFamilyError(msg){
-  const el=document.getElementById('family-error');
-  el.textContent=msg;el.style.display='block';
-  document.getElementById('family-success').style.display='none';
-}
-function showFamilySuccess(msg){
-  const el=document.getElementById('family-success');
-  el.textContent=msg;el.style.display='block';
-  document.getElementById('family-error').style.display='none';
+// Debounced sync — pushes local data to server after changes settle
+let _syncTimer=null;
+function debouncedSync(){
+  if(_syncTimer)clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>{_syncTimer=null;familySync(true);},1500);
 }
 
 function gatherLocalData(){
@@ -4109,7 +4079,7 @@ function gatherLocalData(){
 
 function applyServerData(data){
   if(!data)return;
-  if(Array.isArray(data.players)&&data.players.length){
+  if(Array.isArray(data.players)){
     setPlayers(data.players);
   }
   if(data.avatars)try{localStorage.setItem('am_avatars',JSON.stringify(data.avatars));}catch(e){}
@@ -4123,55 +4093,11 @@ function applyServerData(data){
     if(data['streak_'+name])try{localStorage.setItem('am_streak_'+name,JSON.stringify(data['streak_'+name]));}catch(e){}
     if(data['traits_'+name])try{localStorage.setItem('am_traits_'+name,JSON.stringify(data['traits_'+name]));}catch(e){}
   }
-  // Grandbabe stories from server
-  if(Array.isArray(data.grandbabe_stories)&&data.grandbabe_stories.length){
-    // Merge with local custom stories — Grandbabe's override, but keep local-only ones
-    const existing=getCustomStories();
-    const gbIds=new Set(data.grandbabe_stories.map(s=>s.id));
-    const localOnly=existing.filter(s=>!gbIds.has(s.id)&&!s.createdBy);
-    saveCustomStories([...data.grandbabe_stories,...localOnly]);
-  }
-  // Refresh UI
   progress=loadProgress();
   refreshProfileUI();refreshWelcome();buildHome();
 }
 
-async function familyCreate(){
-  try{
-    const resp=await fetch('/api/family',{
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({action:'create',data:gatherLocalData()})
-    });
-    const result=await resp.json();
-    if(!resp.ok){showFamilyError(result.error||'Failed');return;}
-    setFamilyCode(result.code);
-    showFamilySuccess('Family created! Share the code with your other devices.');
-    openFamilyModal();
-  }catch(e){showFamilyError('Network error');}
-}
-
-async function familyJoin(){
-  const input=document.getElementById('family-code-input');
-  const code=(input.value||'').trim().toLowerCase();
-  if(!code){input.focus();return;}
-  try{
-    const resp=await fetch('/api/family',{
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({action:'join',code})
-    });
-    const result=await resp.json();
-    if(!resp.ok){showFamilyError(result.error||'Failed');return;}
-    setFamilyCode(code);
-    // Now sync: merge local data with server data
-    await familySync();
-    showFamilySuccess('Joined! Your readers are synced.');
-    openFamilyModal();
-  }catch(e){showFamilyError('Network error');}
-}
-
-async function familySync(){
+async function familySync(quiet){
   const code=getFamilyCode();
   if(!code)return;
   try{
@@ -4182,15 +4108,63 @@ async function familySync(){
     });
     const result=await resp.json();
     if(!resp.ok){
-      if(resp.status===404){clearFamilyCode();showFamilyError('Family code expired. Please create a new one.');}
-      else showFamilyError(result.error||'Sync failed');
+      if(resp.status===404&&!quiet){clearFamilyCode();showWelcomeModal();}
       return;
     }
     applyServerData(result.data);
-    showFamilySuccess('Synced!');
   }catch(e){
     console.error('Family sync error:',e);
   }
+}
+
+// Pull from server on load (blocking so UI shows correct data)
+async function loadFromServer(){
+  const code=getFamilyCode();
+  if(!code)return false;
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'join',code})
+    });
+    if(!resp.ok){
+      if(resp.status===404){clearFamilyCode();return false;}
+      return true; // server error, use cache
+    }
+    const result=await resp.json();
+    applyServerData(result.data||{});
+    return true;
+  }catch(e){
+    return true; // offline, use cache
+  }
+}
+
+// --- Family modal (settings) ---
+function openFamilyModal(){
+  const code=getFamilyCode();
+  const connected=document.getElementById('family-connected');
+  const setup=document.getElementById('family-setup');
+  const err=document.getElementById('family-error');
+  const suc=document.getElementById('family-success');
+  err.style.display='none';suc.style.display='none';
+  if(code){
+    document.getElementById('family-code-show').textContent=code;
+    connected.style.display='block';setup.style.display='none';
+  }else{
+    connected.style.display='none';setup.style.display='block';
+  }
+  document.getElementById('family-modal').classList.add('active');
+}
+function closeFamilyModal(){document.getElementById('family-modal').classList.remove('active');}
+function showFamilyError(msg){
+  const el=document.getElementById('family-error');
+  el.textContent=msg;el.style.display='block';
+  document.getElementById('family-success').style.display='none';
+}
+function showFamilySuccess(msg){
+  const el=document.getElementById('family-success');
+  el.textContent=msg;el.style.display='block';
+  document.getElementById('family-error').style.display='none';
 }
 
 function showFamilyRename(){
@@ -4199,7 +4173,6 @@ function showFamilyRename(){
   const inp=document.getElementById('family-rename-input');
   inp.value='';inp.focus();
 }
-
 async function familyRename(){
   const inp=document.getElementById('family-rename-input');
   const newCode=(inp.value||'').trim().toLowerCase();
@@ -4220,19 +4193,13 @@ async function familyRename(){
   }catch(e){showFamilyError('Network error');}
 }
 
-function familyDisconnect(){
+function switchFamily(){
   clearFamilyCode();
-  openFamilyModal();
+  closeFamilyModal();
+  showWelcomeModal();
 }
 
-// Auto-sync on load if family is connected (non-blocking)
-function autoFamilySync(){
-  const code=getFamilyCode();
-  if(!code)return;
-  familySync().catch(()=>{});
-}
-
-// --- Welcome modal (first-time visitors) ---
+// --- Welcome modal (gate — must create or join a family) ---
 function showWelcomeModal(){
   document.getElementById('welcome-modal').classList.add('active');
   document.getElementById('welcome-error').style.display='none';
@@ -4240,9 +4207,25 @@ function showWelcomeModal(){
 function closeWelcomeModal(){
   document.getElementById('welcome-modal').classList.remove('active');
 }
-function welcomeNewFamily(){
-  closeWelcomeModal();
-  showFirstNamePrompt();
+async function welcomeCreateFamily(){
+  const err=document.getElementById('welcome-error');
+  err.style.display='none';
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'create',data:{}})
+    });
+    const result=await resp.json();
+    if(!resp.ok){err.textContent=result.error||'Failed';err.style.display='block';return;}
+    setFamilyCode(result.code);
+    closeWelcomeModal();
+    // Show the code so they can share it
+    openFamilyModal();
+    showFamilySuccess('Family created! Your code is above — share it with other devices.');
+    // Prompt to add first reader
+    setTimeout(showFirstNamePrompt,800);
+  }catch(e){err.textContent='Network error';err.style.display='block';}
 }
 async function welcomeJoinFamily(){
   const inp=document.getElementById('welcome-code-input');
@@ -4257,18 +4240,16 @@ async function welcomeJoinFamily(){
       body:JSON.stringify({action:'join',code})
     });
     const result=await resp.json();
-    if(!resp.ok){err.textContent=result.error||'Could not join';err.style.display='block';return;}
+    if(!resp.ok){err.textContent=result.error||'Family not found. Check the code.';err.style.display='block';return;}
     setFamilyCode(code);
-    applyServerData(result.data);
+    applyServerData(result.data||{});
     closeWelcomeModal();
     const players=getPlayers();
     if(players.length>0){
-      // Family has readers — go straight to home with the first player active
       if(!getActivePlayer())setActivePlayer(players[0]);
       progress=loadProgress();
       refreshProfileUI();refreshWelcome();buildHome();
     }else{
-      // Family exists but no readers yet — prompt to add one
       showFirstNamePrompt();
     }
   }catch(e){err.textContent='Network error';err.style.display='block';}
@@ -4280,24 +4261,29 @@ async function welcomeJoinFamily(){
 captureAdminToken();
 document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇';
 document.getElementById('sound-toggle').classList.toggle('on',soundOn);
-refreshProfileUI();
-refreshWelcome();
 refreshSpeechBtn();
-buildHome();
-refreshCommunityStories();
-refreshGrandbabStories();
-refreshDailyVerseCard();
 
-// Auto-sync family data on load
-autoFamilySync();
-
-// First-time visitor → show welcome/login screen
-if(getPlayers().length===0 && !getFamilyCode()){
-  setTimeout(showWelcomeModal,400);
-} else if(getPlayers().length===0 && getFamilyCode()){
-  // Has family code but no local players — sync should populate them
-  setTimeout(showFirstNamePrompt,400);
-}
+// Server-first: load family data, then render
+(async function initApp(){
+  const code=getFamilyCode();
+  if(!code){
+    // No family — show welcome gate
+    buildHome();
+    refreshProfileUI();refreshWelcome();
+    setTimeout(showWelcomeModal,300);
+    return;
+  }
+  // Pull latest data from server
+  await loadFromServer();
+  refreshProfileUI();refreshWelcome();buildHome();
+  refreshCommunityStories();
+  refreshGrandbabStories();
+  refreshDailyVerseCard();
+  // If family exists but no readers, prompt to add one
+  if(getPlayers().length===0){
+    setTimeout(showFirstNamePrompt,400);
+  }
+})();
 
 // Speech voices load async on some browsers
 if('speechSynthesis' in window){

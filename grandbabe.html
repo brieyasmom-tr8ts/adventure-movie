@@ -92,16 +92,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
     <input id="ed-lesson" placeholder="e.g. Kindness always comes back to you" maxlength="100">
   </div>
 
-  <div class="field">
-    <label>Reading Level</label>
-    <select id="ed-level">
-      <option value="L1">Start Reading (Pre-K)</option>
-      <option value="L2" selected>Growing Reader (1st-2nd Grade)</option>
-      <option value="L3">Brave Reader (3rd-4th Grade)</option>
-      <option value="L4">Story Master (5th-6th Grade)</option>
-    </select>
-  </div>
-
   <button class="btn" id="ed-btn" onclick="createStory()">Create Story</button>
   <div class="status" id="ed-status"></div>
 
@@ -117,7 +107,7 @@ async function createStory(){
   const plot=document.getElementById('ed-plot').value.trim();
   const lesson=document.getElementById('ed-lesson').value.trim();
   const author=document.getElementById('ed-author').value.trim()||'Grandbabe';
-  const level=document.getElementById('ed-level').value;
+  const level='L2'; // Generate at middle level; app adapts per kid
   if(!author){document.getElementById('ed-author').focus();return;}
   if(!title){document.getElementById('ed-title').focus();return;}
   if(!plot){document.getElementById('ed-plot').focus();return;}
@@ -202,20 +192,68 @@ function renderStories(){
   const wrap=document.getElementById('stories-list');
   if(!list.length){wrap.innerHTML='';return;}
   wrap.innerHTML='<h2>Your Stories</h2>'+list.map((s,i)=>
-    `<div class="story-item">
+    `<div class="story-item" onclick="previewStory(${i})" style="cursor:pointer">
       <div class="story-info">
         <span class="story-emoji">${s.emoji||'📝'}</span>
         <div>
           <div class="story-title">${esc(s.title)}</div>
-          <div class="story-date">${s.createdAt||''}</div>
+          <div class="story-date">${s.createdAt||''} · tap to preview</div>
         </div>
       </div>
-      <button class="story-del" onclick="deleteStory(${i})" title="Delete">×</button>
+      <button class="story-del" onclick="event.stopPropagation();deleteStory(${i})" title="Delete">×</button>
     </div>`
   ).join('');
 }
 
-function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Simple story preview — walk through scenes
+let previewScenes=null;
+let previewCurrent=null;
+function previewStory(idx){
+  const s=getStories()[idx];
+  if(!s||!s.scenes)return;
+  previewScenes=s.scenes;
+  // Find first scene (s1 or index 0)
+  const first=s.scenes.find(sc=>sc.id==='s1')||s.scenes[0];
+  if(!first)return;
+  showPreviewScene(first);
+}
+function showPreviewScene(scene){
+  previewCurrent=scene;
+  const author=localStorage.getItem('gb_author')||'Grandbabe';
+  let html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px" id="preview-overlay" onclick="if(event.target===this)closePreview()">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:2px;font-weight:800;margin-bottom:8px">${esc(scene.chapter||'')}</div>
+      <div style="font-size:16px;line-height:1.7;color:var(--text);margin-bottom:18px">${esc(scene.text||'')}</div>`;
+  if(scene.ending){
+    html+=`<div style="text-align:center;padding:16px;background:rgba(255,210,0,0.06);border-radius:12px;margin-bottom:12px">
+      <div style="font-size:36px;margin-bottom:4px">${scene.emoji||'🎬'}</div>
+      <div style="font-size:14px;color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:2px">${esc(scene.type||'Ending')}</div>
+      <div style="font-size:16px;color:#fff;font-weight:800;margin-top:4px">${esc(scene.title||'')}</div>
+      ${scene.lesson?`<div style="font-size:13px;color:var(--text);margin-top:8px"><strong style="color:var(--gold)">Lesson:</strong> ${esc(scene.lesson)}</div>`:''}
+    </div>
+    <button onclick="closePreview()" style="width:100%;padding:14px;background:var(--gold);color:#111;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer">Close</button>`;
+  }else{
+    const choices=scene.choices||[];
+    html+=choices.map(c=>
+      `<button onclick="navigatePreview('${esc(c.nextScene||c.next||'')}')" style="width:100%;padding:14px;margin-bottom:8px;background:rgba(255,255,255,0.06);border:1.5px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit">${esc(c.text)}</button>`
+    ).join('');
+  }
+  html+=`</div></div>`;
+  // Remove existing preview
+  closePreview();
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+function navigatePreview(nextId){
+  if(!previewScenes)return;
+  const next=previewScenes.find(s=>s.id===nextId);
+  if(next)showPreviewScene(next);
+}
+function closePreview(){
+  const el=document.getElementById('preview-overlay');
+  if(el)el.remove();
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
 
 renderStories();
 </script>
