@@ -37,6 +37,21 @@ body{
 /* ---------- Always-on layers ---------- */
 .vignette{display:none}
 
+/* ---------- Floating Home button ---------- */
+.home-fab{
+  display:none;position:fixed;
+  bottom:max(24px,env(safe-area-inset-bottom,24px));left:24px;z-index:250;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-2));
+  border:none;color:#111;font-size:24px;
+  cursor:pointer;
+  box-shadow:0 6px 24px rgba(255,210,0,0.4);
+  transition:transform 0.15s,box-shadow 0.2s;
+  align-items:center;justify-content:center;
+}
+.home-fab:active{transform:scale(0.9)}
+body:not([data-screen="home-screen"]) .home-fab{display:flex}
+
 /* ---------- Top bar ---------- */
 .top-bar{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;z-index:230;display:flex;gap:8px}
 .top-btn{
@@ -671,6 +686,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 
 <div class="vignette"></div>
 
+<button class="home-fab" id="home-fab" onclick="goHome()" title="Home">🏠</button>
 <button class="top-btn top-back" onclick="goHome()" title="Back to stories" aria-label="Back to stories">←</button>
 <button class="profile-pill" id="profile-pill" onclick="openSwitcher()" title="Switch reader">👤 Add name</button>
 <div class="top-bar">
