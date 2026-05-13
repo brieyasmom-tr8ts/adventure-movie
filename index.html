@@ -517,6 +517,19 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
 .avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
 
+/* Sibling challenge */
+.sibling-card{
+  margin:12px 20px;padding:16px;
+  background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(192,132,252,0.12));
+  border:1px solid rgba(96,165,250,0.3);border-radius:16px;
+}
+.sibling-card-title{font-size:14px;font-weight:800;color:#60a5fa;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.sibling-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.sibling-name{font-size:14px;font-weight:700;color:#fff;min-width:60px}
+.sibling-endings{display:flex;gap:4px;flex-wrap:wrap}
+.sibling-ending{font-size:18px;filter:grayscale(0)}
+.sibling-ending.locked{filter:grayscale(1);opacity:0.3}
+
 /* Confetti */
 @keyframes confettiFall{
   0%{transform:translateY(0) translateX(0) rotate(0);opacity:1}
@@ -620,6 +633,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     <div class="daily-text" id="daily-verse-text">Tap to play today's verse-memory games.</div>
     <div class="arrow">›</div>
   </div>
+  <div id="sibling-challenge" style="display:none"></div>
   <button class="custom-button" onclick="openCustomCreator()">
     <span class="custom-icon">✨</span>
     <span>Make My Own Story</span>
@@ -1683,6 +1697,40 @@ function buildHome(){
     const titleHtml=grade?`${cat} <span class="cat-grade">(${grade})</span>`:cat;
     return `<div class="category-section"><div class="category-title">${titleHtml}</div><div class="story-grid">${cards}</div></div>`;
   }).join('')+histHtml;
+  renderSiblingChallenge();
+}
+function renderSiblingChallenge(){
+  const el=document.getElementById('sibling-challenge');
+  if(!el)return;
+  const players=getPlayers();
+  if(players.length<2){el.style.display='none';return;}
+  const today=todayStr();
+  const dailyId='daily_'+today;
+  // Check if any sibling has played today's story
+  const sibData=[];
+  const saved=getActivePlayer();
+  for(const name of players){
+    setActivePlayer(name);
+    const prog=loadProgress();
+    const found=(prog[dailyId]&&prog[dailyId].endings)||[];
+    sibData.push({name,endings:found});
+  }
+  setActivePlayer(saved);
+  // Only show if at least one sibling has played
+  if(!sibData.some(s=>s.endings.length>0)){el.style.display='none';return;}
+  const endingEmojis={'ending_best':'🏆','ending_neutral':'🤔','ending_learn':'💡','end_best':'🏆','end_neutral':'🤔','end_poor':'💡'};
+  const allEndingIds=[...new Set(sibData.flatMap(s=>s.endings))];
+  if(allEndingIds.length===0){el.style.display='none';return;}
+  const rows=sibData.map(s=>{
+    const emojis=allEndingIds.map(eid=>{
+      const got=s.endings.includes(eid);
+      const emoji=endingEmojis[eid]||'⭐';
+      return `<span class="sibling-ending${got?'':' locked'}" title="${eid}">${emoji}</span>`;
+    }).join('');
+    return `<div class="sibling-row"><span class="sibling-name">${escapeHtml(s.name)}</span><span class="sibling-endings">${emojis}</span></div>`;
+  }).join('');
+  el.innerHTML=`<div class="sibling-card"><div class="sibling-card-title">⚡ Today's Sibling Challenge</div>${rows}</div>`;
+  el.style.display='block';
 }
 const CATEGORY_GRADES={
   'Start Reading':'Pre-K – Kindergarten',
