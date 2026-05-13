@@ -512,6 +512,20 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
 .avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
 
+/* Family code display */
+.family-code-display{
+  background:rgba(255,210,0,0.08);border:1.5px dashed var(--gold);border-radius:14px;
+  padding:18px;text-align:center;margin:14px 0;
+}
+.family-code-label{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:var(--gold);font-weight:800;margin-bottom:8px}
+.family-code-value{font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;font-family:'Courier New',monospace}
+.family-code-hint{font-size:12px;color:var(--text-3);margin-top:10px;line-height:1.4}
+.family-status{font-size:12px;color:var(--text-3);text-align:center;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.family-status .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block}
+.family-input-row{display:flex;gap:8px;margin-bottom:12px}
+.family-input-row input{flex:1}
+.family-or{text-align:center;color:var(--text-3);font-size:13px;font-weight:700;margin:12px 0;text-transform:uppercase;letter-spacing:2px}
+
 /* Chips for custom story */
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .chip{
@@ -701,6 +715,7 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
       <h2 style="font-size:15px;margin-bottom:8px">Who's reading?</h2>
       <div class="switcher-list" id="switcher-list"></div>
       <button class="modal-secondary" onclick="addPlayerPrompt()">+ Add another reader</button>
+      <button class="modal-secondary" onclick="closeSwitcher();openFamilyModal()" style="margin-top:4px">🔗 Family Sync</button>
     </div>
     <button class="modal-close" onclick="closeSwitcher()">Done</button>
   </div>
@@ -724,6 +739,37 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
     </div>
     <button class="interactive-submit" onclick="startCustomStory()">Start adventure ✨</button>
     <button class="modal-close" onclick="closeCustomCreator()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="family-modal">
+  <div class="modal-card">
+    <div id="family-view-join">
+      <h2>Family Sync</h2>
+      <p>Sync readers, progress, and badges across all your devices.</p>
+      <div id="family-connected" style="display:none">
+        <div class="family-code-display">
+          <div class="family-code-label">Your Family Code</div>
+          <div class="family-code-value" id="family-code-show"></div>
+          <div class="family-code-hint">Enter this code on another device to sync.</div>
+        </div>
+        <div class="family-status"><span class="dot"></span> Connected</div>
+        <button class="interactive-submit" onclick="familySync()" style="margin-top:14px">Sync Now</button>
+        <button class="modal-secondary" onclick="familyDisconnect()">Disconnect</button>
+      </div>
+      <div id="family-setup">
+        <button class="interactive-submit" onclick="familyCreate()">Create Family</button>
+        <div class="family-or">or</div>
+        <p style="margin-bottom:8px;color:var(--text-2);font-size:14px">Already have a code? Enter it here:</p>
+        <div class="family-input-row">
+          <input class="interactive-input" id="family-code-input" placeholder="e.g. brave-star-42" maxlength="30" autocomplete="off" style="margin-bottom:0">
+          <button class="interactive-submit" onclick="familyJoin()" style="width:auto;padding:12px 20px">Join</button>
+        </div>
+      </div>
+      <div id="family-error" style="color:#ff7878;font-size:13px;text-align:center;margin-top:8px;display:none"></div>
+      <div id="family-success" style="color:#4ade80;font-size:13px;text-align:center;margin-top:8px;display:none"></div>
+    </div>
+    <button class="modal-close" onclick="closeFamilyModal()">Close</button>
   </div>
 </div>
 
@@ -3199,6 +3245,147 @@ document.addEventListener('keydown',e=>{
 });
 
 /* =========================================================
+   FAMILY SYNC
+   ========================================================= */
+function getFamilyCode(){return localStorage.getItem('am_family_code')||null;}
+function setFamilyCode(code){localStorage.setItem('am_family_code',code);}
+function clearFamilyCode(){localStorage.removeItem('am_family_code');}
+
+function openFamilyModal(){
+  const code=getFamilyCode();
+  const connected=document.getElementById('family-connected');
+  const setup=document.getElementById('family-setup');
+  const err=document.getElementById('family-error');
+  const suc=document.getElementById('family-success');
+  err.style.display='none';suc.style.display='none';
+  if(code){
+    document.getElementById('family-code-show').textContent=code;
+    connected.style.display='block';setup.style.display='none';
+  }else{
+    connected.style.display='none';setup.style.display='block';
+  }
+  document.getElementById('family-modal').classList.add('active');
+}
+function closeFamilyModal(){document.getElementById('family-modal').classList.remove('active');}
+
+function showFamilyError(msg){
+  const el=document.getElementById('family-error');
+  el.textContent=msg;el.style.display='block';
+  document.getElementById('family-success').style.display='none';
+}
+function showFamilySuccess(msg){
+  const el=document.getElementById('family-success');
+  el.textContent=msg;el.style.display='block';
+  document.getElementById('family-error').style.display='none';
+}
+
+function gatherLocalData(){
+  const data={};
+  data.players=getPlayers();
+  try{data.avatars=JSON.parse(localStorage.getItem('am_avatars')||'{}');}catch(e){data.avatars={};}
+  try{data.levels=JSON.parse(localStorage.getItem('am_levels')||'{}');}catch(e){data.levels={};}
+  try{data.ageGroups=JSON.parse(localStorage.getItem('am_age_groups')||'{}');}catch(e){data.ageGroups={};}
+  for(const name of data.players){
+    try{data['progress_'+name]=JSON.parse(localStorage.getItem('am_progress_'+name)||'{}');}catch(e){data['progress_'+name]={};}
+    try{data['xp_'+name]=JSON.parse(localStorage.getItem('am_xp_'+name)||'{"xp":0,"level":1,"history":[]}');}catch(e){}
+    try{data['badges_'+name]=JSON.parse(localStorage.getItem('am_badges_'+name)||'[]');}catch(e){}
+    try{data['streak_'+name]=JSON.parse(localStorage.getItem('am_streak_'+name)||'{}');}catch(e){}
+    try{data['traits_'+name]=JSON.parse(localStorage.getItem('am_traits_'+name)||'{}');}catch(e){}
+  }
+  return data;
+}
+
+function applyServerData(data){
+  if(!data)return;
+  if(Array.isArray(data.players)&&data.players.length){
+    setPlayers(data.players);
+  }
+  if(data.avatars)try{localStorage.setItem('am_avatars',JSON.stringify(data.avatars));}catch(e){}
+  if(data.levels)try{localStorage.setItem('am_levels',JSON.stringify(data.levels));}catch(e){}
+  if(data.ageGroups)try{localStorage.setItem('am_age_groups',JSON.stringify(data.ageGroups));}catch(e){}
+  const players=data.players||[];
+  for(const name of players){
+    if(data['progress_'+name])try{localStorage.setItem('am_progress_'+name,JSON.stringify(data['progress_'+name]));}catch(e){}
+    if(data['xp_'+name])try{localStorage.setItem('am_xp_'+name,JSON.stringify(data['xp_'+name]));}catch(e){}
+    if(data['badges_'+name])try{localStorage.setItem('am_badges_'+name,JSON.stringify(data['badges_'+name]));}catch(e){}
+    if(data['streak_'+name])try{localStorage.setItem('am_streak_'+name,JSON.stringify(data['streak_'+name]));}catch(e){}
+    if(data['traits_'+name])try{localStorage.setItem('am_traits_'+name,JSON.stringify(data['traits_'+name]));}catch(e){}
+  }
+  // Refresh UI
+  progress=loadProgress();
+  refreshProfileUI();refreshWelcome();buildHome();
+}
+
+async function familyCreate(){
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'create',data:gatherLocalData()})
+    });
+    const result=await resp.json();
+    if(!resp.ok){showFamilyError(result.error||'Failed');return;}
+    setFamilyCode(result.code);
+    showFamilySuccess('Family created! Share the code with your other devices.');
+    openFamilyModal();
+  }catch(e){showFamilyError('Network error');}
+}
+
+async function familyJoin(){
+  const input=document.getElementById('family-code-input');
+  const code=(input.value||'').trim().toLowerCase();
+  if(!code){input.focus();return;}
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'join',code})
+    });
+    const result=await resp.json();
+    if(!resp.ok){showFamilyError(result.error||'Failed');return;}
+    setFamilyCode(code);
+    // Now sync: merge local data with server data
+    await familySync();
+    showFamilySuccess('Joined! Your readers are synced.');
+    openFamilyModal();
+  }catch(e){showFamilyError('Network error');}
+}
+
+async function familySync(){
+  const code=getFamilyCode();
+  if(!code)return;
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'sync',code,data:gatherLocalData()})
+    });
+    const result=await resp.json();
+    if(!resp.ok){
+      if(resp.status===404){clearFamilyCode();showFamilyError('Family code expired. Please create a new one.');}
+      else showFamilyError(result.error||'Sync failed');
+      return;
+    }
+    applyServerData(result.data);
+    showFamilySuccess('Synced!');
+  }catch(e){
+    console.error('Family sync error:',e);
+  }
+}
+
+function familyDisconnect(){
+  clearFamilyCode();
+  openFamilyModal();
+}
+
+// Auto-sync on load if family is connected (non-blocking)
+function autoFamilySync(){
+  const code=getFamilyCode();
+  if(!code)return;
+  familySync().catch(()=>{});
+}
+
+/* =========================================================
    INIT
    ========================================================= */
 captureAdminToken();
@@ -3210,6 +3397,9 @@ refreshSpeechBtn();
 buildHome();
 refreshCommunityStories();
 refreshDailyVerseCard();
+
+// Auto-sync family data on load
+autoFamilySync();
 
 // First-time visitor → prompt for name
 if(getPlayers().length===0){
@@ -3237,6 +3427,9 @@ document.getElementById('name-input').addEventListener('keydown',e=>{
 });
 document.getElementById('custom-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')startCustomStory();
+});
+document.getElementById('family-code-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')familyJoin();
 });
 </script>
 </body>
