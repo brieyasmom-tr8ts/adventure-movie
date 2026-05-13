@@ -517,6 +517,21 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
 .avatar-btn.danger:hover{background:rgba(255,80,80,0.15);color:#ff8e8e;border-color:#ff7878}
 .avatar-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
 
+/* Vocabulary collector */
+.vocab-toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.92);border:1.5px solid var(--gold);color:#fff;
+  padding:12px 20px;border-radius:14px;z-index:9999;text-align:center;
+  animation:fadeUp 0.4s both;backdrop-filter:blur(10px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);font-size:14px;font-weight:600
+}
+.vocab-word{color:var(--gold);font-weight:800}
+.vocab-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.vocab-section-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:800;margin-bottom:8px}
+.vocab-list{display:flex;flex-wrap:wrap;gap:6px}
+.vocab-chip{padding:5px 10px;background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.2);border-radius:8px;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer}
+.vocab-chip:hover{background:rgba(255,80,80,0.15);border-color:#ff7878;color:#ff7878}
+
 /* Sibling challenge */
 .sibling-card{
   margin:12px 20px;padding:16px;
@@ -2690,7 +2705,7 @@ function renderStatsPanel(){
   document.getElementById('badges-grid').innerHTML=badgesHtml;
 
   // Extra stats
-  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>${buildStreakCalendar()}`;
+  document.getElementById('stats-extra').innerHTML=`<div class="stat-row"><div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">Day Streak</div></div><div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Stories Done</div></div><div class="stat-box"><div class="stat-num">${unlocked.length}/${BADGE_DEFS.length}</div><div class="stat-label">Badges</div></div></div>${buildStreakCalendar()}${renderVocabInStats()}`;
 }
 function buildStreakCalendar(){
   let d;try{d=JSON.parse(localStorage.getItem(streakKey())||'{}');}catch(e){d={};}
@@ -2981,6 +2996,68 @@ function replayHistoryStory(idx){
   visitedScenes=[];journey=[];currentAIScene=null;
   showScreen('player-screen');
   playScene('s1');
+}
+
+/* =========================================================
+   VOCABULARY COLLECTOR
+   ========================================================= */
+function vocabKey(){return 'am_vocab:'+(getActivePlayer()||'__guest__');}
+function getVocab(){try{return JSON.parse(localStorage.getItem(vocabKey())||'[]');}catch(e){return [];}}
+function saveVocab(list){localStorage.setItem(vocabKey(),JSON.stringify(list));}
+
+function addVocabWord(word){
+  const clean=word.replace(/[^a-zA-Z'-]/g,'').toLowerCase();
+  if(!clean||clean.length<3)return;
+  const list=getVocab();
+  if(list.some(w=>w.word===clean))return;
+  list.unshift({word:clean,date:todayStr(),story:currentStory?currentStory.title:''});
+  if(list.length>100)list.length=100;
+  saveVocab(list);
+  showVocabToast(clean);
+}
+function removeVocabWord(word){
+  const list=getVocab().filter(w=>w.word!==word);
+  saveVocab(list);
+}
+function showVocabToast(word){
+  const el=document.createElement('div');
+  el.className='vocab-toast';
+  el.innerHTML=`📚 <span class="vocab-word">${escapeHtml(word)}</span> saved to your word list!`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2000);
+}
+
+// Double-tap on story text to save a word
+(function(){
+  let lastTap=0;
+  document.addEventListener('click',function(e){
+    const textEl=document.getElementById('scene-text');
+    if(!textEl||!textEl.contains(e.target))return;
+    const now=Date.now();
+    if(now-lastTap<400){
+      // Double tap — get the word under cursor
+      const sel=window.getSelection();
+      if(sel&&sel.toString().trim()){
+        addVocabWord(sel.toString().trim());
+      }else{
+        // Try to select word at click position
+        sel.modify('move','backward','word');
+        sel.modify('extend','forward','word');
+        const word=sel.toString().trim();
+        if(word)addVocabWord(word);
+        sel.removeAllRanges();
+      }
+    }
+    lastTap=now;
+  });
+})();
+
+function renderVocabInStats(){
+  const list=getVocab();
+  if(!list.length)return '';
+  return `<div class="vocab-section"><div class="vocab-section-title">📚 My Words (${list.length})</div><div class="vocab-list">${list.slice(0,20).map(w=>
+    `<span class="vocab-chip" onclick="event.stopPropagation();removeVocabWord('${w.word.replace(/'/g,"\\'")}');renderStatsPanel()" title="Tap to remove">${escapeHtml(w.word)}</span>`
+  ).join('')}${list.length>20?`<span style="color:var(--text-3);font-size:11px;padding:5px">+${list.length-20} more</span>`:''}</div></div>`;
 }
 
 /* =========================================================
