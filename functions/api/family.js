@@ -23,6 +23,7 @@ export async function onRequestPost(context) {
     case "join":   return handleJoin(env, body);
     case "sync":   return handleSync(env, body);
     case "info":   return handleInfo(env, body);
+    case "rename": return handleRename(env, body);
     default:       return json({ error: "Unknown action" }, 400);
   }
 }
@@ -151,18 +152,41 @@ function mergeData(server, local) {
   return merged;
 }
 
-// --- Code generation: 3 words + 2 digits ---
+// --- Rename family code ---
+async function handleRename(env, body) {
+  const oldCode = normalizeCode(body.code);
+  if (!oldCode) return json({ error: "current code required" }, 400);
+
+  const newCode = normalizeCode(body.newCode);
+  if (!newCode) return json({ error: "new code required" }, 400);
+  if (!isValidCode(newCode)) return json({ error: "Code must be 4-8 characters: letters, numbers, or hyphens" }, 400);
+
+  const family = await env.STORIES_KV.get(`family:${oldCode}`, "json");
+  if (!family) return json({ error: "Family not found" }, 404);
+
+  // Check new code isn't taken
+  const existing = await env.STORIES_KV.get(`family:${newCode}`, "json");
+  if (existing) return json({ error: "That code is already taken. Try another!" }, 409);
+
+  // Move to new key
+  family.code = newCode;
+  family.updatedAt = new Date().toISOString();
+  await env.STORIES_KV.put(`family:${newCode}`, JSON.stringify(family));
+  await env.STORIES_KV.delete(`family:${oldCode}`);
+
+  return json({ code: newCode });
+}
+
+// --- Code generation: random 6-digit number ---
 function generateCode() {
-  const words = [
-    "blue","red","green","gold","brave","happy","kind","wise","calm","warm",
-    "swift","bright","bold","fair","true","wild","free","keen","glad","pure",
-    "lion","bear","wolf","hawk","deer","fox","owl","star","moon","sun",
-    "tree","lake","hill","wind","rain","snow","fire","rock","wave","seed",
-    "jump","dash","soar","rise","glow","sing","play","rest","hope","love"
-  ];
-  const pick = () => words[Math.floor(Math.random() * words.length)];
-  const num = String(Math.floor(Math.random() * 100)).padStart(2, "0");
-  return `${pick()}-${pick()}-${num}`;
+  const len = 6;
+  let code = "";
+  for (let i = 0; i < len; i++) code += Math.floor(Math.random() * 10);
+  return code;
+}
+
+function isValidCode(code) {
+  return /^[a-z0-9-]{4,8}$/i.test(code);
 }
 
 function normalizeCode(code) {

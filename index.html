@@ -754,6 +754,16 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
           <div class="family-code-hint">Enter this code on another device to sync.</div>
         </div>
         <div class="family-status"><span class="dot"></span> Connected</div>
+        <div id="family-rename-section" style="margin-top:14px">
+          <button class="modal-secondary" onclick="showFamilyRename()" id="family-rename-btn">Change Code</button>
+          <div id="family-rename-form" style="display:none;margin-top:8px">
+            <p style="color:var(--text-2);font-size:13px;margin-bottom:6px">Pick your own code (4-8 characters, letters/numbers/hyphens):</p>
+            <div class="family-input-row">
+              <input class="interactive-input" id="family-rename-input" placeholder="e.g. smith4" maxlength="8" autocomplete="off" style="margin-bottom:0">
+              <button class="interactive-submit" onclick="familyRename()" style="width:auto;padding:12px 20px">Save</button>
+            </div>
+          </div>
+        </div>
         <button class="interactive-submit" onclick="familySync()" style="margin-top:14px">Sync Now</button>
         <button class="modal-secondary" onclick="familyDisconnect()">Disconnect</button>
       </div>
@@ -3373,6 +3383,33 @@ async function familySync(){
   }
 }
 
+function showFamilyRename(){
+  document.getElementById('family-rename-form').style.display='block';
+  document.getElementById('family-rename-btn').style.display='none';
+  const inp=document.getElementById('family-rename-input');
+  inp.value='';inp.focus();
+}
+
+async function familyRename(){
+  const inp=document.getElementById('family-rename-input');
+  const newCode=(inp.value||'').trim().toLowerCase();
+  if(!newCode||newCode.length<4||newCode.length>8){inp.focus();showFamilyError('Code must be 4-8 characters');return;}
+  if(!/^[a-z0-9-]+$/.test(newCode)){inp.focus();showFamilyError('Letters, numbers, and hyphens only');return;}
+  const oldCode=getFamilyCode();
+  try{
+    const resp=await fetch('/api/family',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'rename',code:oldCode,newCode})
+    });
+    const result=await resp.json();
+    if(!resp.ok){showFamilyError(result.error||'Failed');return;}
+    setFamilyCode(result.code);
+    showFamilySuccess('Code changed!');
+    openFamilyModal();
+  }catch(e){showFamilyError('Network error');}
+}
+
 function familyDisconnect(){
   clearFamilyCode();
   openFamilyModal();
@@ -3430,6 +3467,9 @@ document.getElementById('custom-input').addEventListener('keydown',e=>{
 });
 document.getElementById('family-code-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')familyJoin();
+});
+document.getElementById('family-rename-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')familyRename();
 });
 </script>
 </body>
