@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
     "- Keep tone warm, age-appropriate, no violence, profanity, or scary content.",
     "- If the edit request is ambiguous, make a sensible interpretation and proceed.",
     "",
-    "Return ONLY valid JSON with the same top-level shape as the input: { \"title\", \"theme\", \"emoji\", \"scenes\": [...] }. No prose around it."
+    "Return ONLY valid JSON with this top-level shape: { \"title\", \"theme\", \"emoji\", \"imageTopic\", \"scenes\": [...] }. Set imageTopic to ONE of: forest, garden, magic, ocean, adventure, pets, school, castle, night, farm, mystery, default — pick the one that best fits the updated story's setting and feel. No prose around the JSON."
   ].filter(Boolean).join("\n");
 
   const userPrompt = `CURRENT STORY:

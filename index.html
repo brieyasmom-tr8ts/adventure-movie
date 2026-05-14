@@ -120,20 +120,22 @@ body[data-screen="player-screen"] .top-back,body[data-screen="ending-screen"] .t
 }
 .story-grid::-webkit-scrollbar{display:none}
 .story-grid-5{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
-  overflow:visible;scroll-snap-type:none;padding:6px 24px 16px;
+  display:grid;
+  grid-auto-flow:column;
+  grid-template-rows:repeat(2,auto);
+  grid-auto-columns:172px;
+  gap:14px;
+  overflow-x:auto;overflow-y:visible;
+  padding:6px 24px 16px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
-.story-grid-5 .story-card{flex:initial;width:auto;height:auto;aspect-ratio:3/4;font-size:11px}
-.story-grid-5 .story-card .card-title{font-size:12px}
-.story-grid-5 .story-card .card-theme{font-size:9px}
-.story-grid-5 .story-card .card-emoji{font-size:24px}
-.story-grid-5 .story-card .card-ai-tag{font-size:8px;padding:2px 4px;letter-spacing:0.2px}
+.story-grid-5::-webkit-scrollbar{display:none}
+.story-grid-5 .story-card{flex:initial;width:172px;height:240px}
 @media (max-width:560px){
-  .story-grid-5{grid-template-columns:repeat(5,1fr);gap:6px;padding:6px 12px 16px}
-  .story-grid-5 .story-card .card-emoji{font-size:18px}
-  .story-grid-5 .story-card .card-title{font-size:10px;line-height:1.1}
-  .story-grid-5 .story-card .card-theme{font-size:8px}
-  .story-grid-5 .story-card .card-ai-tag{font-size:7px;padding:2px 3px}
+  .story-grid-5{grid-auto-columns:148px;gap:10px;padding:6px 12px 16px}
+  .story-grid-5 .story-card{width:148px;height:212px}
 }
 
 .story-card{
@@ -1039,27 +1041,44 @@ body[data-screen="player-screen"] .top-back{left:12px;top:max(12px,env(safe-area
    storybook image from a small pool based on keywords in title/plot/theme
    so each story has a consistent hero image even when the author didn't
    set one explicitly. Mirrors the picker in grandbabe.html. */
-const GB_STORY_IMAGES=[
-  {url:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',keys:['forest','woods','tree','path','hike','walk']},
-  {url:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80',keys:['garden','flower','bloom','grow','seed','plant']},
-  {url:'https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80',keys:['magic','fairy','star','wish','sparkle','wonder']},
-  {url:'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80',keys:['beach','ocean','sea','sand','wave','sailor','boat','fish']},
-  {url:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80',keys:['adventure','journey','quest','explore','travel']},
-  {url:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80',keys:['pet','dog','cat','puppy','kitten','animal','bunny','rabbit']},
-  {url:'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80',keys:['school','class','teacher','classroom','homework','playground']},
-  {url:'https://images.unsplash.com/photo-1454486837617-ce8e1ba5ebfe?w=800&q=80',keys:['castle','kingdom','princess','prince','knight','dragon','crown']},
-  {url:'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=800&q=80',keys:['night','star','moon','bedtime','dream','sleep','dark']},
-  {url:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80',keys:['shepherd','sheep','farm','meadow','field']},
-  {url:'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80',keys:['mystery','secret','treasure','hidden','clue','map']},
-  {url:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',keys:[]} // default fallback
-];
+const GB_IMAGE_BY_TOPIC={
+  forest:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',
+  garden:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80',
+  magic:'https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80',
+  ocean:'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80',
+  adventure:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80',
+  pets:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80',
+  school:'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80',
+  castle:'https://images.unsplash.com/photo-1454486837617-ce8e1ba5ebfe?w=800&q=80',
+  night:'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=800&q=80',
+  farm:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80',
+  mystery:'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80',
+  default:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80'
+};
+const GB_TOPIC_KEYWORDS={
+  forest:['forest','woods','tree','trail','hike','walk','leaves','squirrel','owl','meadow'],
+  garden:['garden','flower','bloom','grow','seed','plant','butterfly','bee','sunflower'],
+  magic:['magic','fairy','star','wish','sparkle','wonder','spell','wand','dust'],
+  ocean:['beach','ocean','sea','sand','wave','sailor','boat','fish','mermaid','shell','tide','dolphin','shark','whale','pirate','ship'],
+  adventure:['adventure','journey','quest','explore','travel','mountain','road','map','backpack'],
+  pets:['pet','dog','cat','puppy','kitten','bunny','rabbit','hamster','goldfish','vet','park'],
+  school:['school','class','teacher','classroom','homework','playground','recess','bus','lunchbox'],
+  castle:['castle','kingdom','princess','prince','knight','dragon','crown','tower','queen','king'],
+  night:['night','star','moon','bedtime','dream','sleep','dark','blanket','pajama','lullaby'],
+  farm:['farm','sheep','meadow','field','barn','cow','horse','chicken','tractor','hay'],
+  mystery:['mystery','secret','treasure','hidden','clue','map','puzzle','riddle','detective','spy'],
+  default:[]
+};
 function pickStoryImageForGB(s){
   if(s&&s.image)return s.image;
+  // Prefer Claude's explicit topic pick when present.
+  if(s&&s.imageTopic&&GB_IMAGE_BY_TOPIC[s.imageTopic])return GB_IMAGE_BY_TOPIC[s.imageTopic];
+  // Fall back to keyword scan across title/theme/plot for older stories.
   const text=((s&&s.title||'')+' '+(s&&s.theme||'')+' '+(s&&s.plot||'')).toLowerCase();
-  for(const im of GB_STORY_IMAGES){
-    if(im.keys.some(k=>text.indexOf(k)!==-1))return im.url;
+  for(const topic of Object.keys(GB_TOPIC_KEYWORDS)){
+    if(GB_TOPIC_KEYWORDS[topic].some(k=>text.indexOf(k)!==-1))return GB_IMAGE_BY_TOPIC[topic];
   }
-  return GB_STORY_IMAGES[GB_STORY_IMAGES.length-1].url;
+  return GB_IMAGE_BY_TOPIC.default;
 }
 
 const STORIES=[
@@ -4152,12 +4171,13 @@ async function submitStoryEditor(){
       title:story.title||title,
       theme:story.theme||'Adventure',
       emoji:story.emoji||'📝',
+      imageTopic:story.imageTopic||'',
       level,
       createdBy:'Grandbabe',
       createdAt:todayStr(),
       scenes:story.scenes
     };
-    newEntry.image=pickStoryImageForGB({title:newEntry.title,theme:newEntry.theme,plot});
+    newEntry.image=pickStoryImageForGB({title:newEntry.title,theme:newEntry.theme,imageTopic:newEntry.imageTopic,plot});
     custom.unshift(newEntry);
     if(custom.length>20)custom.length=20;
     saveCustomStories(custom);

@@ -124,26 +124,42 @@ document.getElementById('ed-author').value=localStorage.getItem('gb_author')||''
 
 /* Image picker — choose a warm storybook image based on keywords in the
    story. Each story stores its image so it stays consistent across edits. */
-const STORY_IMAGES=[
-  {url:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',keys:['forest','woods','tree','path','hike','walk']},
-  {url:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80',keys:['garden','flower','bloom','grow','seed','plant']},
-  {url:'https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80',keys:['magic','fairy','star','wish','sparkle','wonder']},
-  {url:'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80',keys:['beach','ocean','sea','sand','wave','sailor','boat','fish']},
-  {url:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80',keys:['adventure','journey','quest','explore','travel']},
-  {url:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80',keys:['pet','dog','cat','puppy','kitten','animal','bunny','rabbit']},
-  {url:'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80',keys:['school','class','teacher','classroom','homework','playground']},
-  {url:'https://images.unsplash.com/photo-1454486837617-ce8e1ba5ebfe?w=800&q=80',keys:['castle','kingdom','princess','prince','knight','dragon','crown']},
-  {url:'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=800&q=80',keys:['night','star','moon','bedtime','dream','sleep','dark']},
-  {url:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80',keys:['shepherd','sheep','farm','meadow','field']},
-  {url:'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80',keys:['mystery','secret','treasure','hidden','clue','map']},
-  {url:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',keys:[]} // default fallback
-];
-function pickStoryImage(title,plot,theme){
+const IMAGE_BY_TOPIC={
+  forest:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',
+  garden:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80',
+  magic:'https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=800&q=80',
+  ocean:'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&q=80',
+  adventure:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80',
+  pets:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80',
+  school:'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80',
+  castle:'https://images.unsplash.com/photo-1454486837617-ce8e1ba5ebfe?w=800&q=80',
+  night:'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=800&q=80',
+  farm:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=800&q=80',
+  mystery:'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80',
+  default:'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80'
+};
+const TOPIC_KEYWORDS={
+  forest:['forest','woods','tree','trail','hike','walk','leaves','squirrel','owl','meadow'],
+  garden:['garden','flower','bloom','grow','seed','plant','butterfly','bee','sunflower'],
+  magic:['magic','fairy','star','wish','sparkle','wonder','spell','wand','dust'],
+  ocean:['beach','ocean','sea','sand','wave','sailor','boat','fish','mermaid','shell','tide','dolphin','shark','whale','pirate','ship'],
+  adventure:['adventure','journey','quest','explore','travel','mountain','road','map','backpack'],
+  pets:['pet','dog','cat','puppy','kitten','bunny','rabbit','hamster','goldfish','vet','park'],
+  school:['school','class','teacher','classroom','homework','playground','recess','bus','lunchbox'],
+  castle:['castle','kingdom','princess','prince','knight','dragon','crown','tower','queen','king'],
+  night:['night','star','moon','bedtime','dream','sleep','dark','blanket','pajama','lullaby'],
+  farm:['farm','sheep','meadow','field','barn','cow','horse','chicken','tractor','hay'],
+  mystery:['mystery','secret','treasure','hidden','clue','map','puzzle','riddle','detective','spy'],
+  default:[]
+};
+function pickStoryImage(title,plot,theme,imageTopic){
+  // Prefer the topic Claude returned when generating/editing the story.
+  if(imageTopic&&IMAGE_BY_TOPIC[imageTopic])return IMAGE_BY_TOPIC[imageTopic];
   const text=((title||'')+' '+(plot||'')+' '+(theme||'')).toLowerCase();
-  for(const im of STORY_IMAGES){
-    if(im.keys.some(k=>text.indexOf(k)!==-1))return im.url;
+  for(const topic of Object.keys(TOPIC_KEYWORDS)){
+    if(TOPIC_KEYWORDS[topic].some(k=>text.indexOf(k)!==-1))return IMAGE_BY_TOPIC[topic];
   }
-  return STORY_IMAGES[STORY_IMAGES.length-1].url;
+  return IMAGE_BY_TOPIC.default;
 }
 
 async function createStory(){
@@ -183,7 +199,8 @@ async function createStory(){
       title:story.title||title,
       theme:story.theme||'Adventure',
       emoji:story.emoji||'📝',
-      image:pickStoryImage(story.title||title,plot,story.theme),
+      imageTopic:story.imageTopic||'',
+      image:pickStoryImage(story.title||title,plot,story.theme,story.imageTopic),
       level,
       createdBy:author,
       createdAt:new Date().toISOString().slice(0,10),
@@ -315,12 +332,19 @@ async function submitEdit(){
       return;
     }
     const updatedStory=data.story;
+    // Re-pick the image when Claude returned a fresh topic (the edit may have
+    // shifted the story's setting — e.g. "move it from a castle to a forest").
+    const newTopic=updatedStory.imageTopic||orig.imageTopic||'';
+    const newImage=(updatedStory.imageTopic&&IMAGE_BY_TOPIC[updatedStory.imageTopic])
+      ? IMAGE_BY_TOPIC[updatedStory.imageTopic]
+      : (orig.image||pickStoryImage(updatedStory.title||orig.title,instructions,updatedStory.theme||orig.theme,newTopic));
     const updatedEntry={
       ...orig,
       title:updatedStory.title||orig.title,
       theme:updatedStory.theme||orig.theme,
       emoji:updatedStory.emoji||orig.emoji,
-      image:orig.image||pickStoryImage(updatedStory.title||orig.title,instructions,updatedStory.theme||orig.theme),
+      imageTopic:newTopic,
+      image:newImage,
       scenes:updatedStory.scenes,
       editedAt:new Date().toISOString().slice(0,10)
     };
