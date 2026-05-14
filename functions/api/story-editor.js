@@ -54,6 +54,7 @@ Generate a JSON object with this exact structure:
   "title": "${title}",
   "theme": "one-word theme",
   "emoji": "relevant emoji",
+  "imageTopic": "ONE of: forest, garden, magic, ocean, adventure, pets, school, castle, night, farm, mystery, default — pick the one that best fits this specific story's setting and feel",
   "scenes": [
     {
       "id": "s1",
